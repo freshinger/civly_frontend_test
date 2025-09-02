@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { FormSeparator } from "@/components/custom/auth-form/form-separator"
 import { GoogleAuthButton } from "@/components/custom/auth-form/google-auth-button"
 import { Button } from "@/components/ui/button"
+import { createClient } from "@/utils/supabase/client"
 
 enum AuthView {
     Login,
@@ -47,7 +48,7 @@ export default function LoginPage() {
   )
 
   const SubmitButton = () => (
-    <Button type="submit" className="w-full">
+    <Button type="submit" className="w-full" onClick={(e) => { sign_in_with_email({email: "ardit.e.neziri@gmail.com", password: "1234"}); e.preventDefault()}}>
       Continue
     </Button>
   )
@@ -99,6 +100,15 @@ export default function LoginPage() {
       </a>
     </div>
 )
+
+
+
+async function sign_in_with_email(data: {email: string, password: string}) {
+  console.log("Start sign in with email")
+  const supabase = await createClient()
+  const { error} = await supabase.auth.signInWithPassword(data)
+  console.log("End sign in with email : " + error);
+}
 
 
   const renderFormChildren = () => {

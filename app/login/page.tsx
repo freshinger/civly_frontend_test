@@ -22,7 +22,6 @@ export default function LoginPage() {
     setAuthView(view)
   }
 
-
   const NameField = () => (
     <div className="grid gap-3">
       <Label htmlFor="email">Name</Label>

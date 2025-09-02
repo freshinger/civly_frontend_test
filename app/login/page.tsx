@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input"
 import { FormSeparator } from "@/components/custom/auth-form/form-separator"
 import { GoogleAuthButton } from "@/components/custom/auth-form/google-auth-button"
 import { Button } from "@/components/ui/button"
-import { createClient } from "@/utils/supabase/client"
+import { login } from "@/utils/actions/login"
+import { forgotPassword } from "@/utils/actions/forgotPassword"
+import { signup } from "@/utils/actions/signup"
 
 enum AuthView {
     Login,
@@ -28,6 +30,7 @@ export default function LoginPage() {
       <Label htmlFor="email">Name</Label>
       <Input
         id="name"
+        name="name"
         type="text"
         placeholder="Tom Doe"
         required
@@ -40,6 +43,7 @@ export default function LoginPage() {
       <Label htmlFor="email">Email</Label>
       <Input
         id="email"
+        name="email"
         type="email"
         placeholder="m@example.com"
         required
@@ -47,8 +51,20 @@ export default function LoginPage() {
     </div>
   )
 
-  const SubmitButton = () => (
-    <Button type="submit" className="w-full" onClick={(e) => { sign_in_with_email({email: "ardit.e.neziri@gmail.com", password: "1234"}); e.preventDefault()}}>
+  const LoginButton = () => (
+    <Button type="submit" className="w-full" formAction={login}>
+      Continue
+    </Button>
+  )
+
+  const RegisterButton = () => (
+    <Button type="submit" className="w-full" formAction={signup}>
+      Continue
+    </Button>
+  )
+
+  const ForgotPasswordButton = () => (
+    <Button type="submit" className="w-full" formAction={forgotPassword}>
       Continue
     </Button>
   )
@@ -67,7 +83,7 @@ export default function LoginPage() {
           </a>
         )}
       </div>
-      <Input id="password" type="password" required />
+      <Input id="password" name="password" type="password" required />
     </div>
   )
 
@@ -76,6 +92,7 @@ export default function LoginPage() {
       <Label htmlFor="password">Confirm Password</Label>
       <Input
         id="confirm-password"
+        name="confirm-password"
         type="password"
         placeholder=""
         required
@@ -101,16 +118,6 @@ export default function LoginPage() {
     </div>
 )
 
-
-
-async function sign_in_with_email(data: {email: string, password: string}) {
-  console.log("Start sign in with email")
-  const supabase = await createClient()
-  const { error} = await supabase.auth.signInWithPassword(data)
-  console.log("End sign in with email : " + error);
-}
-
-
   const renderFormChildren = () => {
     switch (authView) {
       case AuthView.Login:
@@ -118,7 +125,7 @@ async function sign_in_with_email(data: {email: string, password: string}) {
           <>
             <EmailField />
             <PasswordField showForgotPassword={true} />
-            <SubmitButton />
+            <LoginButton />
             <FormSeparator />
             <GoogleAuthButton onClick={() => {}} />
             <SwitchToRegisterButton />
@@ -131,7 +138,7 @@ async function sign_in_with_email(data: {email: string, password: string}) {
             <EmailField />
             <PasswordField showForgotPassword={false} />
             <ConfirmPasswordField />
-            <SubmitButton />
+            <RegisterButton />
             <FormSeparator />
             <GoogleAuthButton onClick={() => {}} />
             <SwitchToLoginButton />
@@ -141,7 +148,7 @@ async function sign_in_with_email(data: {email: string, password: string}) {
         return (
           <>
             <EmailField />
-            <SubmitButton />
+            <ForgotPasswordButton />
             <SwitchToLoginButton />
           </>
         )

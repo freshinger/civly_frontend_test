@@ -125,7 +125,7 @@ export default function LoginPage() {
         Sign in
       </a>
     </div>
-  )
+)
 
   const renderFormChildren = () => {
     switch (authView) {

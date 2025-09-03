@@ -3,16 +3,29 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
+import { z } from 'zod';
+
+const schema = z.object({
+  email: z.email({
+    message: "E-Mail is invalid!"
+  })
+});
 
 export async function forgotPassword(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // TODO: validate your inputs
-  const email = formData.get('email') as string;
-  
+  const validatedFields = schema.safeParse({
+    email: formData.get('email')
+  });
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if(!validatedFields.success){
+    return { 
+      zodErrors: validatedFields.error.flatten().fieldErrors,
+      message: "Invalid Field. Failed to reset Password."
+    }
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(validatedFields.data.email);
 
   if (error) {
     console.log(error);

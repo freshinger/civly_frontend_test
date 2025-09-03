@@ -94,8 +94,8 @@ export default function LoginPage() {
     <div className="grid gap-3">
       <Label htmlFor="password">Confirm Password</Label>
       <Input
-        id="confirm-password"
-        name="confirm-password"
+        id="confirmPassword"
+        name="confirmPassword"
         type="password"
         placeholder=""
         required

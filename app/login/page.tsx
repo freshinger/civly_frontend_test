@@ -1,21 +1,21 @@
-"use client"
+'use client'
 
-import { LoginForm } from "@/components/login-form"
-import { CivlyLogo } from "@/components/custom/civly-logo"
-import { useState } from "react"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { FormSeparator } from "@/components/custom/auth-form/form-separator"
-import { GoogleAuthButton } from "@/components/custom/auth-form/google-auth-button"
-import { Button } from "@/components/ui/button"
-import { login } from "@/utils/actions/login"
-import { forgotPassword } from "@/utils/actions/forgotPassword"
-import { signup } from "@/utils/actions/signup"
+import { LoginForm } from '@/components/login-form'
+import { CivlyLogo } from '@/components/custom/civly-logo'
+import { useState } from 'react'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { FormSeparator } from '@/components/custom/auth-form/form-separator'
+import { GoogleAuthButton } from '@/components/custom/auth-form/google-auth-button'
+import { Button } from '@/components/ui/button'
+import { login } from '@/utils/actions/login'
+import { forgotPassword } from '@/utils/actions/forgotPassword'
+import { signup } from '@/utils/actions/signup'
 
 enum AuthView {
-    Login,
-    Register,
-    ForgotPassword
+  Login,
+  Register,
+  ForgotPassword,
 }
 
 export default function LoginPage() {
@@ -69,8 +69,11 @@ export default function LoginPage() {
     </Button>
   )
 
-  const PasswordField = ({ showForgotPassword }: {
-    showForgotPassword?: boolean}) => (
+  const PasswordField = ({
+    showForgotPassword,
+  }: {
+    showForgotPassword?: boolean
+  }) => (
     <div className="grid gap-3">
       <div className="flex items-center">
         <Label htmlFor="password">Password</Label>
@@ -102,8 +105,11 @@ export default function LoginPage() {
 
   const SwitchToRegisterButton = () => (
     <div className="text-center text-sm">
-      Don&apos;t have an account?{" "}
-      <a onClick={() => handleAuthViewChange(AuthView.Register)}className="underline underline-offset-4">
+      Don&apos;t have an account?{' '}
+      <a
+        onClick={() => handleAuthViewChange(AuthView.Register)}
+        className="underline underline-offset-4"
+      >
         Sign up
       </a>
     </div>
@@ -111,12 +117,15 @@ export default function LoginPage() {
 
   const SwitchToLoginButton = () => (
     <div className="text-center text-sm">
-      You already have an account?{" "}
-      <a onClick={() => handleAuthViewChange(AuthView.Login)} className="underline underline-offset-4">
+      You already have an account?{' '}
+      <a
+        onClick={() => handleAuthViewChange(AuthView.Login)}
+        className="underline underline-offset-4"
+      >
         Sign in
       </a>
     </div>
-)
+  )
 
   const renderFormChildren = () => {
     switch (authView) {
@@ -159,11 +168,9 @@ export default function LoginPage() {
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
         <a href="#" className="flex items-center gap-2 self-center font-medium">
-          <CivlyLogo height={200} width={400}/>
+          <CivlyLogo width={180} height={89} />
         </a>
-        <LoginForm>
-          {renderFormChildren()}
-        </LoginForm>
+        <LoginForm>{renderFormChildren()}</LoginForm>
       </div>
     </div>
   )

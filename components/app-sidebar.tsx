@@ -1,0 +1,100 @@
+'use client'
+
+import * as React from 'react'
+import {
+  IconDashboard,
+  IconFileDescription,
+  IconHelp,
+  IconSettings,
+} from '@tabler/icons-react'
+
+import { NavMain } from '@/components/nav-main'
+import { NavSecondary } from '@/components/nav-secondary'
+import { NavUser } from '@/components/nav-user'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar'
+import { CivlyLogo } from '@/components/custom/civly-logo'
+
+const data = {
+  user: {
+    name: 'Katrin Schmidt',
+    email: 'katrin.schmidt@email.de',
+    avatar: '/avatars/shadcn.jpg',
+  },
+  navMain: [
+    {
+      title: 'Dashboard',
+      url: '/dashboard',
+      icon: IconDashboard,
+      isActive: true,
+    },
+  ],
+  resumes: {
+    title: 'My Resumes',
+    url: '/resumes',
+    icon: IconFileDescription,
+    items: [
+      {
+        title: 'Project Manager Sep 25',
+        url: '/resumes/1',
+      },
+      {
+        title: 'Marketing Manager Zalando',
+        url: '/resumes/2',
+      },
+      {
+        title: 'Product Manager Resume',
+        url: '/resumes/3',
+      },
+    ],
+  },
+  navSecondary: [
+    {
+      title: 'Help',
+      url: '#',
+      icon: IconHelp,
+    },
+    {
+      title: 'Settings',
+      url: '#',
+      icon: IconSettings,
+    },
+  ],
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="offcanvas" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5 justify-center h-auto "
+            >
+              <a href="#">
+                <CivlyLogo height={52} width={106} />
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <NavMain items={data.navMain} resumes={data.resumes} />
+        <NavSecondary items={data.navSecondary} className="mt-auto" />
+      </SidebarContent>
+
+      <SidebarFooter>
+        <NavUser user={data.user} />
+      </SidebarFooter>
+    </Sidebar>
+  )
+}

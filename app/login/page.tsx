@@ -2,15 +2,20 @@
 
 import { LoginForm } from '@/components/login-form'
 import { CivlyLogo } from '@/components/custom/civly-logo'
-import { useState } from 'react'
+import { useActionState, useState } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { FormSeparator } from '@/components/custom/auth-form/form-separator'
 import { GoogleAuthButton } from '@/components/custom/auth-form/google-auth-button'
 import { Button } from '@/components/ui/button'
-import { login } from '@/utils/actions/login'
-import { forgotPassword } from '@/utils/actions/forgotPassword'
-import { signup } from '@/utils/actions/signup'
+import { forgotPasswordAction } from '@/utils/actions/forgotPassword'
+import { FormState } from '@/utils/validation/auth'
+import { signUpAction } from '@/utils/actions/signup'
+import { loginAction } from '@/utils/actions/login'
+import { ZodErrors } from '@/components/custom/auth-form/zod-errors'
+import { NameField } from '@/components/custom/auth-form/fields/NameField'
+import { EmailField } from '@/components/custom/auth-form/fields/EmailField'
+import { redirect } from 'next/navigation'
 
 enum AuthView {
   Login,
@@ -19,52 +24,38 @@ enum AuthView {
 }
 
 export default function LoginPage() {
+  //TODO: if already logged in redirect to Dashboard
+  
   const [authView, setAuthView] = useState(AuthView.Login)
+  const INITIAL_STATE: FormState = {
+    success: false,
+    message: undefined,
+    backendErrors: null,
+    zodErrors: null,
+  };
+  const [signUpFormState, signUpFormAction] = useActionState(
+    signUpAction,
+    INITIAL_STATE
+  );
+  const [forgotPasswordFormState, forgotPasswordFormAction] = useActionState(
+    forgotPasswordAction,
+    INITIAL_STATE
+  );
+  const [loginFormState, loginFormAction] = useActionState(
+    loginAction,
+    INITIAL_STATE
+  );
+  
+  if(loginFormState?.success){
+    redirect('/');
+  }
 
   const handleAuthViewChange = (view: AuthView) => {
     setAuthView(view)
   }
 
-  const NameField = () => (
-    <div className="grid gap-3">
-      <Label htmlFor="email">Name</Label>
-      <Input
-        id="name"
-        name="name"
-        type="text"
-        placeholder="Tom Doe"
-        required
-      />
-    </div>
-  )
-
-  const EmailField = () => (
-    <div className="grid gap-3">
-      <Label htmlFor="email">Email</Label>
-      <Input
-        id="email"
-        name="email"
-        type="email"
-        placeholder="m@example.com"
-        required
-      />
-    </div>
-  )
-
-  const LoginButton = () => (
-    <Button type="submit" className="w-full" formAction={login}>
-      Continue
-    </Button>
-  )
-
-  const RegisterButton = () => (
-    <Button type="submit" className="w-full" formAction={signup}>
-      Continue
-    </Button>
-  )
-
-  const ForgotPasswordButton = () => (
-    <Button type="submit" className="w-full" formAction={forgotPassword}>
+  const SubmitButton = () => (
+    <Button type="submit" className="w-full">
       Continue
     </Button>
   )
@@ -132,33 +123,55 @@ export default function LoginPage() {
       case AuthView.Login:
         return (
           <>
-            <EmailField />
-            <PasswordField showForgotPassword={true} />
-            <LoginButton />
-            <FormSeparator />
-            <GoogleAuthButton onClick={() => {}} />
-            <SwitchToRegisterButton />
+            <form action={loginFormAction}>
+              <div className="grid gap-6">
+                <div className="text-pink-500 text-xs italic">{loginFormState?.message} {loginFormState?.backendErrors?.message}</div>
+                <EmailField defaultName={loginFormState?.data?.email || ''} />
+                <ZodErrors error={loginFormState?.zodErrors?.email} />
+                <PasswordField showForgotPassword={true} />
+                <ZodErrors error={loginFormState?.zodErrors?.password} />
+                <SubmitButton />
+                <FormSeparator />
+                <GoogleAuthButton onClick={() => {}} />
+                <SwitchToRegisterButton />
+              </div>
+            </form>
           </>
         )
       case AuthView.Register:
         return (
           <>
-            <NameField />
-            <EmailField />
-            <PasswordField showForgotPassword={false} />
-            <ConfirmPasswordField />
-            <RegisterButton />
-            <FormSeparator />
-            <GoogleAuthButton onClick={() => {}} />
-            <SwitchToLoginButton />
+            <form action={signUpFormAction}>
+              <div className="grid gap-6">
+                <div className="text-pink-500 text-xs italic">{signUpFormState?.message} {loginFormState?.backendErrors?.message}</div>
+                <NameField defaultName={signUpFormState?.data?.name || ''}/>
+                <ZodErrors error={signUpFormState?.zodErrors?.name} />
+                <EmailField defaultName={signUpFormState?.data?.email || ''}/>
+                <ZodErrors error={signUpFormState?.zodErrors?.email} />
+                <PasswordField showForgotPassword={false} />
+                <ZodErrors error={signUpFormState?.zodErrors?.password} />
+                <ConfirmPasswordField />
+                <ZodErrors error={signUpFormState?.zodErrors?.confirmPassword} />
+                <SubmitButton />
+                <FormSeparator />
+                <GoogleAuthButton onClick={() => {}} />
+                <SwitchToLoginButton />
+              </div>
+            </form>
           </>
         )
       case AuthView.ForgotPassword:
         return (
           <>
-            <EmailField />
-            <ForgotPasswordButton />
-            <SwitchToLoginButton />
+            <form action={forgotPasswordFormAction}>
+              <div className="grid gap-6">
+                <div className="text-pink-500 text-xs italic">{forgotPasswordFormState?.message} {loginFormState?.backendErrors?.message}</div>
+                <EmailField defaultName={forgotPasswordFormState?.data?.email || ''}/>
+                <ZodErrors error={forgotPasswordFormState?.zodErrors?.email} />
+                <SubmitButton />
+                <SwitchToLoginButton />
+              </div>
+            </form>
           </>
         )
     }

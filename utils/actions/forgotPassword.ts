@@ -4,24 +4,26 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { z } from 'zod';
+import { forgotPasswordSchema, FormState } from '../validation/auth';
 
-const schema = z.object({
-  email: z.email({
-    message: "E-Mail is invalid!"
-  })
-});
-
-export async function forgotPassword(formData: FormData) {
+export async function forgotPasswordAction(prevState: FormState, formData: FormData): Promise<FormState> {
   const supabase = await createClient()
 
-  const validatedFields = schema.safeParse({
-    email: formData.get('email')
-  });
+  const fields = {
+    email: formData.get('email') as string
+  };
+
+  const validatedFields = forgotPasswordSchema.safeParse(fields);
 
   if(!validatedFields.success){
     return { 
+      success: false,
+      message: 'Validation failed. Failed to reset Password.',
       zodErrors: validatedFields.error.flatten().fieldErrors,
-      message: "Invalid Field. Failed to reset Password."
+      data: {
+        ...prevState.data,
+        ...fields
+      }
     }
   }
 
@@ -29,9 +31,26 @@ export async function forgotPassword(formData: FormData) {
 
   if (error) {
     console.log(error);
-    redirect('/error');
+    return {
+      success: false,
+      message: 'Reset Password failed',
+      backendErrors: error,
+      zodErrors: null,
+      data: {
+        ...prevState.data,
+        ...fields
+      }
+    }
   }
-
-  revalidatePath('/', 'layout');
-  redirect('/');
+  
+  return {
+    success: true,
+    message: 'Reset Password successful',
+    backendErrors: null,
+    zodErrors: null,
+    data: {
+      ...prevState.data,
+      ...fields
+    }
+  }
 }

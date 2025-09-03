@@ -93,8 +93,10 @@ export function NavUser({
             </DropdownMenuGroup>
             {/* <DropdownMenuSeparator /> */}
             <DropdownMenuItem>
-              <IconLogout />
-              Log out
+              <a href='/logout'>
+                <IconLogout />
+                Log out
+              </a>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

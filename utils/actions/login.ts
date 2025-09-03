@@ -1,42 +1,55 @@
 'use server'
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
-import { z } from 'zod';
+import { FormState, loginSchema } from '../validation/auth';
 
-const schema = z.object({
-  email: z.email({
-    message: "E-Mail is invalid!"
-  }),
-  password: z
-    .string()
-    .min(6, "Password must be at least 8 characters")
-    .max(100, "Password must be less than 100 characters"),
-});
+export async function loginAction(prevState: FormState, formData: FormData): Promise<FormState> {
+  
+  const fields = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string
+  };
 
-export async function login(formData: FormData) {
-  const supabase = await createClient();
-
-  const validatedFields = schema.safeParse({
-    email: formData.get('email'),
-    password: formData.get('password')
-  });
+  const validatedFields = loginSchema.safeParse(fields);
 
   if(!validatedFields.success){
     return { 
+      success: false,
+      message: 'Validation failed. Failed to login.',
       zodErrors: validatedFields.error.flatten().fieldErrors,
-      message: "Invalid Fields. Failed to login."
+      data: {
+        ...prevState.data,
+        ...fields
+      }
     }
   }
 
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(validatedFields.data);
 
-  if (error) {
-    console.log(error);
-    redirect('/error');
+  if(error){
+    console.log(error); 
+    return {
+      success: false,
+      message: 'Login failed',
+      backendErrors: error,
+      zodErrors: null,
+      data: {
+        ...prevState.data,
+        ...fields
+      }
+    }
+  } 
+  
+  return {
+    success: true,
+    message: 'Login successful',
+    backendErrors: null,
+    zodErrors: null,
+    data: {
+      ...prevState.data,
+      ...fields
+    }
   }
-
-  revalidatePath('/', 'layout');
-  redirect('/');
 }

@@ -1,39 +1,25 @@
 'use server'
 
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
-import { z } from 'zod';
+import { FormState, signUpSchema } from '../validation/auth';
 
-const schema = z.object({
-  email: z.email({
-    message: "E-Mail is invalid!"
-  }),
-  password: z
-    .string()
-    .min(6, "Password must be at least 8 characters")
-    .max(100, "Password must be less than 100 characters"),
-  confirmPassword: z
-    .string()
-    .min(6, "Password must be at least 8 characters")
-    .max(100, "Password must be less than 100 characters"),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords must match",
-    path: ['confirmPassword'],
-  });;
-
-export async function signup(formData: FormData) {
-  const supabase = await createClient();
-
-  const validatedFields = schema.safeParse({
-    email: formData.get('email'),
-    password: formData.get('password')
-  });
+export async function signUpAction(prevState: FormState, formData: FormData): Promise<FormState> {
+  const fields = {
+    name: formData.get('name') as string,
+    email: formData.get('email') as string,
+    password: formData.get('password') as string
+  };
+  const validatedFields = signUpSchema.safeParse(fields);
 
   if(!validatedFields.success){
     return { 
+      success: false,
+      message: 'Validation failed. Failed to sign up.',
       zodErrors: validatedFields.error.flatten().fieldErrors,
-      message: "Invalid Fields. Failed to sign up."
+      data: {
+        ...prevState.data,
+        ...fields
+      }
     }
   }
 
@@ -41,14 +27,31 @@ export async function signup(formData: FormData) {
     email: validatedFields.data.email,
     password: validatedFields.data.password,
   }
-
+  const supabase = await createClient();
   const { error } = await supabase.auth.signUp(data);
 
   if (error) {
     console.log(error);
-    redirect('/error');
+    return {
+      success: false,
+      message: 'User Sign up failed',
+      backendErrors: error,
+      zodErrors: null,
+      data: {
+        ...prevState.data,
+        ...fields
+      }
+    }
   }
 
-  revalidatePath('/', 'layout');
-  redirect('/');
+  return {
+    success: true,
+    message: 'User Sign up successful',
+    backendErrors: null,
+    zodErrors: null,
+    data: {
+      ...prevState.data,
+      ...fields
+    }
+  }
 }

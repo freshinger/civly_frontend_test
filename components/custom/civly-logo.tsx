@@ -1,20 +1,25 @@
-import * as React from "react"
+import * as React from 'react'
 
-import Image, { ImageProps } from "next/image"
+import Image, { ImageProps } from 'next/image'
 
-type CivlyLogoProps = Omit<ImageProps, "src" | "alt"> & {
+type CivlyLogoProps = Omit<ImageProps, 'src' | 'alt'> & {
   src?: string
 }
 
-export function CivlyLogo({ height, width, ...props }: CivlyLogoProps) {
-    return (
-      <Image
-        className="h-8 w-auto"
-        src="/civly_logo.png"
-        alt="Civly Logo"
-        width={width}
-        height={height}
-        {...props}
-      />
-    )
-  }
+export function CivlyLogo({
+  height = 63,
+  width = 127,
+  priority = true,
+  ...props
+}: CivlyLogoProps) {
+  return (
+    <Image
+      src="/civly_logo.png"
+      alt="Civly Logo"
+      width={width}
+      height={height}
+      priority={priority}
+      {...props}
+    />
+  )
+}

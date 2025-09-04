@@ -41,7 +41,7 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:!bg-primary/10"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage src={user.avatar} alt={user.name} />
@@ -78,7 +78,7 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="hover:!bg-primary/10">
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
@@ -92,7 +92,7 @@ export function NavUser({
               </DropdownMenuItem> */}
             </DropdownMenuGroup>
             {/* <DropdownMenuSeparator /> */}
-            <DropdownMenuItem>
+            <DropdownMenuItem className="hover:!bg-primary/10">
               <IconLogout />
               Log out
             </DropdownMenuItem>

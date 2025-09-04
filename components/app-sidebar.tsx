@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import {
   IconDashboard,
   IconFileDescription,
@@ -23,15 +24,10 @@ import {
 import { CivlyLogo } from '@/components/custom/civly-logo'
 
 const data = {
-  user: {
-    name: 'Katrin Schmidt',
-    email: 'katrin.schmidt@email.de',
-    avatar: '/avatars/shadcn.jpg',
-  },
   navMain: [
     {
       title: 'Dashboard',
-      url: '/dashboard',
+      url: '/',
       icon: IconDashboard,
       isActive: true,
     },
@@ -77,11 +73,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5 justify-center h-auto "
+              className="data-[slot=sidebar-menu-button]:!p-1.5 justify-center h-auto hover:!bg-transparent"
             >
-              <a href="#">
+              <Link href="/">
                 <CivlyLogo height={52} width={106} />
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -93,7 +89,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={{
+            name: 'Katrin Schmidt',
+            email: 'katrin@example.com',
+            avatar: '/katrin.jpg',
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
   )

@@ -6,6 +6,8 @@ import {
   type Icon,
 } from '@tabler/icons-react'
 import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 import {
   SidebarGroup,
@@ -39,6 +41,7 @@ export function NavMain({
   }
 }) {
   const [isResumesOpen, setIsResumesOpen] = useState(true)
+  const pathname = usePathname()
 
   return (
     <SidebarGroup>
@@ -55,21 +58,32 @@ export function NavMain({
           </SidebarMenuItem>
         </SidebarMenu>
         <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {items.map((item) => {
+            const isActive = pathname === item.url
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  tooltip={item.title}
+                  asChild
+                  className="!bg-transparent hover:!bg-primary/10"
+                >
+                  <Link href={item.url}>
+                    {item.icon && <item.icon />}
+                    <span className={isActive ? 'font-bold' : ''}>
+                      {item.title}
+                    </span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
 
           {/* My Resumes Collapsible Item */}
           {resumes && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={() => setIsResumesOpen(!isResumesOpen)}
-                className="w-full justify-between"
+                className="w-full justify-between hover:!bg-primary/10"
               >
                 <div className="flex items-center gap-2">
                   {resumes.icon && <resumes.icon className="h-4 w-4" />}
@@ -85,7 +99,10 @@ export function NavMain({
                 <SidebarMenuSub>
                   {resumes.items.map((item) => (
                     <SidebarMenuSubItem key={item.title}>
-                      <SidebarMenuSubButton asChild>
+                      <SidebarMenuSubButton
+                        asChild
+                        className="hover:!bg-primary/10"
+                      >
                         <a href={item.url}>
                           <span>{item.title}</span>
                         </a>

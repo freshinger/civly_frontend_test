@@ -78,10 +78,12 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem className="hover:!bg-primary/10">
-                <IconUserCircle />
-                Account
-              </DropdownMenuItem>
+              <a href='/account'>
+                <DropdownMenuItem className="hover:!bg-primary/10">
+                  <IconUserCircle />
+                  Account
+                </DropdownMenuItem>
+              </a>
               {/* <DropdownMenuItem>
                 <IconCreditCard />
                 Billing

@@ -10,7 +10,7 @@ export default function AccountForm({ user }: { user: User | null }) {
     const [loading, setLoading] = useState(true);
     const [name, setName] = useState<string | null>(null);
     const [surname, setSurname] = useState<string | null>(null);
-    const [birthday, setBirthday] = useState<Date | null>(null);
+    const [birthday, setBirthday] = useState<Date | undefined>(undefined);
     const [datePickerOpen, setDatePickerOpen] = useState(false);
     const [website, setWebsite] = useState<string | null>(null);
     const [avatar_url, setAvatarUrl] = useState<string | null>(null);
@@ -23,27 +23,25 @@ export default function AccountForm({ user }: { user: User | null }) {
         try {
             setLoading(true)
 
-            const { data, error, status } = await supabase
-                .from('profiles')
-                .select(`name, surname, birthday, email, phone, location, summary, website, avatar_url`)
-                .eq('id', user?.id)
-                .single()
-
-            if (error && status !== 406) {
+            const { data, error} = await supabase.functions.invoke('restful-api/profile/'+user?.id, {
+                method: 'GET'
+            })
+            const {profile} = data;
+            if (error) {
                 console.log(error)
                 throw error
             }
 
-            if (data) {
-                setName(data.name)
-                setSurname(data.surname)
-                setWebsite(data.website)
-                setBirthday(data.birthday)
-                setEmail(data.email)
-                setPhone(data.phone)
-                setLocation(data.location)
-                setSummary(data.summary)
-                setAvatarUrl(data.avatar_url)
+            if (profile) {
+                setName(profile.name)
+                setSurname(profile.surname)
+                setWebsite(profile.website)
+                setBirthday(profile.birthday)
+                setEmail(profile.email)
+                setPhone(profile.phone)
+                setLocation(profile.location)
+                setSummary(profile.summary)
+                setAvatarUrl(profile.avatar_url)
             }
         } catch (error) {
             alert('Error loading user data!')
@@ -69,7 +67,7 @@ export default function AccountForm({ user }: { user: User | null }) {
     }: {
         name: string | null;
         surname: string | null;
-        birthday: Date | null;
+        birthday: Date | undefined;
         email: string | null;
         phone: string | null;
         location: string | null;
@@ -80,19 +78,24 @@ export default function AccountForm({ user }: { user: User | null }) {
         try {
             setLoading(true)
 
-            const { error } = await supabase.from('profiles').upsert({
-                id: user?.id as string,
-                name,
-                surname,
-                birthday: birthday? birthday.toISOString():null,
-                email,
-                phone,
-                location,
-                summary,
-                website,
-                avatar_url,
-                updated_at: new Date().toISOString(),
-            })
+            const { error } = await supabase.functions.invoke('restful-api/profile/'+user?.id, {
+                method: 'PUT',
+                body: { 
+                    profile: {
+                        id: user?.id as string,
+                        name,
+                        surname,
+                        birthday: birthday? birthday.toISOString():null,
+                        email,
+                        phone,
+                        location,
+                        summary,
+                        website,
+                        avatar_url,
+                        updated_at: new Date().toISOString(),
+                    }    
+                }
+            });
             if (error) throw error
             alert('Profile updated!')
         } catch (error) {
@@ -151,9 +154,9 @@ export default function AccountForm({ user }: { user: User | null }) {
                 <label htmlFor="birthday">Birthday</label>
                 <Calendar
             mode="single"
-            selected={birthday || ''}
+            selected={birthday}
             captionLayout="dropdown"
-            onSelect={(birthday: SetStateAction<Date | null>) => {
+            onSelect={(birthday: Date | undefined) => {
               setBirthday(birthday)
               setDatePickerOpen(false)
             }}

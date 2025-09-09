@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import Image from 'next/image'
 
-export default function Avatar({
+export default function ProfilePicturePicker({
   uid,
   url,
   size,

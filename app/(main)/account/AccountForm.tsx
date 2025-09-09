@@ -2,7 +2,7 @@
 import { SetStateAction, useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { type User } from '@supabase/supabase-js';
-import Avatar from './avatar';
+import ProfilePicturePicker from './ProfilePicturePicker';
 import { Calendar } from "@/components/ui/calendar";
 
 export default function AccountForm({ user }: { user: User | null }) {
@@ -109,7 +109,7 @@ export default function AccountForm({ user }: { user: User | null }) {
     return (
         <div className="form-widget">
 
-            <Avatar
+            <ProfilePicturePicker
                 uid={user?.id ?? null}
                 url={avatar_url}
                 size={150}

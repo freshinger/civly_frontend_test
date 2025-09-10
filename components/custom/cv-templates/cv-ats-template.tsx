@@ -15,7 +15,6 @@ interface CVATSTemplateProps {
   cvData: CVData
 }
 
-// Funções helper para extrair usernames
 const getLinkedInUsername = (url: string) => {
   const match = url.match(/linkedin\.com\/in\/([^\/\?]+)/)
   return match ? match[1] : 'LinkedIn'

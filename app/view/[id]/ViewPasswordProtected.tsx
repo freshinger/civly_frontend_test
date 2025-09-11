@@ -10,7 +10,7 @@ export default function Page({
     const supabase = createClient();
 
     const [password, setPassword] = React.useState("");
-    const [response, setResponse] = React.useState("");
+    const [response, setResponse] = React.useState("Please enter the Passcode");
     const [showPasswordField, setShowPasswordField] = React.useState(true);
 
     async function sendPassword(){
@@ -21,6 +21,8 @@ export default function Page({
         if(data.response?.status !== 200){
             if(data.response?.status == 403){
                 setResponse('Access Forbidden');
+            } else if(data.response?.status == 429){
+                setResponse('Access Forbidden. Too many retries.');
             } else {
                 setResponse(JSON.stringify(data.error));
             }
@@ -32,27 +34,29 @@ export default function Page({
 
     if(showPasswordField){
         return (
-        <>
-        <pre>{response}</pre>
-        <InputOTP 
-        maxLength={6}
-        value={password}
-        onChange={(password) => setPassword(password)}
-        >
-        <InputOTPGroup>
-            <InputOTPSlot index={0} />
-            <InputOTPSlot index={1} />
-            <InputOTPSlot index={2} />
-        </InputOTPGroup>
-        <InputOTPSeparator />
-        <InputOTPGroup>
-            <InputOTPSlot index={3} />
-            <InputOTPSlot index={4} />
-            <InputOTPSlot index={5} />
-        </InputOTPGroup>
-        </InputOTP>
-        <Button onClick={sendPassword}>Send</Button>
-        </>
+        <div className="flex justify-center">
+            <div className="flex flex-col justify-evenly h-48">
+                <pre>{response}</pre>
+                <InputOTP 
+                maxLength={6}
+                value={password}
+                onChange={(password) => setPassword(password)}
+                >
+                <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                </InputOTPGroup>
+                </InputOTP>
+                <Button onClick={sendPassword}>Send</Button>
+            </div>
+        </div>
         )
     } else {
         return (

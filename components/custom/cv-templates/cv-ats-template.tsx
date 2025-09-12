@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect, useRef, ReactNode } from 'react'
-import { CVData } from '@/types/cv-data' // Assuming this type definition exists
-import { formatDate } from '@/utils/date-formatting' // Assuming these utils exist
-import { getLinkedInUsername, getXingUsername } from '@/utils/cv-helpers'
+import { CVData } from '@/types/cv-data'
+import { formatDate } from '@/utils/date-formatting'
+import { getLinkedInUsername, getXingUsername } from '@/utils/cv-utils'
 import {
   IconPhone,
   IconMail,
@@ -115,7 +115,7 @@ export default function CVATSTemplate({ cvData }: { cvData: CVData }) {
   }, [cvData])
 
   return (
-    <div className="bg-gray-200 p-8">
+    <div>
       {/* 1. Hidden Renderer for Measurement */}
       <div
         ref={measurementContainerRef}

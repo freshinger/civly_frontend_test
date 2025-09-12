@@ -10,7 +10,7 @@ export default function MainLayout({
     <SidebarProvider>
       <SidebarWrapper />
       <SidebarInset>
-        <main className="flex flex-1 flex-col gap-4 p-4 min-w-0">
+        <main className="flex flex-1 flex-col gap-4 p-0 min-w-0">
           {children}
         </main>
       </SidebarInset>

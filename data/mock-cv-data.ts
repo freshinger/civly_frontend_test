@@ -36,7 +36,7 @@ export const mockCvData: CVData = {
       startDate: new Date('2022-01-01'),
       currentlyWorkingHere: true,
       endDate: undefined,
-      location: 'Berlin, Germany',
+      location: 'Berlin',
       description:
         'Led integrated marketing campaigns that increased qualified leads by 85% and reduced customer acquisition cost by 30%. Managed annual marketing budget of €500K across digital and traditional channels. Developed and executed content marketing strategy resulting in 200% increase in organic website traffic. Built and managed a team of 4 marketing specialists, implementing data-driven processes that improved campaign ROI by 45%.',
     },
@@ -46,7 +46,7 @@ export const mockCvData: CVData = {
       startDate: new Date('2020-03-01'),
       currentlyWorkingHere: false,
       endDate: new Date('2021-12-31'),
-      location: 'Munich, Germany',
+      location: 'Munich',
       description:
         'Managed multi-channel marketing campaigns across email, social media, and paid advertising platforms. Achieved 40% increase in brand awareness through strategic partnerships and influencer collaborations. Implemented marketing automation workflows that improved lead nurturing efficiency by 60%. Conducted market research and competitive analysis to inform product positioning and pricing strategies.',
     },
@@ -56,7 +56,7 @@ export const mockCvData: CVData = {
       startDate: new Date('2018-06-01'),
       currentlyWorkingHere: false,
       endDate: new Date('2020-02-28'),
-      location: 'Berlin, Germany',
+      location: 'Berlin',
       description:
         'Executed digital marketing campaigns for B2B and B2C clients across various industries. Specialized in Google Ads, Facebook Ads, and LinkedIn advertising with average ROAS of 4.5x. Created and optimized landing pages and email campaigns that achieved industry-leading conversion rates. Collaborated with creative teams to develop compelling brand narratives and visual content.',
     },
@@ -84,6 +84,7 @@ export const mockCvData: CVData = {
 
   skillGroups: [
     {
+      id: 'skillgroup-1',
       name: 'Marketing Skills',
       order: 1,
       skills: [
@@ -97,6 +98,7 @@ export const mockCvData: CVData = {
       ],
     },
     {
+      id: 'skillgroup-2',
       name: 'Analytics & Tools',
       order: 2,
       skills: [
@@ -108,6 +110,7 @@ export const mockCvData: CVData = {
       ],
     },
     {
+      id: 'skillgroup-3',
       name: 'Languages',
       order: 3,
       skills: [

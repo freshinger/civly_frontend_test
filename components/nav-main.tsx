@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
 import {
   IconCirclePlusFilled,
   IconChevronDown,
   type Icon,
-} from '@tabler/icons-react'
-import { FormEvent, useState } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { CVData } from '@/types/cv-data'
-import {useRouter} from "next/navigation"
+} from "@tabler/icons-react";
+import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CvData } from "@/schemas/cv_data_schema";
+import { useRouter } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -19,8 +19,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from '@/components/ui/sidebar'
-import { createClient } from '@/utils/supabase/client'
+} from "@/components/ui/sidebar";
+import { createClient } from "@/utils/supabase/client";
 
 export function NavMain({
   items,
@@ -28,65 +28,68 @@ export function NavMain({
   cvs,
 }: {
   items: {
-    title: string
-    url: string
-    icon?: Icon
-    isActive?: boolean
-  }[]
+    title: string;
+    url: string;
+    icon?: Icon;
+    isActive?: boolean;
+  }[];
   resumes?: {
-    title: string
-    url: string
-    icon?: Icon
-    items: CVData[]
-  }
-  cvs: CVData[]
+    title: string;
+    url: string;
+    icon?: Icon;
+    items: CvData[];
+  };
+  cvs: CvData[];
 }) {
   const router = useRouter();
-  const [isResumesOpen, setIsResumesOpen] = useState(true)
-  const pathname = usePathname()
+  const [isResumesOpen, setIsResumesOpen] = useState(true);
+  const pathname = usePathname();
 
   //create a new blank cv
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const supabase = await createClient()
-    const { data: newcv, error } = await supabase.functions.invoke('restful-api/cv', {
-      body: {cv:{name: 'Resume'}}
-    });
-    router.refresh()
+    event.preventDefault();
+    const supabase = await createClient();
+    const { data: newcv, error } = await supabase.functions.invoke(
+      "restful-api/cv",
+      {
+        body: { cv: { name: "Resume" } },
+      }
+    );
+    router.refresh();
   }
 
   // Function to get CV display name
-  const getCvDisplayName = (cv: CVData) => {
+  const getCvDisplayName = (cv: CvData) => {
     // First priority: use the CV name field if it exists
     if (cv.name && cv.name.trim()) {
-      return cv.name.trim()
+      return cv.name.trim();
     }
 
     // Second priority: use personal information
-    const personalInfo = cv.personalInformation || {}
-    const name = personalInfo.name || ''
-    const surname = personalInfo.surname || ''
+    const personalInfo = cv.personalInformation || {};
+    const name = personalInfo.name || "";
+    const surname = personalInfo.surname || "";
 
     if (name || surname) {
-      return `CV - ${name} ${surname}`.trim()
+      return `CV - ${name} ${surname}`.trim();
     }
 
     // Third priority: use email
-    const email = personalInfo.email || ''
+    const email = personalInfo.email || "";
     if (email) {
-      return `CV - ${email.split('@')[0]}`
+      return `CV - ${email.split("@")[0]}`;
     }
 
     // Fallback to ID or date
-    const dateStr = cv.created_at
-      ? new Date(cv.created_at).toLocaleDateString()
-      : ''
-    return `CV - ${dateStr || cv.id.toString().slice(0, 8)}`
-  }
+    const dateStr = cv.createdAt
+      ? new Date(cv.createdAt).toLocaleDateString()
+      : "";
+    return `CV - ${dateStr || cv.id?.toString().slice(0, 8)}`;
+  };
 
   if (resumes) {
-    const resumesNew = resumes
-    resumesNew.items = cvs
+    const resumesNew = resumes;
+    resumesNew.items = cvs;
   }
 
   return (
@@ -108,7 +111,7 @@ export function NavMain({
         </SidebarMenu>
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = pathname === item.url
+            const isActive = pathname === item.url;
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
@@ -118,13 +121,13 @@ export function NavMain({
                 >
                   <Link href={item.url}>
                     {item.icon && <item.icon />}
-                    <span className={isActive ? 'font-bold' : ''}>
+                    <span className={isActive ? "font-bold" : ""}>
                       {item.title}
                     </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            )
+            );
           })}
 
           {/* My Resumes Collapsible Item */}
@@ -140,7 +143,7 @@ export function NavMain({
                 </div>
                 <IconChevronDown
                   className={`h-4 w-4 transition-transform ${
-                    isResumesOpen ? 'rotate-180' : ''
+                    isResumesOpen ? "rotate-180" : ""
                   }`}
                 />
               </SidebarMenuButton>
@@ -153,7 +156,7 @@ export function NavMain({
                           asChild
                           className="hover:!bg-primary/10"
                         >
-                          <Link href={'/cv/' + cv.id}>
+                          <Link href={"/cv/" + cv.id}>
                             <span className="text-sm ">
                               {getCvDisplayName(cv)}
                             </span>
@@ -175,5 +178,5 @@ export function NavMain({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  );
 }

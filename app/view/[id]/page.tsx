@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import ViewPasswordProtected from "./ViewPasswordProtected";
+import { ShowCVByTemplate } from "@/components/custom/cv-view/ShowCVByTemplate";
 
 export default async function Page({
   params,
@@ -32,11 +33,7 @@ export default async function Page({
     }
   }
 
-  return (
-    <>
-        <pre>
-            {JSON.stringify(data)}
-        </pre>
-    </>
-  )
+  if(data.data !== null){
+    return <ShowCVByTemplate cvData={data.data}/>
+  }
 }

@@ -1,5 +1,6 @@
 import { CVCleanTemplate } from '@/components/custom/cv-templates/cv-clean-template'
 import CVATSTemplate from '@/components/custom/cv-templates/cv-ats-template'
+
 import { mockCvData } from '@/data/mock-cv-data'
 
 export default function CVPreviewPage() {

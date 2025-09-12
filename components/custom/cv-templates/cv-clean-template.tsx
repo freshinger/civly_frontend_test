@@ -13,6 +13,7 @@ import {
   getXingUsername,
 } from '@/utils/cv-utils'
 import {
+
   IconGlobe,
   IconMail,
   IconPhone,
@@ -21,6 +22,7 @@ import {
 } from '@tabler/icons-react'
 
 // --- Types ---
+
 interface CVCleanTemplateProps {
   cvData: CVData
   accentColor?: string

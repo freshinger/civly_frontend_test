@@ -1,6 +1,10 @@
 'use client'
+import CVATSTemplate from "@/components/custom/cv-templates/cv-ats-template";
+import { CVCleanTemplate } from "@/components/custom/cv-templates/cv-clean-template";
+import { ShowCVByTemplate } from "@/components/custom/cv-view/ShowCVByTemplate";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/input-otp";
+import { CVData } from "@/types/cv-data";
 import { createClient } from "@/utils/supabase/client";
 import React from "react";
 
@@ -9,6 +13,7 @@ export default function Page({
 }: { id:string }) {
     const supabase = createClient();
 
+    const [cvData, setCVData] = React.useState(null);
     const [password, setPassword] = React.useState("");
     const [disableButton, setDisableButton] = React.useState(false);
     const [response, setResponse] = React.useState("Please enter the Passcode");
@@ -32,7 +37,8 @@ export default function Page({
                 setDisableButton(false);
             }
         } else {
-            setResponse(JSON.stringify(data.data));
+            console.log(data.data);
+            setCVData(data.data);
             setShowPasswordField(false);
         }
     }
@@ -74,10 +80,8 @@ export default function Page({
         </div>
         )
     } else {
-        return (
-        <>
-        <pre>{response}</pre>
-        </>
-        )
+        if(cvData !== null){
+            return <ShowCVByTemplate cvData={cvData}/>
+        }
     }
 }

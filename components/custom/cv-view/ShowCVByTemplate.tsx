@@ -1,28 +1,26 @@
-import { CVData } from "@/types/cv-data"
-import { CVCleanTemplate } from "../cv-templates/cv-clean-template"
-import CVATSTemplate from "../cv-templates/cv-ats-template"
+import { CVCleanTemplate } from "../cv-templates/cv-clean-template";
+import CVATSTemplate from "../cv-templates/cv-ats-template";
+import { CvData } from "@/schemas/cv_data_schema";
 
-export function ShowCVByTemplate({cvData}: {cvData: CVData}){
-    switch ((cvData as CVData).layout_configs?.template_id) {
+export function ShowCVByTemplate({ cvData }: { cvData: CvData }) {
+  switch ((cvData as CvData).layoutConfigs?.templateId) {
     case 0:
-        return (
+      return (
         <>
-            <CVCleanTemplate cvData={cvData} accentColor="text-blue-600" />
+          <CVCleanTemplate cvData={cvData} accentColor="text-blue-600" />
         </>
-        )
+      );
     case 1:
-        return (
+      return (
         <>
-            <CVATSTemplate cvData={cvData} />
+          <CVATSTemplate cvData={cvData} />
         </>
-        )
+      );
     default:
-        return (
+      return (
         <>
-            <CVCleanTemplate cvData={cvData} accentColor="text-blue-600" />
+          <CVCleanTemplate cvData={cvData} accentColor="text-blue-600" />
         </>
-        )
-    }
+      );
+  }
 }
-
-

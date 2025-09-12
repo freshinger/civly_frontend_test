@@ -29,3 +29,6 @@ export const skillGroupSchema = z
       .min(1, { message: "Each group must have at least one skill" }),
   })
   .strict();
+
+export type SkillGroup = z.infer<typeof skillGroupSchema>;
+export type SkillGroupItem = z.infer<typeof skillGroupItemSchema>;

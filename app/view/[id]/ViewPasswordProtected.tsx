@@ -10,21 +10,26 @@ export default function Page({
     const supabase = createClient();
 
     const [password, setPassword] = React.useState("");
+    const [disableButton, setDisableButton] = React.useState(false);
     const [response, setResponse] = React.useState("Please enter the Passcode");
     const [showPasswordField, setShowPasswordField] = React.useState(true);
 
     async function sendPassword(){
+        setDisableButton(true);
+        setResponse('Loading...');
         const data = await supabase.functions.invoke('restful-api/view', {
         method: 'POST',
         body: {id, password}
         });
         if(data.response?.status !== 200){
             if(data.response?.status == 403){
-                setResponse('Access Forbidden');
+                setResponse('Access forbidden');
+                setDisableButton(false);
             } else if(data.response?.status == 429){
-                setResponse('Access Forbidden. Too many retries.');
+                setResponse('Access temporary locked.');
             } else {
                 setResponse(JSON.stringify(data.error));
+                setDisableButton(false);
             }
         } else {
             setResponse(JSON.stringify(data.data));
@@ -34,9 +39,14 @@ export default function Page({
 
     if(showPasswordField){
         return (
+            <div>
         <div className="flex justify-center">
-            <div className="flex flex-col justify-evenly h-48">
+            <div className="flex flex-col justify-evenly h-20">
                 <pre>{response}</pre>
+                </div>
+            </div>
+            <div className="flex justify-center">
+            <div className="flex flex-col justify-evenly h-10">
                 <InputOTP 
                 maxLength={6}
                 value={password}
@@ -54,7 +64,12 @@ export default function Page({
                     <InputOTPSlot index={5} />
                 </InputOTPGroup>
                 </InputOTP>
-                <Button onClick={sendPassword}>Send</Button>
+            </div>
+            </div>
+            <div className="flex justify-center">
+                <div className="flex flex-col justify-evenly h-20">
+                    <Button disabled={disableButton} onClick={sendPassword}>Send</Button>
+                </div>
             </div>
         </div>
         )

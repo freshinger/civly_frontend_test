@@ -153,11 +153,11 @@ export function NavUser() {
             </DropdownMenuGroup>
 
             <DropdownMenuItem
-              className="hover:!bg-primary/10"
+              className="hover:!bg-primary/10 cursor-pointer"
               onClick={() => signOut()}
             >
               <IconLogout />
-              Log out
+              Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -34,11 +34,26 @@ export function useAuth() {
     }
   }, [supabase])
 
+  const signOut = async () => {
+    try {
+      // Use the server-side signout route
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = '/auth/signout'
+      document.body.appendChild(form)
+      form.submit()
+    } catch (error) {
+      console.error('Error signing out:', error)
+      // Fallback to client-side signout
+      await supabase.auth.signOut()
+    }
+  }
+
   return {
     user,
     loading,
     isLoggedIn: !!user,
-    signOut: () => supabase.auth.signOut(),
+    signOut,
     signIn: (email: string, password: string) =>
       supabase.auth.signInWithPassword({ email, password }),
     signUp: (email: string, password: string) =>

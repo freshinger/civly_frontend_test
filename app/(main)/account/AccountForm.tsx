@@ -20,7 +20,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { CalendarIcon, User as UserIcon, LogOut, Save } from 'lucide-react'
+import {
+  CalendarIcon,
+  User as UserIcon,
+  LogOut,
+  Save,
+  Trash2,
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 
@@ -41,31 +47,40 @@ export default function AccountForm({ user }: { user: User | null }) {
     try {
       setLoading(true)
 
-      const { data, error } = await supabase.functions.invoke(
-        'restful-api/profile/' + user?.id,
-        {
-          method: 'GET',
-        },
-      )
-      const { profile } = data
-      if (error) {
-        console.log(error)
-        throw error
+      // Get basic profile data from profiles table
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('name, surname, email, phone, avatar_url')
+        .eq('id', user?.id)
+        .single()
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+        console.log('Profile fetch error:', error)
       }
 
-      if (profile) {
-        setName(profile.name)
-        setSurname(profile.surname)
-        setWebsite(profile.website)
-        setBirthdate(profile.birthday)
-        setEmail(profile.email)
-        setPhone(profile.phone)
-        setLocation(profile.location)
-        setSummary(profile.summary)
-        setAvatarUrl(profile.avatar_url)
+      // Set basic profile data
+      if (profileData) {
+        setName(profileData.name || '')
+        setSurname(profileData.surname || '')
+        setEmail(profileData.email || user?.email || '')
+        setPhone(profileData.phone || '')
+        setAvatarUrl(profileData.avatar_url || '')
+      } else {
+        // Fallback to auth user data
+        setEmail(user?.email || '')
       }
+
+      // Get extended data from user metadata
+      const metadata = user?.user_metadata || {}
+      setBirthdate(metadata.birthdate ? new Date(metadata.birthdate) : undefined)
+      setLocation(metadata.location || '')
+      setSummary(metadata.summary || '')
+      setWebsite(metadata.website || '')
+
     } catch (error) {
-      alert('Error loading user data!')
+      console.log('Error loading user data:', error)
+      // Set fallback values from auth user
+      setEmail(user?.email || '')
     } finally {
       setLoading(false)
     }
@@ -75,7 +90,7 @@ export default function AccountForm({ user }: { user: User | null }) {
     getProfile()
   }, [user, getProfile])
 
-  async function updateProfile({
+  const updateProfile = async ({
     name,
     surname,
     birthdate,
@@ -95,36 +110,98 @@ export default function AccountForm({ user }: { user: User | null }) {
     summary: string | null
     website: string | null
     avatar_url: string | null
-  }) {
+  }) => {
     try {
       setLoading(true)
 
-      const { error } = await supabase.functions.invoke(
-        'restful-api/profile/' + user?.id,
-        {
-          method: 'PUT',
-          body: {
-            profile: {
-              id: user?.id as string,
-              name,
-              surname,
-              birthday: birthdate ? birthdate.toISOString() : null,
-              email,
-              phone,
-              location,
-              summary,
-              website,
-              avatar_url,
-              updated_at: new Date().toISOString(),
-            },
-          },
-        },
-      )
-      if (error) throw error
-      alert('Profile updated!')
+      // Basic profile data for profiles table
+      const profileData = {
+        name,
+        surname,
+        email,
+        phone,
+        avatar_url,
+        updated_at: new Date().toISOString(),
+      }
+
+      // Extended profile data (store in user_metadata or separate table)
+      const extendedData = {
+        birthdate: birthdate instanceof Date ? birthdate.toISOString().split('T')[0] : null,
+        location,
+        summary,
+        website,
+      }
+
+      console.log('Updating profile with data:', profileData)
+      console.log('Extended data:', extendedData)
+
+      // Update basic profile
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user?.id,
+          ...profileData,
+        })
+        .select()
+
+      if (error) {
+        console.error('Database error:', error)
+        throw error
+      }
+
+      // Store extended data in user metadata for now
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          ...extendedData,
+          name,
+          surname,
+        }
+      })
+
+      if (metadataError) {
+        console.error('Metadata update error:', metadataError)
+        // Don't throw error for metadata, it's supplementary
+      }
+
+      alert('Profile updated successfully!')
     } catch (error) {
-      console.log('Error updating profile:', error)
-      alert('Error updating the data!')
+      console.error('Error updating the data:', error)
+      
+      if (error instanceof Error) {
+        alert(`Error updating profile: ${error.message}`)
+      } else {
+        alert('Error updating the data! Please check the console for details.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteAccount = async () => {
+    if (
+      !confirm(
+        'Are you sure you want to delete your account? This action cannot be undone.',
+      )
+    ) {
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      // Delete user account using Supabase Admin API
+      const { error } = await supabase.auth.admin.deleteUser(user?.id || '')
+
+      if (error) throw error
+
+      // Sign out after successful deletion
+      await supabase.auth.signOut()
+
+      alert('Account deleted successfully')
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      alert('Error deleting account. Please contact support.')
     } finally {
       setLoading(false)
     }
@@ -160,17 +237,6 @@ export default function AccountForm({ user }: { user: User | null }) {
                 size={80}
                 onUpload={(url) => {
                   setAvatarUrl(url)
-                  updateProfile({
-                    name,
-                    surname,
-                    birthdate,
-                    email,
-                    phone,
-                    location,
-                    summary,
-                    website,
-                    avatar_url: url,
-                  })
                 }}
               />
             </div>
@@ -344,38 +410,76 @@ export default function AccountForm({ user }: { user: User | null }) {
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-between">
-        <Button
-          onClick={() =>
-            updateProfile({
-              name,
-              surname,
-              birthdate,
-              email,
-              phone,
-              location,
-              summary,
-              website,
-              avatar_url,
-            })
-          }
-          disabled={loading}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90"
-        >
-          <Save className="h-4 w-4" />
-          {loading ? 'Saving...' : 'Save Changes'}
-        </Button>
-
-        <form action="/auth/signout" method="post">
+      <div className="flex flex-col gap-4">
+        {/* Primary actions */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
           <Button
-            variant="outline"
-            type="submit"
-            className="flex items-center gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={() =>
+              updateProfile({
+                name,
+                surname,
+                birthdate,
+                email,
+                phone,
+                location,
+                summary,
+                website,
+                avatar_url,
+              })
+            }
+            disabled={loading}
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90"
           >
-            <LogOut className="h-4 w-4" />
-            Sign Out
+            <Save className="h-4 w-4" />
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
-        </form>
+
+          <form action="/auth/signout" method="post">
+            <Button
+              variant="outline"
+              type="submit"
+              className="flex items-center gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </form>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="mt-12">
+        <Card className="border-destructive/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardDescription>
+              Irreversible and destructive actions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-destructive/5 rounded-lg border border-destructive/20">
+              <div className="flex-1">
+                <h4 className="font-medium text-destructive mb-1">
+                  Delete Account
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Once you delete your account, there is no going back. This
+                  will permanently delete your account, all your resumes, and
+                  remove all of your data from our servers.
+                </p>
+              </div>
+              <Button
+                onClick={deleteAccount}
+                disabled={loading}
+                variant="destructive"
+                className="flex items-center gap-2 shrink-0"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Account
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

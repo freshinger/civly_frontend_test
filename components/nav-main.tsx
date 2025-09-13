@@ -185,8 +185,10 @@ export function NavMain({
                 />
               </SidebarMenuButton>
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isResumesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                className={`overflow-y-auto transition-all duration-300 ease-in-out ${
+                  isResumesOpen
+                    ? 'max-h-[70vh] opacity-100'
+                    : 'max-h-0 opacity-0'
                 }`}
               >
                 <SidebarMenuSub className="mx-0 px-0 gap-0.5">

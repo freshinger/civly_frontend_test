@@ -5,6 +5,7 @@ import {
   IconLogout,
   IconUserCircle,
 } from '@tabler/icons-react'
+import { useEffect, useState } from 'react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -26,27 +27,54 @@ import { useAuth } from '@/hooks/use-auth'
 import { useUserProfile } from '@/hooks/use-user-profile'
 import { getDisplayName } from '@/services/user-profile.service'
 import { generateInitials } from '@/utils/user-avatar'
+import { createClient } from '@/utils/supabase/client'
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { signOut } = useAuth()
   const { profile, loading, user } = useUserProfile()
-
-  console.log('NavUser state:', { profile, loading, user })
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const supabase = createClient()
 
   // Get user display data from profile
   const userName = getDisplayName(profile)
   const userEmail = user?.email || ''
-  const userAvatar =
-    profile?.avatar_url || user?.user_metadata?.avatar_url || ''
-  const userInitials = generateInitials(userName)
 
-  console.log('NavUser display data:', {
-    userName,
-    userEmail,
-    userAvatar,
-    userInitials,
-  })
+  // Download avatar image like ProfilePicturePicker does
+  useEffect(() => {
+    async function downloadImage(path: string) {
+      try {
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .download(path)
+
+        if (error) {
+          setAvatarUrl(null)
+          return
+        }
+
+        const url = URL.createObjectURL(data)
+        setAvatarUrl(url)
+      } catch {
+        setAvatarUrl(null)
+      }
+    }
+
+    const avatarPath =
+      profile?.avatar_url || user?.user_metadata?.avatar_url || ''
+
+    if (avatarPath && !avatarPath.startsWith('http')) {
+      // Only download if it's a storage path, not a full URL
+      downloadImage(avatarPath)
+    } else if (avatarPath.startsWith('http')) {
+      // If it's already a full URL, use it directly
+      setAvatarUrl(avatarPath)
+    } else {
+      setAvatarUrl(null)
+    }
+  }, [profile?.avatar_url, user?.user_metadata?.avatar_url, supabase])
+
+  const userInitials = generateInitials(userName)
 
   // Show loading state while auth is loading
   if (loading) {
@@ -71,7 +99,7 @@ export function NavUser() {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" disabled>
-            <Avatar className="h-8 w-8 rounded-lg grayscale">
+            <Avatar className="h-8 w-8 rounded-lg">
               <AvatarFallback
                 className="rounded-lg text-white font-semibold text-xs"
                 style={{ backgroundColor: 'var(--primary-300)' }}
@@ -99,8 +127,8 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:!bg-primary/10"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={userAvatar} alt={userName} />
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={avatarUrl || ''} alt={userName} />
                 <AvatarFallback
                   className="rounded-lg text-white font-semibold text-xs"
                   style={{ backgroundColor: 'var(--primary-300)' }}
@@ -126,7 +154,7 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={userAvatar} alt={userName} />
+                  <AvatarImage src={avatarUrl || ''} alt={userName} />
                   <AvatarFallback
                     className="rounded-lg text-white font-semibold text-xs"
                     style={{ backgroundColor: 'var(--primary-300)' }}

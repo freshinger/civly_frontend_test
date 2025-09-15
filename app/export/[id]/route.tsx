@@ -6,8 +6,8 @@ async function generatePDF(url: string) {
 let browser;
   try {
     const isVercel = !!process.env.VERCEL_ENV;
-    let puppeteer: any,
-      launchOptions: any = {
+    let puppeteer,launchOptions;
+    launchOptions = {
         headless: true,
       };
 
@@ -15,7 +15,7 @@ let browser;
       const chromium = (await import("@sparticuz/chromium")).default;
       puppeteer = await import("puppeteer-core");
       launchOptions = {
-        ...launchOptions,
+        headless: true,
         args: chromium.args,
         executablePath: await chromium.executablePath(),
       };
@@ -29,6 +29,7 @@ let browser;
     const pdfBuffer = await page.pdf({ format: "A4"});
     return pdfBuffer;
   } catch (error) {
+    console.log(error);
     throw error;
   } finally {
     if (browser) {

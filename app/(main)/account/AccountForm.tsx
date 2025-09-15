@@ -20,14 +20,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  CalendarIcon,
-  User as UserIcon,
-  LogOut,
-  Save,
-  Trash2,
-} from 'lucide-react'
+import { CalendarIcon, LogOut, Save, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
+import moment from 'moment'
 import { cn } from '@/lib/utils'
 
 export default function AccountForm({ user }: { user: User | null }) {
@@ -54,7 +49,8 @@ export default function AccountForm({ user }: { user: User | null }) {
         .eq('id', user?.id)
         .single()
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows found
         console.log('Profile fetch error:', error)
       }
 
@@ -72,11 +68,12 @@ export default function AccountForm({ user }: { user: User | null }) {
 
       // Get extended data from user metadata
       const metadata = user?.user_metadata || {}
-      setBirthdate(metadata.birthdate ? new Date(metadata.birthdate) : undefined)
+      setBirthdate(
+        metadata.birthdate ? new Date(metadata.birthdate) : undefined,
+      )
       setLocation(metadata.location || '')
       setSummary(metadata.summary || '')
       setWebsite(metadata.website || '')
-
     } catch (error) {
       console.log('Error loading user data:', error)
       // Set fallback values from auth user
@@ -126,7 +123,10 @@ export default function AccountForm({ user }: { user: User | null }) {
 
       // Extended profile data (store in user_metadata or separate table)
       const extendedData = {
-        birthdate: birthdate instanceof Date ? birthdate.toISOString().split('T')[0] : null,
+        birthdate:
+          birthdate instanceof Date
+            ? moment(birthdate).format('YYYY-MM-DD')
+            : null,
         location,
         summary,
         website,
@@ -136,7 +136,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       console.log('Extended data:', extendedData)
 
       // Update basic profile
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .upsert({
           id: user?.id,
@@ -155,7 +155,7 @@ export default function AccountForm({ user }: { user: User | null }) {
           ...extendedData,
           name,
           surname,
-        }
+        },
       })
 
       if (metadataError) {
@@ -166,7 +166,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       alert('Profile updated successfully!')
     } catch (error) {
       console.error('Error updating the data:', error)
-      
+
       if (error instanceof Error) {
         alert(`Error updating profile: ${error.message}`)
       } else {

@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import { PersonalInformationTab } from './personal-information' // RHF version
 import { ExperienceTab } from './experience-tab' // RHF + useFieldArray
-import { LayoutTabPanel, type LayoutOptions } from './layout-tab'
+import { LayoutTabPanel } from './layout-tab'
 
 import type { CvData } from '@/schemas/cv_data_schema'
 import { useEffect } from 'react'
@@ -30,14 +30,6 @@ export function EditorSidebarRight(
   props: React.ComponentProps<typeof Sidebar>,
 ) {
   const [value, setValue] = React.useState('layout')
-
-  // Layout options state
-  const [layoutOptions, setLayoutOptions] = React.useState<LayoutOptions>({
-    templateId: 'modern',
-    accentColor: '#005eff',
-    typography: 'minimalist',
-    fontSize: 0,
-  })
 
   const getSingle = useCvStore((s) => s.getSingle)
   const saveLocally = useCvStore((s) => s.saveLocally)
@@ -69,16 +61,10 @@ export function EditorSidebarRight(
     })
 
     return () => subscription.unsubscribe()
-  }, [form])
+  }, [form, getSingle, saveLocally])
 
   const onSubmit = (data: CvData) => {
     useCvStore.getState().saveRemote(data)
-  }
-
-  const handleLayoutOptionsChange = (newOptions: LayoutOptions) => {
-    setLayoutOptions(newOptions)
-    // Aqui você pode integrar com o formulário se necessário
-    console.log('Layout options changed:', newOptions)
   }
 
   const CustomTabsContent: React.FC<{
@@ -122,10 +108,7 @@ export function EditorSidebarRight(
 
             <SidebarContent className="flex-none gap-4 overflow-y-auto h-[calc(100vh-140px)]">
               <CustomTabsContent value="layout">
-                <LayoutTabPanel
-                  currentOptions={layoutOptions}
-                  onOptionsChange={handleLayoutOptionsChange}
-                />
+                <LayoutTabPanel />
               </CustomTabsContent>
 
               {/* RHF tabs: no props, they read from form context */}

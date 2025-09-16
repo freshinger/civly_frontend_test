@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { type User } from '@supabase/supabase-js'
+import { useToast } from '@/hooks/use-toast'
 import ProfilePicturePicker from './ProfilePicturePicker'
 import { Calendar } from '@/components/ui/calendar'
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils'
 
 export default function AccountForm({ user }: { user: User | null }) {
   const supabase = createClient()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState<string | null>(null)
   const [surname, setSurname] = useState<string | null>(null)
@@ -76,6 +78,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       setWebsite(metadata.website || '')
     } catch (error) {
       console.log('Error loading user data:', error)
+      toast.warning('Some profile data could not be loaded')
       // Set fallback values from auth user
       setEmail(user?.email || '')
     } finally {
@@ -163,14 +166,14 @@ export default function AccountForm({ user }: { user: User | null }) {
         // Don't throw error for metadata, it's supplementary
       }
 
-      alert('Profile updated successfully!')
+      toast.success('Profile updated successfully!')
     } catch (error) {
       console.error('Error updating the data:', error)
 
       if (error instanceof Error) {
-        alert(`Error updating profile: ${error.message}`)
+        toast.error(`Error updating profile: ${error.message}`)
       } else {
-        alert('Error updating the data! Please check the console for details.')
+        toast.error('Error updating the data! Please check the console for details.')
       }
     } finally {
       setLoading(false)
@@ -197,11 +200,11 @@ export default function AccountForm({ user }: { user: User | null }) {
       // Sign out after successful deletion
       await supabase.auth.signOut()
 
-      alert('Account deleted successfully')
+      toast.success('Account deleted successfully')
       window.location.href = '/'
     } catch (error) {
       console.error('Error deleting account:', error)
-      alert('Error deleting account. Please contact support.')
+      toast.error('Error deleting account. Please contact support.')
     } finally {
       setLoading(false)
     }

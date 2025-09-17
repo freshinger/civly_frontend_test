@@ -14,7 +14,7 @@ export default async function Page({
   const { id } = await params;
   const supabase = createClient();
 
-  const data  = await supabase.functions.invoke('restful-api/view/'+id, {
+  const data  = await supabase.functions.invoke('view/'+id, {
     method: 'GET'
   });
 

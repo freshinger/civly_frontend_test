@@ -4,7 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 // Fetch ALL (collection)
 export async function fetchAllCvs(): Promise<CvData[]> {
   const sb = createClient();
-  const { data, error } = await sb.functions.invoke("restful-api/cv", {
+  const { data, error } = await sb.functions.invoke("cv-data/", {
     method: "GET",
   });
   if (error) throw error;

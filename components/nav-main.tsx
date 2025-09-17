@@ -50,7 +50,7 @@ export function NavMain({
     event.preventDefault();
     const supabase = await createClient();
     const { data: newcv, error } = await supabase.functions.invoke(
-      "restful-api/cv",
+      "cv-data/",
       {
         body: { cv: { name: "Resume" } },
       }

@@ -23,7 +23,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         try {
             setLoading(true)
 
-            const { data, error} = await supabase.functions.invoke('restful-api/profile/'+user?.id, {
+            const { data, error} = await supabase.functions.invoke('profile/'+user?.id, {
                 method: 'GET'
             })
             const {profile} = data;
@@ -78,7 +78,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         try {
             setLoading(true)
 
-            const { error } = await supabase.functions.invoke('restful-api/profile/'+user?.id, {
+            const { error } = await supabase.functions.invoke('profile/'+user?.id, {
                 method: 'PUT',
                 body: { 
                     profile: {

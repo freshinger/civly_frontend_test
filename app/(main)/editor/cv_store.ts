@@ -16,6 +16,7 @@ export interface ToastItem {
   type: ToastType
   message: string
   createdAt: number
+  isExiting?: boolean
 }
 
 type CvStore = {
@@ -32,6 +33,7 @@ type CvStore = {
   toasts: ToastItem[]
   addToast: (type: ToastType, message: string) => string
   removeToast: (id: string) => void
+  dismissToast: (id: string) => void
   clearAllToasts: () => void
 
   // Toast convenience methods
@@ -165,10 +167,24 @@ export const useCvStore = create<CvStore>()(
 
         // Auto-dismiss after fixed duration
         setTimeout(() => {
-          get().removeToast(id)
+          get().dismissToast(id)
         }, TOAST_DURATIONS[type])
 
         return id
+      },
+
+      dismissToast: (id) => {
+        // Start exit animation
+        set((state) => ({
+          toasts: state.toasts.map((toast) =>
+            toast.id === id ? { ...toast, isExiting: true } : toast,
+          ),
+        }))
+
+        // Remove after animation completes
+        setTimeout(() => {
+          get().removeToast(id)
+        }, 300) // Match animation duration
       },
 
       removeToast: (id) => {

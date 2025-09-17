@@ -78,7 +78,6 @@ export default function AccountForm({ user }: { user: User | null }) {
       setWebsite(metadata.website || '')
     } catch (error) {
       console.log('Error loading user data:', error)
-      toast.warning('Some profile data could not be loaded')
       // Set fallback values from auth user
       setEmail(user?.email || '')
     } finally {
@@ -88,7 +87,7 @@ export default function AccountForm({ user }: { user: User | null }) {
 
   useEffect(() => {
     getProfile()
-  }, [user, getProfile])
+  }, [getProfile])
 
   const updateProfile = async ({
     name,
@@ -173,7 +172,9 @@ export default function AccountForm({ user }: { user: User | null }) {
       if (error instanceof Error) {
         toast.error(`Error updating profile: ${error.message}`)
       } else {
-        toast.error('Error updating the data! Please check the console for details.')
+        toast.error(
+          'Error updating the data! Please check the console for details.',
+        )
       }
     } finally {
       setLoading(false)

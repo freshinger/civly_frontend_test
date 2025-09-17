@@ -21,6 +21,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { CalendarIcon, LogOut, Save, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import moment from 'moment'
@@ -38,6 +47,8 @@ export default function AccountForm({ user }: { user: User | null }) {
   const [email, setEmail] = useState<string | null>(null)
   const [phone, setPhone] = useState<string | null>(null)
   const [location, setLocation] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
   const [summary, setSummary] = useState<string | null>(null)
 
   const getProfile = useCallback(async () => {
@@ -182,16 +193,9 @@ export default function AccountForm({ user }: { user: User | null }) {
   }
 
   const deleteAccount = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to delete your account? This action cannot be undone.',
-      )
-    ) {
-      return
-    }
-
     try {
       setLoading(true)
+      setDeleteDialogOpen(false) // Close dialog when action starts
 
       // Delete user account using Supabase Admin API
       const { error } = await supabase.auth.admin.deleteUser(user?.id || '')
@@ -209,6 +213,16 @@ export default function AccountForm({ user }: { user: User | null }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLogout = () => {
+    setLogoutDialogOpen(false)
+    // Submit the form to handle server-side logout
+    const form = document.createElement('form')
+    form.action = '/auth/signout'
+    form.method = 'post'
+    document.body.appendChild(form)
+    form.submit()
   }
 
   return (
@@ -438,16 +452,14 @@ export default function AccountForm({ user }: { user: User | null }) {
             {loading ? 'Saving...' : 'Save Changes'}
           </Button>
 
-          <form action="/auth/signout" method="post">
-            <Button
-              variant="outline"
-              type="submit"
-              className="flex items-center gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
-          </form>
+          <Button
+            variant="outline"
+            onClick={() => setLogoutDialogOpen(true)}
+            className="flex items-center gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
       </div>
 
@@ -472,19 +484,146 @@ export default function AccountForm({ user }: { user: User | null }) {
                   remove all of your data from our servers.
                 </p>
               </div>
-              <Button
-                onClick={deleteAccount}
-                disabled={loading}
-                variant="destructive"
-                className="flex items-center gap-2 shrink-0"
+              <Dialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
               >
-                <Trash2 className="h-4 w-4" />
-                Delete Account
-              </Button>
+                <DialogTrigger asChild>
+                  <Button
+                    disabled={loading}
+                    variant="destructive"
+                    className="flex items-center gap-2 shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Account
+                  </Button>
+                </DialogTrigger>
+                <DialogContent
+                  className="sm:max-w-[500px]"
+                  showCloseButton={true}
+                >
+                  <DialogHeader>
+                    <DialogTitle className="text-destructive flex items-center gap-2">
+                      <Trash2 className="h-5 w-5" />
+                      Delete Account Permanently
+                    </DialogTitle>
+                    <DialogDescription>
+                      This will permanently delete your account and all
+                      associated data. This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4 py-4">
+                    {/* Warning Section */}
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-destructive/20 p-1 rounded-full mt-0.5">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-destructive">
+                            ⚠️ Complete Data Deletion
+                          </p>
+                          <p className="text-sm text-destructive/80 mt-1">
+                            This action will permanently remove your account,
+                            all your CVs, personal data, and cannot be reversed.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* What gets deleted */}
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="text-sm font-medium text-foreground mb-2">
+                        What will be deleted:
+                      </p>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Your account and login credentials</li>
+                        <li>• All created CVs and resumes</li>
+                        <li>• Personal information and profile data</li>
+                        <li>• All associated files and documents</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setDeleteDialogOpen(false)}
+                      disabled={loading}
+                      className="border-primary/20 text-primary hover:bg-primary/5"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={deleteAccount}
+                      disabled={loading}
+                      className="bg-destructive hover:bg-destructive/90 flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {loading
+                        ? 'Deleting Account...'
+                        : 'Delete Account Permanently'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]" showCloseButton={true}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <LogOut className="h-5 w-5" />
+              Sign Out
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to sign out of your account?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-amber-100 p-1 rounded-full mt-0.5">
+                  <LogOut className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-amber-800">
+                    Unsaved Changes Notice
+                  </p>
+                  <p className="text-sm text-amber-700 mt-1">
+                    Make sure you have saved any changes to your profile or CVs
+                    before signing out.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setLogoutDialogOpen(false)}
+              className="border-primary/20 text-primary hover:bg-primary/5"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleLogout}
+              className="bg-primary hover:bg-primary/90 flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

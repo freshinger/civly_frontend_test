@@ -107,10 +107,11 @@ export function NavMain({
     event.preventDefault()
     setSelectedCvId(null) // Clear any selected CV
 
+
     try {
       const supabase = await createClient()
-      await supabase.functions.invoke('restful-api/cv', {
-        body: { cv: { name: 'Resume' } },
+      await supabase.functions.invoke('cv-data/', {
+        body: { name: 'Resume' },
       })
       toast.success('New CV created successfully!')
       router.refresh()

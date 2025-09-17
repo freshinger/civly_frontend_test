@@ -22,7 +22,7 @@ export default function Page({ id }: { id: string }) {
   async function sendPassword() {
     setDisableButton(true);
     setResponse("Loading...");
-    const data = await supabase.functions.invoke("restful-api/view", {
+    const data = await supabase.functions.invoke("view", {
       method: "POST",
       body: { id, password },
     });

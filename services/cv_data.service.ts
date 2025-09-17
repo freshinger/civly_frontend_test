@@ -44,3 +44,39 @@ export async function duplicateCv(id: string | null): Promise<CvData | null> {
   if (error) throw error;
   return data;
 }
+
+export function handleExportPdf(id: string) {
+  fetch('export/'+id)
+  .then(
+    async res => {
+      if(res.body !== null){
+        const reader = res.body.getReader();
+        return new ReadableStream({
+          start(controller) {
+            return pump();
+            function pump(): Promise<void> {
+              return reader.read().then(({ done, value }) => {
+                if (done) {
+                  controller.close();
+                  return;
+                }
+                controller.enqueue(value);
+                return pump();
+              });
+            }
+          },
+        });
+      }
+    })
+    .then((stream) => new Response(stream))
+    .then((response) => response.blob())
+    .then((blob) => {
+      const url = window.URL.createObjectURL(new Blob([blob as unknown as BlobPart], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `cv-${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
+}

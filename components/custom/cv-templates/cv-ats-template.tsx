@@ -22,7 +22,7 @@ const USABLE_PAGE_HEIGHT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
 function Page({ children }: { children: ReactNode }) {
   return (
     <div
-      className="bg-white shadow-lg mb-8 mx-auto overflow-hidden"
+      className="bg-white shadow-lg mx-auto overflow-hidden"
       style={{
         width: "794px",
         height: `${A4_PAGE_HEIGHT_PX}px`,

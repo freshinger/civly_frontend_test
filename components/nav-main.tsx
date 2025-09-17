@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/sidebar'
 import { createClient } from '@/utils/supabase/client'
 import { useCvStore } from '@/app/(main)/editor/cv_store'
+import { handleExportPdf } from '@/services/cv_data.service'
 
 export function NavMain({
   items,
@@ -350,11 +351,9 @@ Best regards`
                                   }}
                                   onExportPdf={async () => {
                                     try {
-                                      // TODO: Implement actual PDF export functionality
-                                      toast.info(
-                                        'PDF export feature coming soon!',
-                                      )
-                                      console.log('Export PDF:', cv.id)
+                                      if(cv.id){
+                                        handleExportPdf(cv.id)
+                                      }
                                     } catch (error) {
                                       console.error('Export error:', error)
                                       toast.error('Failed to export PDF')

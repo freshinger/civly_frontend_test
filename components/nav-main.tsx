@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CvData } from '@/schemas/cv_data_schema'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 import { ResumeCardMenu } from '@/components/custom/resume-card-menu'
 import {
   SidebarGroup,
@@ -43,6 +44,7 @@ export function NavMain({
   cvs: CvData[]
 }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isResumesOpen, setIsResumesOpen] = useState(false)
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null)
   // State for cascade animation effects
@@ -85,11 +87,18 @@ export function NavMain({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSelectedCvId(null) // Clear any selected CV
-    const supabase = await createClient()
-    await supabase.functions.invoke('restful-api/cv', {
-      body: { cv: { name: 'Resume' } },
-    })
-    router.refresh()
+
+    try {
+      const supabase = await createClient()
+      await supabase.functions.invoke('restful-api/cv', {
+        body: { cv: { name: 'Resume' } },
+      })
+      toast.success('New CV created successfully!')
+      router.refresh()
+    } catch (error) {
+      console.error('Error creating CV:', error)
+      toast.error('Failed to create new CV')
+    }
   }
 
   // Function to get CV display name
@@ -246,21 +255,56 @@ export function NavMain({
                                     // Navigate to edit mode
                                     router.push(`/editor`)
                                   }}
-                                  onShare={() => {
-                                    // TODO: Implement share functionality
-                                    console.log('Share CV:', cv.id)
+                                  onShare={async () => {
+                                    try {
+                                      // Create shareable link
+                                      const shareUrl = `${window.location.origin}/view/${cv.id}`
+                                      await navigator.clipboard.writeText(
+                                        shareUrl,
+                                      )
+                                      toast.success(
+                                        'Share link copied to clipboard!',
+                                      )
+                                    } catch (error) {
+                                      console.error('Share error:', error)
+                                      toast.error('Failed to copy share link')
+                                    }
                                   }}
-                                  onDuplicate={() => {
-                                    // TODO: Implement duplicate functionality
-                                    console.log('Duplicate CV:', cv.id)
+                                  onDuplicate={async () => {
+                                    try {
+                                      // TODO: Implement actual duplicate functionality
+                                      toast.info(
+                                        'Duplicate feature coming soon!',
+                                      )
+                                      console.log('Duplicate CV:', cv.id)
+                                    } catch (error) {
+                                      console.error('Duplicate error:', error)
+                                      toast.error('Failed to duplicate CV')
+                                    }
                                   }}
-                                  onExportPdf={() => {
-                                    // TODO: Implement PDF export functionality
-                                    console.log('Export PDF:', cv.id)
+                                  onExportPdf={async () => {
+                                    try {
+                                      // TODO: Implement actual PDF export functionality
+                                      toast.info(
+                                        'PDF export feature coming soon!',
+                                      )
+                                      console.log('Export PDF:', cv.id)
+                                    } catch (error) {
+                                      console.error('Export error:', error)
+                                      toast.error('Failed to export PDF')
+                                    }
                                   }}
-                                  onDelete={() => {
-                                    // TODO: Implement delete functionality
-                                    console.log('Delete CV:', cv.id)
+                                  onDelete={async () => {
+                                    try {
+                                      // TODO: Implement actual delete functionality (will need modal confirmation)
+                                      toast.warning(
+                                        'Delete feature coming soon!',
+                                      )
+                                      console.log('Delete CV:', cv.id)
+                                    } catch (error) {
+                                      console.error('Delete error:', error)
+                                      toast.error('Failed to delete CV')
+                                    }
                                   }}
                                 />
                               </div>

@@ -45,7 +45,7 @@ export default function Page() {
           return new ReadableStream({
             start(controller) {
               return pump();
-              function pump() {
+              function pump(): Promise<void> {
                 return reader.read().then(({ done, value }) => {
                   if (done) {
                     controller.close();

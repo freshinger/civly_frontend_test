@@ -12,9 +12,7 @@ let browser;
       };
 
     if (isVercel) {
-      // @ts-expect-error for deployment on vercel
       const chromium = (await import("@sparticuz/chromium")).default;
-      // @ts-expect-error for deployment on vercel
       puppeteer = await import("puppeteer-core");
       launchOptions = {
         headless: true,
@@ -22,7 +20,6 @@ let browser;
         executablePath: await chromium.executablePath(),
       };
     } else {
-      // @ts-expect-error for local development
       puppeteer = await import("puppeteer");
     }
 
@@ -68,5 +65,4 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/export/[id]'>
       { status: 500 }
     );
   }
-  
 }

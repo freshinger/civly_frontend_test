@@ -32,3 +32,14 @@ export async function deleteCv(id: string): Promise<void> {
   const { error } = await sb.functions.invoke("cv-delete", { body: { id } });
   if (error) throw error;
 }
+
+export async function duplicateCv(id: string | null): Promise<CvData | null> {
+  if(id === null) return null;
+  const sb = createClient();
+  const { data, error } = await sb.functions.invoke("restful-api/cv/"+id, {
+    method: 'POST',
+    body: {},
+  });
+  if (error) throw error;
+  return data;
+}

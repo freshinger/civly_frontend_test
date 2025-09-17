@@ -58,7 +58,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       // Get basic profile data from profiles table
       const { data: profileData, error } = await supabase
         .from('profiles')
-        .select('name, surname, email, phone, avatar_url')
+        .select('name, surname, email, phone, avatarUrl')
         .eq('id', user?.id)
         .single()
 
@@ -73,7 +73,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         setSurname(profileData.surname || '')
         setEmail(profileData.email || user?.email || '')
         setPhone(profileData.phone || '')
-        setAvatarUrl(profileData.avatar_url || '')
+        setAvatarUrl(profileData.avatarUrl || '')
       } else {
         // Fallback to auth user data
         setEmail(user?.email || '')
@@ -130,8 +130,8 @@ export default function AccountForm({ user }: { user: User | null }) {
         surname,
         email,
         phone,
-        avatar_url,
-        updated_at: new Date().toISOString(),
+        avatarUrl: avatar_url, // Fixed: database uses camelCase
+        updatedAt: new Date().toISOString(), // Fixed: database uses camelCase
       }
 
       // Extended profile data (store in user_metadata or separate table)
@@ -147,9 +147,10 @@ export default function AccountForm({ user }: { user: User | null }) {
 
       console.log('Updating profile with data:', profileData)
       console.log('Extended data:', extendedData)
+      console.log('User ID:', user?.id)
 
       // Update basic profile
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('profiles')
         .upsert({
           id: user?.id,
@@ -157,8 +158,11 @@ export default function AccountForm({ user }: { user: User | null }) {
         })
         .select()
 
+      console.log('Supabase response:', { data, error })
+
       if (error) {
         console.error('Database error:', error)
+        console.error('Error details:', JSON.stringify(error, null, 2))
         throw error
       }
 
@@ -507,22 +511,19 @@ export default function AccountForm({ user }: { user: User | null }) {
                       <Trash2 className="h-5 w-5" />
                       Delete Account Permanently
                     </DialogTitle>
-                    <DialogDescription>
+                    {/* <DialogDescription>
                       This will permanently delete your account and all
                       associated data. This action cannot be undone.
-                    </DialogDescription>
+                    </DialogDescription> */}
                   </DialogHeader>
 
                   <div className="space-y-4 py-4">
                     {/* Warning Section */}
                     <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
                       <div className="flex items-start gap-3">
-                        <div className="bg-destructive/20 p-1 rounded-full mt-0.5">
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </div>
                         <div>
                           <p className="text-sm font-medium text-destructive">
-                            ⚠️ Complete Data Deletion
+                            Complete Data Deletion
                           </p>
                           <p className="text-sm text-destructive/80 mt-1">
                             This action will permanently remove your account,
@@ -551,7 +552,7 @@ export default function AccountForm({ user }: { user: User | null }) {
                       variant="outline"
                       onClick={() => setDeleteDialogOpen(false)}
                       disabled={loading}
-                      className="border-primary/20 text-primary hover:bg-primary/5"
+                      className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       Cancel
                     </Button>
@@ -610,7 +611,7 @@ export default function AccountForm({ user }: { user: User | null }) {
             <Button
               variant="outline"
               onClick={() => setLogoutDialogOpen(false)}
-              className="border-primary/20 text-primary hover:bg-primary/5"
+              className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               Cancel
             </Button>

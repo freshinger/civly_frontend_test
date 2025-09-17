@@ -4,7 +4,7 @@ export interface UserProfile {
   id: string
   name?: string
   surname?: string
-  avatar_url?: string
+  avatarUrl?: string
   email?: string
 }
 

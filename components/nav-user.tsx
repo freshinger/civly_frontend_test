@@ -61,7 +61,7 @@ export function NavUser() {
     }
 
     const avatarPath =
-      profile?.avatar_url || user?.user_metadata?.avatar_url || ''
+      profile?.avatarUrl || user?.user_metadata?.avatar_url || ''
 
     if (avatarPath && !avatarPath.startsWith('http')) {
       // Only download if it's a storage path, not a full URL
@@ -72,7 +72,7 @@ export function NavUser() {
     } else {
       setAvatarUrl(null)
     }
-  }, [profile?.avatar_url, user?.user_metadata?.avatar_url, supabase])
+  }, [profile?.avatarUrl, user?.user_metadata?.avatar_url, supabase])
 
   const userInitials = generateInitials(userName)
 

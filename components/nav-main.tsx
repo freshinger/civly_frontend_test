@@ -6,12 +6,24 @@ import {
   IconPlus,
   type Icon,
 } from '@tabler/icons-react'
+import { Trash2, Copy, ExternalLink, Mail } from 'lucide-react'
 import { FormEvent, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { CvData } from '@/schemas/cv_data_schema'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 import { ResumeCardMenu } from '@/components/custom/resume-card-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -22,6 +34,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
 import { createClient } from '@/utils/supabase/client'
+import { useCvStore } from '@/app/(main)/editor/cv_store'
 
 export function NavMain({
   items,
@@ -43,11 +56,19 @@ export function NavMain({
   cvs: CvData[]
 }) {
   const router = useRouter()
+  const { toast } = useToast()
+  const { deleteOne } = useCvStore()
   const [isResumesOpen, setIsResumesOpen] = useState(false)
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null)
   // State for cascade animation effects
   const [visibleCvs, setVisibleCvs] = useState<Set<number>>(new Set())
   const [disappearingCvs, setDisappearingCvs] = useState<Set<number>>(new Set())
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [cvToDelete, setCvToDelete] = useState<CvData | null>(null)
+  const [shareDialogOpen, setShareDialogOpen] = useState(false)
+  const [cvToShare, setCvToShare] = useState<CvData | null>(null)
+  const [shareUrl, setShareUrl] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
   const pathname = usePathname()
 
   // Cascade effect for "My Resumes" section
@@ -85,11 +106,76 @@ export function NavMain({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSelectedCvId(null) // Clear any selected CV
-    const supabase = await createClient()
-    await supabase.functions.invoke('restful-api/cv', {
-      body: { cv: { name: 'Resume' } },
-    })
-    router.refresh()
+
+    try {
+      const supabase = await createClient()
+      await supabase.functions.invoke('restful-api/cv', {
+        body: { cv: { name: 'Resume' } },
+      })
+      toast.success('New CV created successfully!')
+      router.refresh()
+    } catch (error) {
+      console.error('Error creating CV:', error)
+      toast.error('Failed to create new CV')
+    }
+  }
+
+  const deleteCv = async () => {
+    if (!cvToDelete || !cvToDelete.id) return
+
+    try {
+      setDeleteDialogOpen(false)
+      await deleteOne(cvToDelete.id)
+      toast.success('CV deleted successfully!')
+      router.refresh()
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast.error('Failed to delete CV')
+    } finally {
+      setCvToDelete(null)
+    }
+  }
+
+  const openShareModal = (cv: CvData) => {
+    const url = `${window.location.origin}/view/${cv.id}`
+    setCvToShare(cv)
+    setShareUrl(url)
+    setLinkCopied(false)
+    setShareDialogOpen(true)
+  }
+
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setLinkCopied(true)
+      toast.success('Share link copied to clipboard!')
+      setTimeout(() => setLinkCopied(false), 3000) // Reset after 3 seconds
+    } catch (error) {
+      console.error('Copy error:', error)
+      toast.error('Failed to copy link')
+    }
+  }
+
+  const shareViaEmail = () => {
+    const cvName = cvToShare ? getCvDisplayName(cvToShare) : 'My CV'
+    const subject = `Check out my CV: ${cvName}`
+    const body = `Hi,
+
+I hope this message finds you well. I wanted to share my CV with you for your review.
+
+📄 CV: ${cvName}
+🔗 Link: ${shareUrl}
+
+This link provides access to my current CV with all my professional experience, skills, and qualifications. Please feel free to download or share it as needed.
+
+I'd be happy to discuss any opportunities or answer any questions you might have.
+
+Best regards`
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`
+    window.open(mailtoUrl)
+    toast.success('Email client opened with CV sharing message!')
   }
 
   // Function to get CV display name
@@ -246,21 +332,37 @@ export function NavMain({
                                     // Navigate to edit mode
                                     router.push(`/editor`)
                                   }}
-                                  onShare={() => {
-                                    // TODO: Implement share functionality
-                                    console.log('Share CV:', cv.id)
+                                  onShare={async () => {
+                                    openShareModal(cv)
                                   }}
-                                  onDuplicate={() => {
-                                    // TODO: Implement duplicate functionality
-                                    console.log('Duplicate CV:', cv.id)
+                                  onDuplicate={async () => {
+                                    try {
+                                      // TODO: Implement actual duplicate functionality
+                                      toast.info(
+                                        'Duplicate feature coming soon!',
+                                      )
+                                      console.log('Duplicate CV:', cv.id)
+                                    } catch (error) {
+                                      console.error('Duplicate error:', error)
+                                      toast.error('Failed to duplicate CV')
+                                    }
                                   }}
-                                  onExportPdf={() => {
-                                    // TODO: Implement PDF export functionality
-                                    console.log('Export PDF:', cv.id)
+                                  onExportPdf={async () => {
+                                    try {
+                                      // TODO: Implement actual PDF export functionality
+                                      toast.info(
+                                        'PDF export feature coming soon!',
+                                      )
+                                      console.log('Export PDF:', cv.id)
+                                    } catch (error) {
+                                      console.error('Export error:', error)
+                                      toast.error('Failed to export PDF')
+                                    }
                                   }}
-                                  onDelete={() => {
-                                    // TODO: Implement delete functionality
-                                    console.log('Delete CV:', cv.id)
+                                  onDelete={async () => {
+                                    // Open delete confirmation modal
+                                    setCvToDelete(cv)
+                                    setDeleteDialogOpen(true)
                                   }}
                                 />
                               </div>
@@ -310,6 +412,163 @@ export function NavMain({
           )}
         </SidebarMenu>
       </SidebarGroupContent>
+
+      {/* CV Share Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]" showCloseButton={true}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <ExternalLink className="h-5 w-5" />
+              Share CV: {cvToShare ? getCvDisplayName(cvToShare) : ''}
+            </DialogTitle>
+            <DialogDescription>
+              Share your professional CV with recruiters, colleagues, or
+              potential employers.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Share Link Section */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">
+                Shareable Link
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  value={shareUrl}
+                  readOnly
+                  className="flex-1 bg-primary/5 border-primary/20 text-sm font-mono"
+                />
+                <Button
+                  onClick={copyShareLink}
+                  variant={linkCopied ? 'default' : 'outline'}
+                  size="sm"
+                  className={`shrink-0 ${
+                    linkCopied
+                      ? 'bg-primary hover:bg-primary/90'
+                      : 'border-primary text-primary hover:bg-primary hover:text-white'
+                  }`}
+                >
+                  <Copy className="h-4 w-4" />
+                  {linkCopied ? 'Copied!' : 'Copy'}
+                </Button>
+              </div>
+              {linkCopied && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  ✓ Link copied to clipboard successfully!
+                </p>
+              )}
+            </div>
+
+            {/* Share Methods Section */}
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium text-foreground mb-3">
+                Share via:
+              </p>
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  onClick={shareViaEmail}
+                  variant="outline"
+                  className="justify-start h-auto p-4 border-primary/20 hover:bg-primary/5 hover:border-primary"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-foreground">Email</div>
+                      <div className="text-sm text-muted-foreground">
+                        Send via your email client with a professional message
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+              </div>
+            </div>
+
+            {/* Privacy Notice */}
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary/20 p-1 rounded-full mt-0.5">
+                  <ExternalLink className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-primary">
+                    Sharing Settings
+                  </p>
+                  <p className="text-sm text-primary/80 mt-1">
+                    This CV is currently public. Anyone with this link can view
+                    your CV.
+                  </p>
+                  {/* TODO: Implement CV privacy settings - show different message for private CVs */}
+                  {/* TODO: Add "Make Private" button here when password protection is implemented */}
+                  <p className="text-xs text-primary/60 mt-2 italic">
+                    💡 Tip: Password protection for private CV sharing coming
+                    soon!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* CV Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]" showCloseButton={true}>
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Delete CV
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the CV{' '}
+              <strong>{cvToDelete ? getCvDisplayName(cvToDelete) : ''}</strong>?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-destructive/20 p-1 rounded-full mt-0.5">
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-destructive">
+                    ⚠️ Permanent Deletion Warning
+                  </p>
+                  <p className="text-sm text-destructive/80 mt-1">
+                    This CV and all its data will be permanently removed from
+                    your account. This action cannot be reversed.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false)
+                setCvToDelete(null)
+              }}
+              className="border-primary/20 text-primary hover:bg-primary/5"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteCv}
+              className="bg-destructive hover:bg-destructive/90 flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete CV
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarGroup>
   )
 }

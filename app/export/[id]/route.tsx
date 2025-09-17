@@ -12,9 +12,9 @@ let browser;
       };
 
     if (isVercel) {
-      // @ts-ignore for deployment on vercel
+      // @ts-expect-error for deployment on vercel
       const chromium = (await import("@sparticuz/chromium")).default;
-      // @ts-ignore for deployment on vercel
+      // @ts-expect-error for deployment on vercel
       puppeteer = await import("puppeteer-core");
       launchOptions = {
         headless: true,
@@ -22,7 +22,7 @@ let browser;
         executablePath: await chromium.executablePath(),
       };
     } else {
-      // @ts-ignore for local development
+      // @ts-expect-error for local development
       puppeteer = await import("puppeteer");
     }
 

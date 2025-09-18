@@ -14,11 +14,11 @@ export const cvDataSchema = z.object({
   visibility: z.enum(["draft", "private", "public"]).optional(),
   password: z.string().optional(),
   // Subschemas
-  layoutConfigs: layoutConfigsSchema,
-  personalInformation: personalInformationSchema,
-  experience: z.array(experienceItemSchema),
-  education: z.array(educationItemSchema),
-  skillGroups: z.array(skillGroupSchema),
+  layoutConfigs: layoutConfigsSchema.optional(),
+  personalInformation: personalInformationSchema.optional(),
+  experience: z.array(experienceItemSchema).optional(),
+  education: z.array(educationItemSchema).optional(),
+  skillGroups: z.array(skillGroupSchema).optional(),
 });
 
 export type CvData = z.infer<typeof cvDataSchema>;

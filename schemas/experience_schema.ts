@@ -3,7 +3,7 @@ import { z } from "zod";
 export const experienceItemSchema = z
   .object({
     role: z.string().min(1, { message: "Role is required" }),
-    company: z.string().min(1, { message: "Company name is required" }),
+    company: z.string().optional(),
     startDate: z
       .string()
       .min(1, { message: "Start date is required" })
@@ -21,7 +21,6 @@ export const experienceItemSchema = z
     description: z.string().optional(),
     isEditing: z.boolean().optional(),
   })
-  .strict()
   // Rule: endDate required unless currently working
   .refine((data) => data.currentlyWorkingHere || !!data.endDate, {
     message: "End date is required unless you are currently working here",

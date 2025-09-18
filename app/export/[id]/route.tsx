@@ -1,9 +1,14 @@
 'use server'
+import { createClient } from "@/utils/supabase/server";
 import { NextRequest } from "next/server";
 
 async function generatePDF(url: string) {
-
-let browser;
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.getSession()
+  if(error){
+    throw error;
+  }
+  let browser;
   try {
     const isVercel = !!process.env.VERCEL_ENV;
     let puppeteer,launchOptions;
@@ -25,8 +30,9 @@ let browser;
 
     browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
+    await page.setExtraHTTPHeaders({ 'Authorization': 'Bearer '+data.session?.access_token });
     await page.goto(url, { waitUntil: "networkidle0" });
-    const pdfBuffer = await page.pdf({ format: "A4"});
+    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true});
     return pdfBuffer;
   } catch (error) {
     console.log(error);
@@ -53,7 +59,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext<'/export/[id]'>
     host = 'https://'+host;
   }
   try {
-    const pdfBuffer = await generatePDF(host+'/view/'+id);
+    const pdfBuffer = await generatePDF(host+'/cv-preview/'+id);
     
     const newHeaders = new Headers()
     newHeaders.set('Content-Type', 'application/pdf');

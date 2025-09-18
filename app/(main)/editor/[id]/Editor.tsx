@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import { useCvStore } from "@/app/(main)/editor/cv_store";
 import { CvData } from "@/schemas/cv_data_schema";
 
-export default function Page() {
+export default function Page({ id }: { id: string }) {
   return (
     <SidebarProvider isWide={true} className="overflow-hidden h-[100vh]">
       <SidebarInset>
@@ -41,15 +41,16 @@ export default function Page() {
           </div>
         </header>
         <div className="min-h-[100vh] gap-4 p-4 overflow-y-auto">
-          <TemplatePreview id="dummy" />
+          <TemplatePreview id={id} />
         </div>
       </SidebarInset>
-      <EditorSidebarRight />
+      <EditorSidebarRight id={id} />
     </SidebarProvider>
   );
 }
 
 const TemplatePreview = ({ id }: { id: string }) => {
+  console.log("Template id:", id);
   const getSingle = useCvStore((s) => s.getSingle);
   const [cvData, setCvData] = useState<CvData | null>(null);
   const subscribe = useCvStore.subscribe;
@@ -58,7 +59,7 @@ const TemplatePreview = ({ id }: { id: string }) => {
     let alive = true;
     subscribe((state) => {
       console.log("CV STORE CHANGED", state);
-      setCvData(state.items.find((x) => x.id === id) as CvData);
+      setCv(state.items.find((x) => x?.id === id) as CvData);
     });
     (async () => {
       const data = await getSingle(id);

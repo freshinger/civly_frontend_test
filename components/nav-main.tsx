@@ -318,12 +318,13 @@ Best regards`;
                                 isActiveCv ? "bg-primary/10" : ""
                               }`}
                             >
-                              <Link
-                                href={"/editor"}
-                                className="flex items-center flex-1 pl-2 py-1 min-h-8"
-                                onClick={() =>
-                                  setSelectedCvId(cv.id?.toString() || null)
-                                }
+                              <Button
+                                variant="ghost"
+                                className="flex items-center flex-1 pl-2 py-1 min-h-8 hover:bg-transparent"
+                                onClick={() => {
+                                  router.push("/editor/" + cv.id);
+                                  setSelectedCvId(cv.id?.toString() || null);
+                                }}
                               >
                                 <span
                                   className={`text-sm ${
@@ -332,12 +333,12 @@ Best regards`;
                                 >
                                   {getCvDisplayName(cv)}
                                 </span>
-                              </Link>
+                              </Button>
                               <div className="opacity-0 group-hover/item:opacity-100 transition-opacity py-1 pr-2 flex items-center justify-center">
                                 <ResumeCardMenu
                                   onEdit={() => {
                                     // Navigate to edit mode
-                                    router.push(`/editor`);
+                                    router.push(`/editor/${cv.id}`);
                                   }}
                                   onShare={async () => {
                                     openShareModal(cv);

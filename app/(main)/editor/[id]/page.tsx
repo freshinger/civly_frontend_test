@@ -14,16 +14,11 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { EditorSidebarRight } from "@/app/(main)/editor/editor-sidebar/editor-sidebar-right";
-import { useEffect, useState } from "react";
-import { useCvStore } from "@/stores/cv_store";
-import { CvData } from "@/schemas/cv_data_schema";
 import { useParams } from "next/navigation";
-import { ShowCVByTemplate } from "@/components/custom/cv-view/ShowCVByTemplate";
 import { TemplatePreview } from "./TemplatePreview";
 
 export default function Page() {
   const { id } = useParams() as { id: string };
-  console.log("ID", id);
   return (
     <SidebarProvider isWide={true} className="overflow-hidden h-[100vh]">
       <SidebarInset>

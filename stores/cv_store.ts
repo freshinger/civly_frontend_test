@@ -34,6 +34,7 @@ export const useCvStore = create<CvStore>()(
       saveLocally: (cv) => {
         if (!cv?.id) return;
         console.log("SAVE LOCALLY", cv.personalInformation?.name);
+        console.log(get().items);
 
         set((s) => {
           const idx = s.items.findIndex((x) => x?.id === cv.id);
@@ -47,12 +48,6 @@ export const useCvStore = create<CvStore>()(
 
           const current = s.items[idx];
 
-          if (isNewer(cv.updatedAt, current.updatedAt)) {
-            const next = s.items.slice();
-            next[idx] = { ...cv };
-            return { items: next };
-          }
-
           // merge (partials), preserve existing updatedAt
           const next = s.items.slice();
           next[idx] = {
@@ -65,44 +60,19 @@ export const useCvStore = create<CvStore>()(
       },
 
       getSingle: async (id) => {
-        console.log("GET SINGLE", id);
-        const cvData = await fetchCv(id);
-        console.log("SERVER", cvData);
-        console.log(
-          "LOCAL",
-          get().items.find((x) => x?.id === id)
-        );
+        //console.log("GET SINGLE", id);
+        const serverData = await fetchCv(id);
+        const localData = get().items.find((x) => x?.id === id);
 
-        return cvData;
-        /*
-        set((s) => {
-          const items = s.items ?? [];
-          const idx = items.findIndex((x) => x?.id === cvData.id);
-          if (idx === -1) return { items: [...items, cvData] };
-
-          // merge instead of replace (so partials are OK)
-          const next = items.slice();
-          next[idx] = {
-            ...items[idx],
-            ...cvData,
-            updatedAt: new Date().toISOString(),
-          };
-          return { items: next };
-        });
-        return await Promise.resolve(get().items.find((x) => x?.id === id));
-        */
+        if (isNewer(serverData.updatedAt, localData?.updatedAt)) {
+          get().saveLocally(serverData);
+          return serverData;
+        }
+        return localData;
       },
 
       saveRemote: async (cv) => {
-        await updateCv(cv);
-        // after remote save you can either refetch or just mirror locally:
-        // Option A (strict): await get().fetchAll()
-        // Option B (fast): mirror now; next fetch will reconcile anyway
-        set((s) => ({
-          items: s.items.some((x) => x.id === cv.id)
-            ? s.items.map((x) => (x.id === cv.id ? cv : x))
-            : [...s.items, cv],
-        }));
+        return await updateCv(cv);
       },
 
       deleteOne: async (id) => {

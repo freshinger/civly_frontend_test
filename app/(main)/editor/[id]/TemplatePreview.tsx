@@ -21,12 +21,13 @@ export const TemplatePreview = ({ id }: { id: string }) => {
   useEffect(() => {
     let alive = true;
     subscribe((state) => {
+      console.log("state change", state);
       setCvData(state.items.find((x) => x?.id === id) as CvData);
     });
     (async () => {
       const data = await getSingle(id);
       if (!alive) {
-        setLoadingStatus(LoadingStatus.Error);
+        //setLoadingStatus(LoadingStatus.Error);
         return;
       }
       setCvData(data as CvData);
@@ -35,7 +36,7 @@ export const TemplatePreview = ({ id }: { id: string }) => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [loadingStatus]);
   return (
     <>
       {loadingStatus === LoadingStatus.Loading && (
@@ -43,10 +44,10 @@ export const TemplatePreview = ({ id }: { id: string }) => {
           <h1 className="text-2xl font-bold">Loading...</h1>
         </div>
       )}
-      {loadingStatus === LoadingStatus.Loaded && cvData && (
-        <ShowCVByTemplate cvData={cvData} />
+      {loadingStatus === LoadingStatus.Loaded && (
+        <ShowCVByTemplate cvData={cvData as CvData} />
       )}
-      {loadingStatus === LoadingStatus.Error && !cvData && (
+      {loadingStatus === LoadingStatus.Error && (
         <div className="flex items-center justify-center h-full">
           <h1 className="text-2xl font-bold">Error</h1>
         </div>

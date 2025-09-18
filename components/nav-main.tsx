@@ -34,8 +34,9 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/utils/supabase/client";
-import { useCvStore } from "@/app/(main)/editor/cv_store";
 import { handleExportPdf } from "@/services/cv_data.service";
+import { useCvStore } from "@/stores/cv_store";
+import { PersonalInformation } from "@/schemas/personal_information_schema";
 
 export function NavMain({
   items,
@@ -192,9 +193,9 @@ Best regards`;
     }
 
     // Second priority: use personal information
-    const personalInfo = cv.personalInformation || {};
-    const name = personalInfo.name || "";
-    const surname = personalInfo.surname || "";
+    const personalInfo = cv.personalInformation || ({} as PersonalInformation);
+    const name = personalInfo.name ?? "";
+    const surname = personalInfo.surname ?? "";
 
     if (name || surname) {
       return `CV - ${name} ${surname}`.trim();

@@ -1,46 +1,45 @@
-'use client'
+"use client";
 
-import { SectionCards } from '@/components/section-cards'
-import { SiteHeader } from '@/components/site-header'
-import { ResumeGrid } from '@/components/custom/resume-grid'
+import { SectionCards } from "@/components/section-cards";
+import { SiteHeader } from "@/components/site-header";
+import { ResumeGrid } from "@/components/custom/resume-grid";
 
 const mockResumes = [
   {
-    id: '20b996e1-7787-454a-a70e-a4fa126e1870',
-    title: 'Senior Project Manager',
-    lastEdited: '2 days ago',
-    previewImage: '/resume-2cols-thumbnail.svg',
+    id: "1",
+    title: "Senior Project Manager",
+    lastEdited: "2 days ago",
+    previewImage: "/resume-2cols-thumbnail.svg",
   },
   {
-    id: '2',
-    title: 'Marketing Manager Zalando',
-    lastEdited: '3 days ago',
-    previewImage: '/resume-2cols-thumbnail.svg',
+    id: "2",
+    title: "Marketing Manager Zalando",
+    lastEdited: "3 days ago",
+    previewImage: "/resume-2cols-thumbnail.svg",
   },
-]
+];
 
 export default function Page() {
   const handleCreateNew = () => {
-    console.log('Create new resume')
-  }
+    //console.log('Create new resume')
+  };
 
   const handleEditResume = (id: string) => {
-    console.log('Edit resume:', id)
-  }
+    //console.log('Edit resume:', id)
+  };
 
   const handleShareResume = (id: string) => {
-    console.log('Share resume:', id)
-  }
+    //console.log('Share resume:', id)
+  };
 
   const handleDuplicateResume = (id: string) => {
-    console.log('Duplicate resume:', id)
-  }
+    //console.log('Duplicate resume:', id)
+  };
 
   const handleExportPdf = (id: string) => {
-    fetch('export/'+id)
-    .then(
-      async res => {
-        if(res.body !== null){
+    fetch("export/" + id)
+      .then(async (res) => {
+        if (res.body !== null) {
           const reader = res.body.getReader();
           return new ReadableStream({
             start(controller) {
@@ -62,7 +61,9 @@ export default function Page() {
       .then((stream) => new Response(stream))
       .then((response) => response.blob())
       .then((blob) => {
-        const url = window.URL.createObjectURL(new Blob([blob as unknown as BlobPart], { type: "application/pdf" }));
+        const url = window.URL.createObjectURL(
+          new Blob([blob as unknown as BlobPart], { type: "application/pdf" })
+        );
         const link = document.createElement("a");
         link.href = url;
         link.download = `cv-${id}.pdf`;
@@ -70,16 +71,15 @@ export default function Page() {
         link.click();
         link.remove();
       });
-  }
-      
+  };
 
   const handleDeleteResume = (id: string) => {
-    console.log('Delete resume:', id)
-  }
+    //console.log('Delete resume:', id)
+  };
 
   const handleOpenResume = (id: string) => {
-    console.log('Open resume:', id)
-  }
+    //console.log('Open resume:', id)
+  };
 
   return (
     <>
@@ -107,5 +107,5 @@ export default function Page() {
         </div>
       </div>
     </>
-  )
+  );
 }

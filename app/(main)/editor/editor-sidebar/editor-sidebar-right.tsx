@@ -20,7 +20,7 @@ import { useEffect } from "react";
 import { EducationTab } from "./education-tab";
 import { SkillsTab } from "./skill-tab";
 
-import { useCvStore } from "@/app/(main)/editor/cv_store";
+import { useCvStore } from "@/stores/cv_store";
 
 import { cvDataSchema } from "@/schemas/cv_data_schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -39,7 +39,7 @@ export function EditorSidebarRight({
   const form = useForm<CvData>({
     defaultValues: {},
     shouldUnregister: false,
-    mode: "onChange",
+    mode: "onSubmit",
     resolver: zodResolver(cvDataSchema),
   });
 
@@ -51,21 +51,11 @@ export function EditorSidebarRight({
       }
     })();
     const subscription = form.watch((values, { name, type }) => {
-      console.log("WATCH", values);
-      console.log("TYPE", typeof values);
       saveLocally(values as CvData);
-      console.log(
-        "changed field:",
-        name,
-        "type:",
-        type,
-        "value:",
-        name ? values[name as keyof typeof values] : undefined
-      );
     });
 
     return () => subscription.unsubscribe();
-  }, [form, getSingle, saveLocally]);
+  }, []);
 
   const onSubmit = (data: CvData) => {
     useCvStore.getState().saveRemote(data);

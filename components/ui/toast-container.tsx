@@ -1,42 +1,42 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import { useCvStore } from '@/app/(main)/editor/cv_store'
-import { Toast } from './toast'
+import React, { useState, useEffect } from "react";
+import { useToastStore } from "@/stores/toast_store";
+import { Toast } from "./toast";
 
 export function ToastContainer() {
-  const { toasts, dismissToast } = useCvStore()
-  const [enteredToasts, setEnteredToasts] = useState<Set<string>>(new Set())
+  const { toasts, dismissToast } = useToastStore();
+  const [enteredToasts, setEnteredToasts] = useState<Set<string>>(new Set());
 
   // Track when toasts enter to trigger entrance animation
   useEffect(() => {
     const newToastIds = toasts
       .filter((toast) => !toast.isExiting)
-      .map((toast) => toast.id)
+      .map((toast) => toast.id);
 
     setEnteredToasts((prev) => {
-      const existingIds = new Set(prev)
-      const currentToastIds = new Set(newToastIds)
+      const existingIds = new Set(prev);
+      const currentToastIds = new Set(newToastIds);
 
       // Add new toasts that haven't entered yet
-      const toAdd = newToastIds.filter((id) => !existingIds.has(id))
+      const toAdd = newToastIds.filter((id) => !existingIds.has(id));
 
       // Remove toasts that no longer exist
-      const toKeep = [...prev].filter((id) => currentToastIds.has(id))
+      const toKeep = [...prev].filter((id) => currentToastIds.has(id));
 
       if (toAdd.length > 0) {
         // Start them offscreen, then animate in after a small delay
         setTimeout(() => {
-          setEnteredToasts(() => new Set([...toKeep, ...toAdd]))
-        }, 10)
+          setEnteredToasts(() => new Set([...toKeep, ...toAdd]));
+        }, 10);
       }
 
       // Return cleaned up set for immediate update
-      return new Set(toKeep)
-    })
-  }, [toasts]) // Only depend on toasts, not enteredToasts
+      return new Set(toKeep);
+    });
+  }, [toasts]); // Only depend on toasts, not enteredToasts
 
-  if (toasts.length === 0) return null
+  if (toasts.length === 0) return null;
 
   return (
     <div
@@ -49,15 +49,15 @@ export function ToastContainer() {
           key={toast.id}
           className={`transform transition-transform duration-300 ease-in-out ${
             toast.isExiting
-              ? 'translate-y-full'
+              ? "translate-y-full"
               : enteredToasts.has(toast.id)
-              ? 'translate-y-0'
-              : 'translate-y-full'
+                ? "translate-y-0"
+                : "translate-y-full"
           }`}
         >
           <Toast toast={toast} onDismiss={dismissToast} />
         </div>
       ))}
     </div>
-  )
+  );
 }

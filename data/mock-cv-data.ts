@@ -11,7 +11,8 @@ export const mockCvData: CvData = {
   layoutConfigs: {
     templateId: 0,
     colorId: 2,
-    fontSize: 11,
+    fontSizeId: 1,
+    fontId: 0,
   },
 
   personalInformation: {

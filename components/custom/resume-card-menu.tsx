@@ -21,6 +21,14 @@ interface ResumeCardMenuProps {
   onDuplicate?: () => void
   onExportPdf?: () => void
   onDelete?: () => void
+  align?: 'start' | 'center' | 'end'
+  side?: 'top' | 'right' | 'bottom' | 'left'
+  // Control which items to show
+  showEdit?: boolean
+  showShare?: boolean
+  showDuplicate?: boolean
+  showExportPdf?: boolean
+  showDelete?: boolean
 }
 
 export function ResumeCardMenu({
@@ -29,6 +37,13 @@ export function ResumeCardMenu({
   onDuplicate,
   onExportPdf,
   onDelete,
+  align = 'start',
+  side = 'right',
+  showEdit = true,
+  showShare = true,
+  showDuplicate = true,
+  showExportPdf = true,
+  showDelete = true,
 }: ResumeCardMenuProps) {
   return (
     <DropdownMenu>
@@ -44,38 +59,51 @@ export function ResumeCardMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        align="start"
-        side="right"
+        align={align}
+        side={side}
         sideOffset={8}
         className="min-w-48"
       >
-        <DropdownMenuItem onClick={onEdit} className="hover:!bg-primary/10">
-          <IconEdit className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onShare} className="hover:!bg-primary/10">
-          <IconShare className="mr-2 h-4 w-4" />
-          Share
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onDuplicate}
-          className="hover:!bg-primary/10"
-        >
-          <IconCopy className="mr-2 h-4 w-4" />
-          Duplicate
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onExportPdf}
-          className="hover:!bg-primary/10"
-        >
-          <IconFileTypePdf className="mr-2 h-4 w-4" />
-          Export PDF
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onDelete} className="hover:!bg-primary/10">
-          <IconTrash className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
+        {showEdit && (
+          <DropdownMenuItem onClick={onEdit} className="hover:!bg-primary/10">
+            <IconEdit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+        )}
+        {showShare && (
+          <DropdownMenuItem onClick={onShare} className="hover:!bg-primary/10">
+            <IconShare className="mr-2 h-4 w-4" />
+            Share
+          </DropdownMenuItem>
+        )}
+        {showDuplicate && (
+          <DropdownMenuItem
+            onClick={onDuplicate}
+            className="hover:!bg-primary/10"
+          >
+            <IconCopy className="mr-2 h-4 w-4" />
+            Duplicate
+          </DropdownMenuItem>
+        )}
+        {showExportPdf && (
+          <DropdownMenuItem
+            onClick={onExportPdf}
+            className="hover:!bg-primary/10"
+          >
+            <IconFileTypePdf className="mr-2 h-4 w-4" />
+            Export PDF
+          </DropdownMenuItem>
+        )}
+        {showDelete &&
+          (showEdit || showShare || showDuplicate || showExportPdf) && (
+            <DropdownMenuSeparator />
+          )}
+        {showDelete && (
+          <DropdownMenuItem onClick={onDelete} className="hover:!bg-primary/10">
+            <IconTrash className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -17,11 +17,9 @@ export async function fetchAllCvs(): Promise<CvData[]> {
 
 // Single-item CRUD (server owns timestamps)
 export async function fetchCv(id: string): Promise<CvData> {
-  //console.log("starting fetch", id);
-  const { data, error } = await sb.functions.invoke(path + id, {
+  const { data, error } = await sb.functions.invoke("cv-data/", {
     method: "GET",
   });
-  //console.log("ending fetch", data);
   if (error) throw error;
   return data;
 }

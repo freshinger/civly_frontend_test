@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { CvData } from '@/schemas/cv_data_schema'
-import { useCvStore } from '@/app/(main)/editor/cv_store'
+import React from "react";
+import { CvData } from "@/schemas/cv_data_schema";
+import { useCvStore } from "@/stores/cv_store";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Copy,
   ExternalLink,
@@ -19,16 +19,16 @@ import {
   Lock,
   Globe,
   AlertCircle,
-} from 'lucide-react'
+} from "lucide-react";
 
 interface ShareModalProps {
-  isOpen: boolean
-  onOpenChange: (open: boolean) => void
-  cv: CvData | null
-  shareUrl: string
-  linkCopied: boolean
-  onCopyLink: () => void
-  onShareEmail: () => void
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  cv: CvData | null;
+  shareUrl: string;
+  linkCopied: boolean;
+  onCopyLink: () => void;
+  onShareEmail: () => void;
 }
 
 export function ShareModal({
@@ -40,45 +40,45 @@ export function ShareModal({
   onCopyLink,
   onShareEmail,
 }: ShareModalProps) {
-  const { items } = useCvStore()
+  const { items } = useCvStore();
 
-  if (!cv) return null
+  if (!cv) return null;
 
   // Get the most up-to-date version of the CV from the store
-  const currentCv = items.find((item) => item.id === cv.id) || cv
+  const currentCv = items.find((item) => item.id === cv.id) || cv;
 
   const isPublished =
-    currentCv.visibility === 'public' || currentCv.visibility === 'private'
-  const isPrivate = currentCv.visibility === 'private'
+    currentCv.visibility === "public" || currentCv.visibility === "private";
+  const isPrivate = currentCv.visibility === "private";
 
   // Function to get CV display name
   const getCvDisplayName = (cv: CvData) => {
     // First priority: use the CV name field if it exists
     if (cv.name && cv.name.trim()) {
-      return cv.name.trim()
+      return cv.name.trim();
     }
 
     // Second priority: use personal information
-    const personalInfo = cv.personalInformation || {}
-    const name = personalInfo.name || ''
-    const surname = personalInfo.surname || ''
+    const personalInfo = cv.personalInformation || {};
+    const name = personalInfo.name || "";
+    const surname = personalInfo.surname || "";
 
     if (name || surname) {
-      return `CV - ${name} ${surname}`.trim()
+      return `CV - ${name} ${surname}`.trim();
     }
 
     // Third priority: use email
-    const email = personalInfo.email || ''
+    const email = personalInfo.email || "";
     if (email) {
-      return `CV - ${email.split('@')[0]}`
+      return `CV - ${email.split("@")[0]}`;
     }
 
     // Fallback to ID or date
     const dateStr = currentCv.createdAt
       ? new Date(currentCv.createdAt).toLocaleDateString()
-      : ''
-    return `CV - ${dateStr || currentCv.id?.toString().slice(0, 8)}`
-  }
+      : "";
+    return `CV - ${dateStr || currentCv.id?.toString().slice(0, 8)}`;
+  };
 
   // If not published, show publish prompt
   if (!isPublished) {
@@ -132,8 +132,8 @@ export function ShareModal({
               </Button>
               <Button
                 onClick={() => {
-                  window.open(`/editor?cv=${cv.id}`, '_blank')
-                  onOpenChange(false)
+                  window.open(`/editor?cv=${cv.id}`, "_blank");
+                  onOpenChange(false);
                 }}
                 className="bg-primary hover:bg-primary/90"
               >
@@ -143,7 +143,7 @@ export function ShareModal({
           </div>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
@@ -174,16 +174,16 @@ export function ShareModal({
               />
               <Button
                 onClick={onCopyLink}
-                variant={linkCopied ? 'default' : 'outline'}
+                variant={linkCopied ? "default" : "outline"}
                 size="sm"
                 className={`shrink-0 ${
                   linkCopied
-                    ? 'bg-primary hover:bg-primary/90'
-                    : 'border-primary text-primary hover:bg-primary hover:text-white'
+                    ? "bg-primary hover:bg-primary/90"
+                    : "border-primary text-primary hover:bg-primary hover:text-white"
                 }`}
               >
                 <Copy className="h-4 w-4" />
-                {linkCopied ? 'Copied!' : 'Copy'}
+                {linkCopied ? "Copied!" : "Copy"}
               </Button>
             </div>
             {linkCopied && (
@@ -255,14 +255,14 @@ export function ShareModal({
           <div
             className={`border rounded-lg p-4 ${
               isPrivate
-                ? 'bg-yellow-50 border-yellow-200'
-                : 'bg-primary/10 border-primary/20'
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-primary/10 border-primary/20"
             }`}
           >
             <div className="flex items-start gap-3">
               <div
                 className={`p-1 rounded-full mt-0.5 ${
-                  isPrivate ? 'bg-yellow-100' : 'bg-primary/20'
+                  isPrivate ? "bg-yellow-100" : "bg-primary/20"
                 }`}
               >
                 {isPrivate ? (
@@ -274,19 +274,19 @@ export function ShareModal({
               <div>
                 <p
                   className={`text-sm font-medium ${
-                    isPrivate ? 'text-yellow-800' : 'text-primary'
+                    isPrivate ? "text-yellow-800" : "text-primary"
                   }`}
                 >
-                  {isPrivate ? 'Private Sharing' : 'Public Sharing'}
+                  {isPrivate ? "Private Sharing" : "Public Sharing"}
                 </p>
                 <p
                   className={`text-sm mt-1 ${
-                    isPrivate ? 'text-yellow-700' : 'text-primary/80'
+                    isPrivate ? "text-yellow-700" : "text-primary/80"
                   }`}
                 >
                   {isPrivate
-                    ? 'This CV requires a password. Only people with the password can view it.'
-                    : 'This CV is currently public. Anyone with this link can view your CV.'}
+                    ? "This CV requires a password. Only people with the password can view it."
+                    : "This CV is currently public. Anyone with this link can view your CV."}
                 </p>
                 {!isPrivate && (
                   <p className="text-sm mt-1 text-primary/80">
@@ -300,5 +300,5 @@ export function ShareModal({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

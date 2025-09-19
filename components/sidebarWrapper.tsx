@@ -1,28 +1,30 @@
-'use server'
-import { createClient } from '@/utils/supabase/server'
-import { AppSidebar } from './app-sidebar'
+"use server";
+import { createClient } from "@/utils/supabase/server";
+import { AppSidebar } from "./app-sidebar";
 
 export async function SidebarWrapper() {
   try {
-    const supabase = await createClient()
+    const supabase = await createClient();
 
     const {
       data: { user },
       error: userError,
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return <AppSidebar cvs={[]} />
+      return <AppSidebar cvs={[]} />;
     }
 
-    const { data, error } = await supabase.functions.invoke('cv-data/', {method: 'GET'})
-    console.log("cvs:",data);
+    const { data, error } = await supabase.functions.invoke("cv-data/", {
+      method: "GET",
+    });
+    //console.log("cvs:", data);
     if (error) {
-      return <AppSidebar cvs={[]} />
+      return <AppSidebar cvs={[]} />;
     }
 
-    return <AppSidebar cvs={data.data} />
+    return <AppSidebar cvs={data.data} />;
   } catch {
-    return <AppSidebar cvs={[]} />
+    return <AppSidebar cvs={[]} />;
   }
 }

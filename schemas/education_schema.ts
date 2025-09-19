@@ -3,7 +3,7 @@ import { z } from "zod";
 export const educationItemSchema = z
   .object({
     degree: z.string().min(1, { message: "Degree field is required" }),
-    institution: z.string().min(1, { message: "Institution name is required" }),
+    institution: z.string().optional(),
     startDate: z
       .string()
       .min(1, { message: "Start date is required" })
@@ -21,7 +21,6 @@ export const educationItemSchema = z
     description: z.string().optional(),
     isEditing: z.boolean().optional(),
   })
-  .strict()
   .refine(
     (data) => {
       if (!data.currentlyStudyingHere && !data.endDate) return false;

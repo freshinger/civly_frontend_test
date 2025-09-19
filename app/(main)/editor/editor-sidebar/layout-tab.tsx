@@ -1,190 +1,73 @@
-'use client'
+"use client";
 
-import React from 'react'
-import Image from 'next/image'
-import { Label } from '@/components/ui/label'
+import React from "react";
+import Image from "next/image";
+import { Label } from "@/components/ui/label";
 import {
   FormField,
   FormItem,
   FormControl,
   FormMessage,
-} from '@/components/ui/form'
-import { useFormContext } from 'react-hook-form'
-import type { CvData } from '@/schemas/cv_data_schema'
-import { Separator } from '@/components/ui/separator'
+} from "@/components/ui/form";
+import { useFormContext } from "react-hook-form";
+import type { CvData } from "@/schemas/cv_data_schema";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Slider } from '@/components/ui/slider'
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
   TooltipContent,
-} from '@/components/ui/tooltip'
-import {
-  SLIDER_TO_FONT_SIZE,
-  FONT_SIZE_TO_SLIDER,
-  type FontSizeType,
-} from '@/constants/font-sizes'
-
-// --- Type Definitions for Clarity ---
-export interface LayoutOptions {
-  templateId: 'modern' | 'classic' | 'ats'
-  accentColor: string
-  typography: 'minimalist' | 'classic' | 'modern' | 'serif' | 'sans-serif'
-  fontSize: number
-  fontSizeType: FontSizeType
-}
-
-// --- Data for the controls ---
-const templates = [
-  {
-    id: 'modern',
-    name: 'Modern',
-    description: 'Clean and contemporary design',
-  },
-  {
-    id: 'classic',
-    name: 'Classic',
-    description: 'Traditional and professional',
-  },
-  {
-    id: 'ats',
-    name: 'ATS-Friendly',
-    description: 'Optimized for applicant tracking systems',
-  },
-]
-
-const colorPalette = [
-  // Blues (starting with primary)
-  { name: 'Classic Blue', hex: '#005eff', isPrimary: true },
-  { name: 'Sky Blue', hex: '#44aaff' },
-  { name: 'Cyan Blue', hex: '#44ddff' },
-  // Purples
-  { name: 'Royal Purple', hex: '#6644ff' },
-  { name: 'Deep Purple', hex: '#8844ff' },
-  { name: 'Lavender', hex: '#aa88ff' },
-  // Greens
-  { name: 'Forest Green', hex: '#22aa44' },
-  { name: 'Emerald', hex: '#44cc66' },
-  { name: 'Mint Green', hex: '#66dd88' },
-  // Reds
-  { name: 'Crimson', hex: '#cc2244' },
-  { name: 'Coral', hex: '#ff4466' },
-  { name: 'Rose', hex: '#ff6688' },
-  // Oranges
-  { name: 'Burnt Orange', hex: '#dd6622' },
-  { name: 'Tangerine', hex: '#ff8844' },
-  { name: 'Peach', hex: '#ffaa66' },
-  // Neutrals
-  { name: 'Charcoal', hex: '#444444' },
-  { name: 'Slate Gray', hex: '#666666' },
-  { name: 'Stone Gray', hex: '#888888' },
-]
-
-// Typography options with font pairing
-const typographyOptions = [
-  {
-    id: 'minimalist',
-    name: 'Minimalist',
-    headingFont: 'Inter',
-    bodyFont: 'Inter',
-    headingStyle: 'font-sans',
-    atsSupported: false,
-  },
-  {
-    id: 'classic',
-    name: 'Classic',
-    headingFont: 'Playfair Display',
-    bodyFont: 'Source Sans Pro',
-    headingStyle: 'font-serif',
-    atsSupported: false,
-  },
-  {
-    id: 'modern',
-    name: 'Modern',
-    headingFont: 'Montserrat',
-    bodyFont: 'Open Sans',
-    headingStyle: 'font-sans font-medium',
-    atsSupported: false,
-  },
-]
-
-// ATS-specific typography options (serif/sans-serif)
-const atsTypographyOptions = [
-  {
-    id: 'sans-serif',
-    name: 'Sans Serif',
-    headingFont: 'Arial',
-    bodyFont: 'Arial',
-    headingStyle: 'font-sans',
-    atsSupported: true,
-  },
-  {
-    id: 'serif',
-    name: 'Serif',
-    headingFont: 'Times New Roman',
-    bodyFont: 'Times New Roman',
-    headingStyle: 'font-serif',
-    atsSupported: true,
-  },
-]
+} from "@/components/ui/tooltip";
+import { TemplateRecord } from "@/types/templateType";
+import { ColorRecord } from "@/types/colorType";
+import { TypographyRecord } from "@/types/typographyType";
 
 // Template visual representations using SVGs
-const TemplatePreview = ({ templateId }: { templateId: string }) => {
-  const getTemplateSrc = (id: string) => {
-    switch (id) {
-      case 'modern':
-        return '/civly_modern-template.svg'
-      case 'classic':
-        return '/civly_classic-template.svg'
-      case 'ats':
-        return '/civly_ats-template.svg'
-      default:
-        return '/civly_modern-template.svg'
-    }
-  }
-
+const TemplatePreview = ({ templateId }: { templateId: number }) => {
   return (
     <div className="w-full h-full flex items-center justify-center bg-white rounded-sm border border-gray-300">
       <Image
-        src={getTemplateSrc(templateId)}
+        src={TemplateRecord[templateId].imageUrl}
         alt={`${templateId} template preview`}
         width={132}
         height={104}
         className="w-full h-full object-contain"
       />
     </div>
-  )
-}
+  );
+};
 
 export function LayoutTabPanel() {
-  const form = useFormContext<CvData>()
+  const form = useFormContext<CvData>();
 
   // Template selection with FormField
   const TemplateField = () => {
+    const defaultValue = 0;
     return (
       <FormField
         control={form.control}
-        name="layoutConfigs.templateType"
+        name="layoutConfigs.templateId"
         render={({ field }) => (
           <FormItem>
             <FormControl>
               <div className="grid grid-cols-1 gap-3">
-                {templates.map((template) => (
+                {Object.values(TemplateRecord).map((template) => (
                   <div
                     key={template.id}
                     className={`relative h-20 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50 ${
-                      String(field.value) === template.id ||
-                      (!field.value && template.id === 'modern')
-                        ? 'border-primary ring-2 ring-primary/20'
-                        : 'border-gray-200'
+                      Number(field.value) === template.id ||
+                      (!field.value && template.id === defaultValue)
+                        ? "border-primary ring-2 ring-primary/20"
+                        : "border-gray-200"
                     }`}
                     onClick={() => field.onChange(template.id)}
                   >
@@ -207,32 +90,32 @@ export function LayoutTabPanel() {
           </FormItem>
         )}
       />
-    )
-  }
+    );
+  };
 
   // Accent Color Field
   const AccentColorField = () => {
     return (
       <FormField
         control={form.control}
-        name="layoutConfigs.accentColor"
+        name="layoutConfigs.colorId"
         render={({ field }) => (
           <FormItem>
             <FormControl>
               <div className="grid grid-cols-6 gap-x-3 gap-y-4">
                 <TooltipProvider>
-                  {colorPalette.map((color) => (
+                  {Object.values(ColorRecord).map((color) => (
                     <Tooltip key={color.name}>
                       <TooltipTrigger asChild>
                         <div
                           className={`relative w-10 h-10 rounded-full cursor-pointer transition-all hover:scale-110 ${
-                            String(field.value) === color.hex ||
-                            (!field.value && color.hex === '#005eff')
-                              ? 'ring-2 ring-primary ring-offset-2 shadow-lg scale-110'
-                              : 'hover:shadow-md'
+                            Number(field.value) === color.id ||
+                            (!field.value && color.id === 0)
+                              ? "ring-2 ring-primary ring-offset-2 shadow-lg scale-110"
+                              : "hover:shadow-md"
                           }`}
                           style={{ backgroundColor: color.hex }}
-                          onClick={() => field.onChange(color.hex)}
+                          onClick={() => field.onChange(color.id)}
                         />
                       </TooltipTrigger>
                       <TooltipContent side="bottom">
@@ -247,34 +130,30 @@ export function LayoutTabPanel() {
           </FormItem>
         )}
       />
-    )
-  }
+    );
+  };
 
-  // Typography Field
+  const DEFAULT_FONT_ID = 0;
+
   const TypographyField = () => {
-    const currentTypographyOptions =
-      form.watch('layoutConfigs.templateType') === 'ats'
-        ? atsTypographyOptions
-        : typographyOptions
-
     return (
       <FormField
         control={form.control}
-        name="layoutConfigs.typography"
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <Select
-                value={field.value || 'minimalist'}
-                onValueChange={field.onChange}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Select a font style">
-                    {(() => {
-                      const selected = currentTypographyOptions.find(
-                        (f) => f.id === (field.value || 'minimalist'),
-                      )
-                      return selected ? (
+        name="layoutConfigs.fontId"
+        render={({ field }) => {
+          const selectedId = Number(field.value ?? DEFAULT_FONT_ID);
+          const selected = TypographyRecord[selectedId];
+
+          return (
+            <FormItem>
+              <FormControl>
+                <Select
+                  value={String(selectedId)}
+                  onValueChange={(v) => field.onChange(Number(v))}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Select a font style">
+                      {selected && (
                         <div className="flex items-center gap-2">
                           <span
                             className={`text-sm font-medium ${selected.headingStyle}`}
@@ -287,63 +166,61 @@ export function LayoutTabPanel() {
                               : `${selected.headingFont} & ${selected.bodyFont}`}
                           </span>
                         </div>
-                      ) : null
-                    })()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {currentTypographyOptions.map((font) => (
-                    <SelectItem key={font.id} value={font.id} className="h-12">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-sm font-medium ${font.headingStyle}`}
-                        >
-                          {font.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {font.headingFont === font.bodyFont
-                            ? font.headingFont
-                            : `${font.headingFont} & ${font.bodyFont}`}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {Object.values(TypographyRecord).map((font) => (
+                      <SelectItem
+                        key={font.id}
+                        value={String(font.id)}
+                        className="h-12"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-sm font-medium ${font.headingStyle}`}
+                          >
+                            {font.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {font.headingFont === font.bodyFont
+                              ? font.headingFont
+                              : `${font.headingFont} & ${font.bodyFont}`}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          );
+        }}
       />
-    )
-  }
+    );
+  };
 
   // Font Size Field
   const FontSizeField = () => {
     return (
       <FormField
         control={form.control}
-        name="layoutConfigs.fontSizeType"
+        name="layoutConfigs.fontSizeId"
         render={({ field }) => {
-          const currentSliderValue =
-            FONT_SIZE_TO_SLIDER[field.value as FontSizeType] ?? 0
-
           return (
             <FormItem>
               <FormControl>
                 <div className="space-y-3">
                   <div className="px-2">
                     <Slider
-                      value={[currentSliderValue]}
+                      value={[field.value]}
                       onValueChange={(value) => {
-                        const enumValue =
-                          SLIDER_TO_FONT_SIZE[
-                            value[0] as keyof typeof SLIDER_TO_FONT_SIZE
-                          ]
-                        field.onChange(enumValue)
+                        field.onChange(value[0]);
                       }}
-                      min={-1}
-                      max={1}
+                      min={10}
+                      max={12}
                       step={1}
                       className="w-full"
                     />
@@ -363,11 +240,11 @@ export function LayoutTabPanel() {
               </FormControl>
               <FormMessage />
             </FormItem>
-          )
+          );
         }}
       />
-    )
-  }
+    );
+  };
 
   return (
     <ScrollArea className="h-full">
@@ -414,5 +291,5 @@ export function LayoutTabPanel() {
         </div>
       </div>
     </ScrollArea>
-  )
+  );
 }

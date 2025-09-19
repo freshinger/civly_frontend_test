@@ -1,4 +1,4 @@
-import { useCvStore } from '@/app/(main)/editor/cv_store'
+import { useToastStore } from "@/stores/toast_store";
 
 export function useToast() {
   const {
@@ -8,7 +8,7 @@ export function useToast() {
     showInfo,
     removeToast,
     clearAllToasts,
-  } = useCvStore()
+  } = useToastStore();
 
   const toast = {
     success: (message: string) => showSuccess(message),
@@ -17,7 +17,7 @@ export function useToast() {
     info: (message: string) => showInfo(message),
     dismiss: (id: string) => removeToast(id),
     dismissAll: () => clearAllToasts(),
-  }
+  };
 
-  return { toast }
+  return { toast };
 }

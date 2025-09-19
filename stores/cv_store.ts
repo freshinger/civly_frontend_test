@@ -1,0 +1,95 @@
+import { create } from "zustand";
+import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
+import { type CvData } from "@/schemas/cv_data_schema";
+import {
+  fetchAllCvs,
+  updateCv,
+  deleteCv,
+  fetchCv,
+} from "@/services/cv_data.service";
+
+const ts = (s?: string) => (s ? Date.parse(s) : 0) || 0;
+const isNewer = (a?: string, b?: string) => ts(a) > ts(b);
+
+type CvStore = {
+  items: CvData[];
+  fetchAll: () => Promise<void>;
+  saveLocally: (cv: CvData) => void;
+  saveRemote: (cv: CvData) => Promise<void>;
+  getSingle: (id: string) => Promise<CvData | undefined>;
+  deleteOne: (id: string) => Promise<void>;
+};
+
+export const useCvStore = create<CvStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+
+      // Merge policy: last-write-wins per CV (server vs local)
+      fetchAll: async () => {
+        const server = await fetchAllCvs();
+        set({ items: server });
+      },
+
+      saveLocally: (cv) => {
+        if (!cv?.id) return;
+        console.log("SAVE LOCALLY", cv.personalInformation?.name);
+        console.log(get().items);
+
+        set((s) => {
+          const idx = s.items.findIndex((x) => x?.id === cv.id);
+          if (idx === -1) {
+            const withTs: CvData = {
+              ...cv,
+              updatedAt: cv.updatedAt ?? new Date().toISOString(),
+            };
+            return { items: [...s.items, withTs] };
+          }
+
+          const current = s.items[idx];
+
+          // merge (partials), preserve existing updatedAt
+          const next = s.items.slice();
+          next[idx] = {
+            ...current,
+            ...cv,
+            updatedAt: current.updatedAt,
+          };
+          return { items: next };
+        });
+      },
+
+      getSingle: async (id) => {
+        //console.log("GET SINGLE", id);
+        const serverData = await fetchCv(id);
+        const localData = get().items.find((x) => x?.id === id);
+
+        if (isNewer(serverData.updatedAt, localData?.updatedAt)) {
+          get().saveLocally(serverData);
+          return serverData;
+        }
+        return localData;
+      },
+
+      saveRemote: async (cv) => {
+        return await updateCv(cv);
+      },
+
+      deleteOne: async (id) => {
+        await deleteCv(id);
+
+        // after server delete, drop it locally too
+        // (or call fetchAll() if you want to strictly mirror server)
+        set((s) => ({
+          items: s.items.filter((cv) => cv.id !== id),
+        }));
+      },
+    }),
+
+    {
+      name: "cv_store",
+      storage: createJSONStorage(() => localStorage),
+      version: 1,
+    }
+  )
+);

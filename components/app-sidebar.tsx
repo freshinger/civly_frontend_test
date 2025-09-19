@@ -23,11 +23,31 @@ import {
 } from "@/components/ui/sidebar";
 import { CivlyLogo } from "@/components/custom/civly-logo";
 import { CvData } from "@/schemas/cv_data_schema";
+import { useCvStore } from "@/stores/cv_store";
 
 export function AppSidebar({
-  cvs = [],
+  cvs: serverCvs = [],
   ...props
 }: React.ComponentProps<typeof Sidebar> & { cvs?: CvData[] }) {
+  const { items: storeCvs, fetchAll } = useCvStore();
+
+  // Sync store with server data on mount if store is empty or server has more data
+  React.useEffect(() => {
+    if (
+      serverCvs.length > 0 &&
+      (storeCvs.length === 0 || serverCvs.length > storeCvs.length)
+    ) {
+      fetchAll();
+    }
+  }, [serverCvs.length, storeCvs.length, fetchAll]);
+
+  // Use server CVs if available (they are authoritative), otherwise use store CVs
+  const cvs = serverCvs.length > 0 ? serverCvs : storeCvs;
+  console.log("AppSidebar rendering", {
+    storeCvs: storeCvs.length,
+    serverCvs: serverCvs.length,
+    using: cvs.length,
+  });
   const data = {
     navMain: [
       {
@@ -56,6 +76,7 @@ export function AppSidebar({
       },
     ],
   };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

@@ -73,11 +73,17 @@ export function NavMain({
   const [linkCopied, setLinkCopied] = useState(false);
   const pathname = usePathname();
 
-  useEffect(() => {
+  function refresh() {
     updateList().then((data) => {
       setCVS(getCVS());
-      resumes.items = data;
+      if (resumes) {
+        resumes.items = data;
+      }
     });
+  }
+
+  useEffect(() => {
+    refresh();
   }, []);
 
   // Cascade effect for "My Resumes" section
@@ -338,7 +344,7 @@ Best regards`;
                                 <ResumeCardMenu
                                   onEdit={() => {
                                     // Navigate to edit mode
-                                    router.push(`/editor?cv=${cv.id}`);
+                                    router.push(`/editor/${cv.id}`);
                                   }}
                                   onShare={async () => {
                                     openShareModal(cv);

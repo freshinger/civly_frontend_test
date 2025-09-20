@@ -101,7 +101,7 @@ export function handleExportPdf(id: string) {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.download = `cv-${id}.pdf`;
+      link.download = `cv-${cv.id}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();

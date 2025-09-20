@@ -6,8 +6,6 @@ import React, { useState, useEffect } from 'react'
 
 // --- Services ---
 import {
-  updateCVName,
-  fetchCv,
   updateVisibility,
   handleExportPdf,
 } from '@/services/cv_data.service'
@@ -30,21 +28,28 @@ import {
   IconX,
 } from '@tabler/icons-react'
 import { useCvStore } from '@/stores/cv_store'
+import { LoadingStatus } from '@/types/LoadingStatus'
 
 // --- Type Definitions  ---
 type SaveStatus = 'Saved' | 'Saving...' | 'Unsaved Changes' | 'Error'
 export type Visibility = 'Public' | 'Private' | 'Draft'
 
 // --- The Main Header Component ---
-export function EditorHeader({ cvId = 'dummy' }: { cvId?: string }) {
+export function EditorHeader({ id = 'dummy' }: { id?: string }) {
   // --- Store ---
-  const { items: cvs } = useCvStore()
+  const { items: cvs } = useCvStore((state)=>state)
   const remove = useCvStore((s) => s.deleteOne);
   const duplicate = useCvStore((s) => s.duplicateOne);
   const saveName = useCvStore((s) => s.saveName);
+  const getCV = useCvStore((s)=>s.getSingle);
+  const fetchAll = useCvStore((s)=>s.fetchAllList);
+  const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
+  const subscribe = useCvStore.subscribe;
   // --- State Management ---
   const [currentCv, setCurrentCv] = useState<CvData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+      LoadingStatus.Loading
+    );
   const [isEditingName, setIsEditingName] = useState(false)
   const [cvName, setCvName] = useState('Resume')
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved')
@@ -53,41 +58,39 @@ export function EditorHeader({ cvId = 'dummy' }: { cvId?: string }) {
   const [shareUrl, setShareUrl] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
 
-  // Load CV from server
   useEffect(() => {
-    const loadCV = async () => {
-      if (cvId === 'dummy') {
-        setCurrentCv(null)
-        setIsLoading(false)
-        return
+    let alive = true;
+    subscribe((state) => {
+      console.log("state change", state);
+      setCvDataList(state.items);
+    });
+    (async () => {
+      const data = await fetchAll();
+      if (!alive) {
+        //setLoadingStatus(LoadingStatus.Error);
+        return;
       }
-
-      try {
-        setIsLoading(true)
-        const cv = await fetchCv(cvId)
-
-        console.log('Loaded CV from server:', cv)
-        setCurrentCv(cv)
-        setCvName(cv?.name || 'Resume')
-      } catch (error) {
-        console.error('Error loading CV:', error)
-        setCurrentCv(null)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadCV()
-  }, [cvId])
+      setCvDataList(data as CvData[]);
+      if(id){
+          const cv = cvs?.filter((x) => x.id === id)
+          if(cv?.length === 1){
+            setCurrentCv(cv[0])
+            setCvName(cv[0].name || 'Resume')
+          }
+        }
+      setLoadingStatus(LoadingStatus.Loaded);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [loadingStatus]);
 
   // Debug logs
   console.log(
     'EditorHeader - cvId:',
-    cvId,
+    id,
     'currentCv:',
     currentCv?.id,
-    'isLoading:',
-    isLoading,
     'cvName:',
     cvName,
   )
@@ -101,7 +104,6 @@ export function EditorHeader({ cvId = 'dummy' }: { cvId?: string }) {
     return 'Draft'
   }
 
-  // Handle visibility changes - update CV via service
   // Handle visibility changes - update CV via service
   const handleVisibilityChange = async (
     newVisibility: Visibility,
@@ -187,18 +189,11 @@ Best regards`
     try {
       setSaveStatus('Saving...')
 
-      // Update on server
-      await updateCVName(currentCv.id!, cvName.trim())
-
-      // Update local CV object
-      setCurrentCv({
-        ...currentCv,
-        name: cvName.trim(),
-      })
       saveName({
         ...currentCv,
         name: cvName.trim(),
       })
+      setLoadingStatus(LoadingStatus.Loading)
       setSaveStatus('Saved')
     } catch (error) {
       console.error('Error updating CV name:', error)
@@ -214,7 +209,7 @@ Best regards`
   }
 
   // If loading or CV not found, show appropriate state
-  if (isLoading) {
+  if (loadingStatus === LoadingStatus.Loading) {
     return (
       <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white z-[5] h-16">
         <div className="flex items-center gap-3">
@@ -234,7 +229,7 @@ Best regards`
     )
   }
 
-  if (!currentCv && cvId !== 'dummy') {
+  if (!currentCv && id !== 'dummy') {
     return (
       <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white z-[5] h-16">
         <div className="flex items-center gap-3">

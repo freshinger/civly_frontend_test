@@ -7,6 +7,7 @@ import {
   fetchCv,
   fetchAllCvsList,
   duplicateCv,
+  updateCVName,
 } from "@/services/cv_data.service";
 
 const ts = (s?: string) => (s ? Date.parse(s) : 0) || 0;
@@ -14,7 +15,9 @@ const isNewer = (a?: string, b?: string) => ts(a) > ts(b);
 
 type CvStore = {
   items: CvData[];
-  fetchAll: () => Promise<CvData[]>;
+  localList: CvData[];
+  fetchAllList: () => Promise<CvData[]>;
+  fetchLocalList: () => CvData[];
   saveLocally: (cv: CvData) => void;
   saveName: (cv: CvData) => void;
   saveRemote: (cv: CvData) => Promise<void>;
@@ -34,40 +37,46 @@ export const useCvStore = create<CvStore>()(
         set({ items: server });
         return server;
       },
+      fetchLocalList: () => {
+        return get().items;
+      },
       saveLocally: (cv) => {
         if (!cv?.id) return;
         console.log("SAVE LOCALLY", cv.personalInformation?.name);
-        console.log(get().items);
+        console.log(get().localList);
 
         set((s) => {
-          const idx = s.items.findIndex((x) => x?.id === cv.id);
+          const idx = s.localList.findIndex((x) => x?.id === cv.id);
           if (idx === -1) {
             const withTs: CvData = {
               ...cv,
               updatedAt: cv.updatedAt ?? new Date().toISOString(),
             };
-            return { items: [...s.items, withTs] };
+            return { localList: [...s.localList, withTs] };
           }
 
-          const current = s.items[idx];
+          const current = s.localList[idx];
 
           // merge (partials), preserve existing updatedAt
-          const next = s.items.slice();
+          const next = s.localList.slice();
           next[idx] = {
             ...current,
             ...cv,
             updatedAt: current.updatedAt,
           };
-          return { items: next };
+          return { localList: next };
         });
       },
 
-      saveName: (cv) => {
+      saveName: async (cv) => {
+        // Update on server
+        await updateCVName(cv.id!, cv.name.trim());
+
         set((s) => {
           const newItems = get().items;
           const idx = newItems.findIndex((x) => x?.id === cv.id);
           newItems[idx].name = cv.name;
-          console.log("new items", newItems)
+          console.log("new items", newItems);
           return { items: newItems };
         });
       },

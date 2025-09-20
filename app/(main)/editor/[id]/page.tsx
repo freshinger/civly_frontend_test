@@ -15,7 +15,7 @@ export default function Page() {
     <SidebarProvider isWide={true} className="overflow-hidden h-[100vh]">
       <SidebarInset>
         <SiteHeader />
-        <EditorHeader cvId={id} />
+        <EditorHeader id={id} />
         <div className="min-h-[100vh] gap-4 p-4 overflow-y-auto">
           <TemplatePreview id={id} />
         </div>

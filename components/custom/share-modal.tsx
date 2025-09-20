@@ -20,6 +20,7 @@ import {
   Globe,
   AlertCircle,
 } from "lucide-react";
+import router from "next/router";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -132,7 +133,7 @@ export function ShareModal({
               </Button>
               <Button
                 onClick={() => {
-                  window.open(`/editor?cv=${cv.id}`, "_blank");
+                  router.push(`/editor/${cv.id}`);
                   onOpenChange(false);
                 }}
                 className="bg-primary hover:bg-primary/90"

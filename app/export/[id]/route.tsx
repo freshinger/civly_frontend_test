@@ -56,8 +56,8 @@ async function generatePDF(url: string) {
     );
 
     // Optional debug (uncomment if you need to inspect cookies)
-     const cookies = await page.browserContext().cookies();
-     console.log('Puppeteer cookies for url:', cookies);
+    // const cookies = await page.browserContext().cookies();
+    // console.log('Puppeteer cookies for url:', cookies);
 
     // Now navigate: the request to your Next server will include these cookies
     await page.goto(url, { waitUntil: "networkidle0" });

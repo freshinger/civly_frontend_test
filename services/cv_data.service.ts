@@ -73,8 +73,8 @@ export async function deleteCv(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export function handleExportPdf(id: string) {
-  fetch("export/" + id)
+export function handleExportPdf(cv: CvData) {
+  fetch("/export/" + cv.id)
     .then(async (res) => {
       if (res.body !== null) {
         const reader = res.body.getReader();

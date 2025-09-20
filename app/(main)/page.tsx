@@ -1,40 +1,24 @@
 "use client";
 
-import { SectionCards } from "@/components/section-cards";
-import { SiteHeader } from "@/components/site-header";
-import { ResumeGrid } from "@/components/custom/resume-grid";
-
-const mockResumes = [
-  {
-    id: "20b996e1-7787-454a-a70e-a4fa126e1870",
-    title: "Senior Project Manager",
-    lastEdited: "2 days ago",
-    previewImage: "/resume-2cols-thumbnail.svg",
-  },
-  {
-    id: "2",
-    title: "Marketing Manager Zalando",
-    lastEdited: "3 days ago",
-    previewImage: "/resume-2cols-thumbnail.svg",
-  },
-];
+import { SectionCards } from '@/components/section-cards'
+import { SiteHeader } from '@/components/site-header'
+import { ResumeGrid } from '@/components/custom/resume-grid'
+import { createEmptyCv, duplicateCv, handleExportPdf } from '@/services/cv_data.service'
+import { useRouter } from 'next/navigation'
+import { useCVListStore } from '@/providers/cvListProvider'
+import { useEffect, useState } from 'react'
+import { CvData } from '@/schemas/cv_data_schema'
+import router from 'next/router';
 
 export default function Page() {
-  const handleCreateNew = () => {
-    //console.log('Create new resume')
-  };
 
-  const handleEditResume = (id: string) => {
-    //console.log('Edit resume:', id)
-  };
+  const router = useRouter()
 
-  const handleShareResume = (id: string) => {
-    //console.log('Share resume:', id)
-  };
+  const { updateList, getCVS } = useCVListStore(
+    (state) => state,
+  )
+  const [cvs, setCVS] = useState<CvData[]>([])
 
-  const handleDuplicateResume = (id: string) => {
-    //console.log('Duplicate resume:', id)
-  };
 
   const handleExportPdf = (id: string) => {
     fetch("export/" + id)
@@ -73,13 +57,42 @@ export default function Page() {
       });
   };
 
-  const handleDeleteResume = (id: string) => {
-    //console.log('Delete resume:', id)
-  };
+    createEmptyCv().then(() => {
+      router.refresh()
+    })
+  }
 
-  const handleOpenResume = (id: string) => {
-    //console.log('Open resume:', id)
-  };
+  const handleEditResume = (cv: CvData) => {
+    console.log('Edit resume:', cv.id)
+  }
+
+  const handleShareResume = (cv: CvData) => {
+    console.log('Share resume:', cv.id)
+  }
+
+  const handleDuplicateResume = (cv: CvData) => {
+    if(cv.id){
+      duplicateCv(cv.id).then(() => {
+        router.refresh()
+      })
+    }
+  }
+
+  const handleDeleteResume = (cv: CvData) => {
+    console.log('Delete resume:', cv.id)
+  }
+
+  const handleOpenResume = (cv: CvData) => {
+    router.push('cv-preview/'+cv.id)
+  }
+
+
+  useEffect(() => {
+    updateList().then((data) => {
+      setCVS(getCVS())
+    }
+    )
+  }, [])
 
   return (
     <>
@@ -95,7 +108,7 @@ export default function Page() {
 
             <SectionCards />
             <ResumeGrid
-              resumes={mockResumes}
+              resumes={cvs}
               onCreateNew={handleCreateNew}
               onEditResume={handleEditResume}
               onShareResume={handleShareResume}

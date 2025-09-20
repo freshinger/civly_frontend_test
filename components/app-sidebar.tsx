@@ -61,7 +61,7 @@ export function AppSidebar({
       title: "My Resumes",
       url: "/cv",
       icon: IconFileDescription,
-      items: cvs,
+      items: [],
     },
     navSecondary: [
       {
@@ -76,7 +76,6 @@ export function AppSidebar({
       },
     ],
   };
-
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -95,7 +94,7 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={data.navMain} resumes={data.resumes} cvs={cvs} />
+        <NavMain items={data.navMain} resumes={data.resumes} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
 

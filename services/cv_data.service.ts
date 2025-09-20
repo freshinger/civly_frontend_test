@@ -11,7 +11,7 @@ export async function fetchAllCvs(): Promise<CvData[]> {
     method: "GET",
   });
   if (error) throw error;
-  return (data as { items: CvData[] }).items;
+  return data.data;
 }
 
 // Single-item CRUD (server owns timestamps)
@@ -43,16 +43,16 @@ export async function duplicateCv(id: string | null): Promise<CvData | null> {
 }
 
 export async function updateCVName(id: string, value: string) {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke("cv-data/" + id, {
     method: "PATCH",
-    body: {},
+    body: { name: value },
   });
 }
 
 export async function updateVisibility(id: string, value: string) {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke("cv-data/" + id, {
     method: "PATCH",
-    body: {},
+    body: { visibility: value },
   });
 }
 

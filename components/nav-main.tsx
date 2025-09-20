@@ -26,14 +26,19 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { createClient } from "@/utils/supabase/client";
-import { handleExportPdf } from "@/services/cv_data.service";
+import {
+  createEmptyCv,
+  deleteCv,
+  duplicateCv,
+  handleExportPdf,
+} from "@/services/cv_data.service";
 import { PersonalInformation } from "@/schemas/personal_information_schema";
 import { Button } from "./ui/button";
+import { useCVListStore } from "@/providers/cvListProvider";
 
 export function NavMain({
   items,
   resumes,
-  cvs,
 }: {
   items: {
     title: string;
@@ -47,11 +52,12 @@ export function NavMain({
     icon?: Icon;
     items: CvData[];
   };
-  cvs: CvData[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { deleteOne, fetchAll } = useCvStore();
+
+  const { updateList, getCVS } = useCVListStore((state) => state);
+  const [cvs, setCVS] = useState<CvData[]>([]);
   const [isResumesOpen, setIsResumesOpen] = useState(false);
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null);
   // State for cascade animation effects
@@ -66,6 +72,13 @@ export function NavMain({
   const [shareUrl, setShareUrl] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    updateList().then((data) => {
+      setCVS(getCVS());
+      resumes.items = data;
+    });
+  }, []);
 
   // Cascade effect for "My Resumes" section
   useEffect(() => {
@@ -107,44 +120,22 @@ export function NavMain({
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSelectedCvId(null); // Clear any selected CV
-    console.log("Creating new CV...");
 
     try {
-      const supabase = await createClient();
-      console.log("Supabase client created");
-
-      const response = await supabase.functions.invoke("cv-data/", {
-        body: {
-          name: "Resume",
-          visibility: "draft", // All new CVs start as draft
-        },
-      });
-
-      console.log("CV creation response:", response);
-
-      if (response.error) {
-        console.error("CV creation error:", response.error);
-        throw new Error(response.error.message || "Failed to create CV");
-      }
-
-      console.log("CV created successfully, refreshing store...");
-      // Refresh the store to get the new CV from server
-      await fetchAll();
-      console.log("Store refreshed");
-
-      toast.success("New CV created successfully!");
+      await createEmptyCv();
+      router.refresh();
     } catch (error) {
       console.error("Error creating CV:", error);
       toast.error("Failed to create new CV");
     }
   }
 
-  const deleteCv = async () => {
+  const remove = async () => {
     if (!cvToDelete || !cvToDelete.id) return;
 
     try {
       setDeleteDialogOpen(false);
-      await deleteOne(cvToDelete.id);
+      await deleteCv(cvToDelete.id);
       toast.success("CV deleted successfully!");
       router.refresh();
     } catch (error) {
@@ -226,11 +217,6 @@ Best regards`;
       : "";
     return `CV - ${dateStr || cv.id?.toString().slice(0, 8)}`;
   };
-
-  if (resumes) {
-    const resumesNew = resumes;
-    resumesNew.items = cvs;
-  }
 
   return (
     <SidebarGroup>
@@ -359,11 +345,10 @@ Best regards`;
                                   }}
                                   onDuplicate={async () => {
                                     try {
-                                      // TODO: Implement actual duplicate functionality
-                                      toast.info(
-                                        "Duplicate feature coming soon!"
-                                      );
-                                      console.log("Duplicate CV:", cv.id);
+                                      if (cv.id) {
+                                        await duplicateCv(cv.id);
+                                        router.refresh();
+                                      }
                                     } catch (error) {
                                       console.error("Duplicate error:", error);
                                       toast.error("Failed to duplicate CV");
@@ -454,7 +439,7 @@ Best regards`;
         isOpen={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         cv={cvToDelete}
-        onDelete={deleteCv}
+        onDelete={remove}
       />
     </SidebarGroup>
   );

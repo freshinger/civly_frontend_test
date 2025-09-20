@@ -117,8 +117,8 @@ export default function Page() {
                 Welcome back, {userName}! 👋
               </h1>
             </div>
-
-            <SectionCards />
+            
+            {/*<SectionCards />*/}
             <ResumeGrid
               resumes={cvs}
               onCreateNew={handleCreateNew}

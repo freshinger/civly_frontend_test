@@ -283,7 +283,7 @@ Best regards`;
                 />
               </SidebarMenuButton>
               <div
-                className={`overflow-y-auto overflow-x-hidden transition-all duration-300 ease-in-out ${
+                className={` transition-all duration-300 ease-in-out ${
                   isResumesOpen
                     ? "max-h-[70vh] opacity-100"
                     : "max-h-0 opacity-0"

@@ -113,12 +113,12 @@ export function EditorSidebarRight({ id, ...props }: Props) {
             className="w-full gap-0 h-screen flex flex-col"
           >
             <SidebarHeader className="border-sidebar-border border-b h-[50px] w-full ">
-              <TabsList className="w-full h-full bg-white ">
-                <TabsTrigger value="layout">Layout</TabsTrigger>
-                <TabsTrigger value="profile">Information</TabsTrigger>
-                <TabsTrigger value="skills">Skills</TabsTrigger>
-                <TabsTrigger value="work">Experience</TabsTrigger>
-                <TabsTrigger value="education">Education</TabsTrigger>
+              <TabsList className="w-full h-full bg-white flex justify-start gap-1">
+                <TabsTrigger value="layout" className="text-xs flex-shrink-0">Layout</TabsTrigger>
+                <TabsTrigger value="profile" className="text-xs flex-shrink-0">Information</TabsTrigger>
+                <TabsTrigger value="skills" className="text-xs flex-shrink-0">Skills</TabsTrigger>
+                <TabsTrigger value="work" className="text-xs flex-shrink-0">Experience</TabsTrigger>
+                <TabsTrigger value="education" className="text-xs flex-shrink-0">Education</TabsTrigger>
               </TabsList>
             </SidebarHeader>
 

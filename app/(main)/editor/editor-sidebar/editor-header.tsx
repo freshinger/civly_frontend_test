@@ -1,172 +1,172 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react'
+
+// --- Store ---
+import { useCvStore } from '@/stores/cv_store'
 
 // --- Services ---
 import {
-  fetchCv,
   updateCVName,
+  fetchCv,
   updateVisibility,
-} from "@/services/cv_data.service";
-import type { CvData } from "@/schemas/cv_data_schema";
+} from '@/services/cv_data.service'
+import type { CvData } from '@/schemas/cv_data_schema'
 
 // --- Local Components ---
-import { VisibilityModal } from "./visibility-modal";
-import { ShareModal } from "@/components/custom/share-modal";
-import { ResumeCardMenu } from "@/components/custom/resume-card-menu";
+import { VisibilityModal } from './visibility-modal'
+import { ShareModal } from '@/components/custom/share-modal'
+import { ResumeCardMenu } from '@/components/custom/resume-card-menu'
 
 // --- Shadcn UI & Icon Imports ---
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { PanelLeftIcon } from "lucide-react";
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { SidebarTrigger } from '@/components/ui/sidebar'
+import { PanelLeftIcon } from 'lucide-react'
 import {
   IconPencil,
   IconLock,
   IconLockOpen,
-  IconDeviceFloppy,
-  IconWorld,
-  IconX,
   IconCheck,
-} from "@tabler/icons-react";
-import { useCvStore } from "@/stores/cv_store";
+  IconX,
+} from '@tabler/icons-react'
 
 // --- Type Definitions  ---
-type SaveStatus = "Saved" | "Saving..." | "Unsaved Changes" | "Error";
-export type Visibility = "Public" | "Private" | "Draft";
+type SaveStatus = 'Saved' | 'Saving...' | 'Unsaved Changes' | 'Error'
+export type Visibility = 'Public' | 'Private' | 'Draft'
 
 // --- The Main Header Component ---
 export function EditorHeader({
-  cvId = "dummy",
+  cvId = 'dummy',
   rightSidebarOpen,
   setRightSidebarOpen,
 }: {
-  cvId?: string;
-  rightSidebarOpen?: boolean;
-  setRightSidebarOpen?: (open: boolean) => void;
+  cvId?: string
+  rightSidebarOpen?: boolean
+  setRightSidebarOpen?: (open: boolean) => void
 }) {
   // --- Store ---
-  const { remoteitems: cvs } = useCvStore();
+  const { remoteitems: cvs } = useCvStore()
 
   // --- State Management ---
-  const [currentCv, setCurrentCv] = useState<CvData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [cvName, setCvName] = useState("Resume");
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("Saved");
-  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [currentCv, setCurrentCv] = useState<CvData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [cvName, setCvName] = useState('Resume')
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved')
+  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false)
+  const [shareUrl, setShareUrl] = useState('')
+  const [linkCopied, setLinkCopied] = useState(false)
 
   // Load CV from server
   useEffect(() => {
     const loadCV = async () => {
-      if (cvId === "dummy") {
-        setCurrentCv(null);
-        setIsLoading(false);
-        return;
+      if (cvId === 'dummy') {
+        setCurrentCv(null)
+        setIsLoading(false)
+        return
       }
 
       try {
-        setIsLoading(true);
-        const cv = await fetchCv(cvId);
+        setIsLoading(true)
+        const cv = await fetchCv(cvId)
 
-        console.log("Loaded CV from server:", cv);
-        setCurrentCv(cv);
-        setCvName(cv?.name || "Resume");
+        console.log('Loaded CV from server:', cv)
+        setCurrentCv(cv)
+        setCvName(cv?.name || 'Resume')
       } catch (error) {
-        console.error("Error loading CV:", error);
-        setCurrentCv(null);
+        console.error('Error loading CV:', error)
+        setCurrentCv(null)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    loadCV();
-  }, [cvId]);
+    loadCV()
+  }, [cvId])
 
   // Debug logs
   console.log(
-    "EditorHeader - cvId:",
+    'EditorHeader - cvId:',
     cvId,
-    "currentCv:",
+    'currentCv:',
     currentCv?.id,
-    "isLoading:",
+    'isLoading:',
     isLoading,
-    "cvName:",
-    cvName
-  );
+    'cvName:',
+    cvName,
+  )
 
   // Get visibility from currentCv (service data)
   const getVisibility = (): Visibility => {
-    const visibility = currentCv?.visibility;
+    const visibility = currentCv?.visibility
 
-    if (visibility === "public") return "Public";
-    if (visibility === "private") return "Private";
-    return "Draft";
-  };
+    if (visibility === 'public') return 'Public'
+    if (visibility === 'private') return 'Private'
+    return 'Draft'
+  }
 
   // Handle visibility changes - update CV via service
   // Handle visibility changes - update CV via service
   const handleVisibilityChange = async (
     newVisibility: Visibility,
-    newPassword?: string
+    newPassword?: string,
   ) => {
     if (!currentCv) {
-      return;
+      return
     }
 
     // Map UI visibility to schema visibility
     const schemaVisibility =
-      newVisibility === "Public"
-        ? ("public" as const)
-        : newVisibility === "Private"
-          ? ("private" as const)
-          : ("draft" as const);
+      newVisibility === 'Public'
+        ? ('public' as const)
+        : newVisibility === 'Private'
+        ? ('private' as const)
+        : ('draft' as const)
 
     try {
-      setSaveStatus("Saving...");
+      setSaveStatus('Saving...')
 
       // Update on server
-      await updateVisibility(currentCv, schemaVisibility);
+      await updateVisibility(currentCv, schemaVisibility)
 
       // Update local CV object
       setCurrentCv({
         ...currentCv,
         visibility: schemaVisibility,
-        password: newVisibility === "Private" ? newPassword || "" : undefined,
-      });
+        password: newVisibility === 'Private' ? newPassword || '' : undefined,
+      })
 
-      setSaveStatus("Saved");
+      setSaveStatus('Saved')
     } catch (error) {
-      console.error("Error updating CV visibility:", error);
-      setSaveStatus("Error");
+      console.error('Error updating CV visibility:', error)
+      setSaveStatus('Error')
     }
-  }; // --- Share Functions ---
+  } // --- Share Functions ---
   const handleShare = () => {
     if (currentCv) {
-      const url = `${window.location.origin}/view/${currentCv.id}`;
-      setShareUrl(url);
-      setLinkCopied(false);
-      setIsShareModalOpen(true);
+      const url = `${window.location.origin}/view/${currentCv.id}`
+      setShareUrl(url)
+      setLinkCopied(false)
+      setIsShareModalOpen(true)
     }
-  };
+  }
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 3000);
+      await navigator.clipboard.writeText(shareUrl)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 3000)
     } catch (error) {
-      console.error("Failed to copy link:", error);
+      console.error('Failed to copy link:', error)
     }
-  };
+  }
 
   const shareViaEmail = () => {
-    const cvName = currentCv?.name || "My CV";
-    const subject = `Check out my CV: ${cvName}`;
+    const cvName = currentCv?.name || 'My CV'
+    const subject = `Check out my CV: ${cvName}`
     const body = `Hi,
 
 I hope this message finds you well. I wanted to share my CV with you for your review.
@@ -175,47 +175,47 @@ I hope this message finds you well. I wanted to share my CV with you for your re
 
 This link provides access to my current CV with all my professional experience, skills, and qualifications. Please feel free to download or share it as needed.
 
-Best regards`;
+Best regards`
 
     const mailtoUrl = `mailto:?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoUrl);
-  };
+      subject,
+    )}&body=${encodeURIComponent(body)}`
+    window.open(mailtoUrl)
+  }
 
   // --- Name Editing Functions ---
   const handleNameSave = async () => {
-    setIsEditingName(false);
+    setIsEditingName(false)
 
-    if (!currentCv || !cvName.trim() || currentCv.id === "dummy") {
-      return;
+    if (!currentCv || !cvName.trim() || currentCv.id === 'dummy') {
+      return
     }
 
     try {
-      setSaveStatus("Saving...");
+      setSaveStatus('Saving...')
 
       // Update on server
-      await updateCVName(currentCv.id!, cvName.trim());
+      await updateCVName(currentCv.id!, cvName.trim())
 
       // Update local CV object
       setCurrentCv({
         ...currentCv,
         name: cvName.trim(),
-      });
+      })
 
-      setSaveStatus("Saved");
+      setSaveStatus('Saved')
     } catch (error) {
-      console.error("Error updating CV name:", error);
-      setSaveStatus("Error");
+      console.error('Error updating CV name:', error)
+      setSaveStatus('Error')
       // Revert name on error
-      setCvName(currentCv.name || "Resume");
+      setCvName(currentCv.name || 'Resume')
     }
-  };
+  }
 
   const handleNameCancel = () => {
-    setCvName(currentCv?.name || "Resume");
-    setIsEditingName(false);
-  };
+    setCvName(currentCv?.name || 'Resume')
+    setIsEditingName(false)
+  }
 
   // If loading or CV not found, show appropriate state
   if (isLoading) {
@@ -236,10 +236,10 @@ Best regards`;
           </Badge>
         </div>
       </header>
-    );
+    )
   }
 
-  if (!currentCv && cvId !== "dummy") {
+  if (!currentCv && cvId !== 'dummy') {
     return (
       <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-16">
         <div className="flex items-center gap-3">
@@ -257,23 +257,23 @@ Best regards`;
           </Badge>
         </div>
       </header>
-    );
+    )
   }
 
   const getSaveStatusBadgeVariant = () => {
     switch (saveStatus) {
-      case "Saved":
-        return "bg-green-50 border-green-200 text-green-800";
-      case "Saving...":
-        return "bg-blue-50 border-blue-200 text-blue-800";
-      case "Unsaved Changes":
-        return "bg-orange-50 border-orange-200 text-orange-800";
-      case "Error":
-        return "bg-red-50 border-red-200 text-red-800";
+      case 'Saved':
+        return 'bg-green-50 border-green-200 text-green-800'
+      case 'Saving...':
+        return 'bg-blue-50 border-blue-200 text-blue-800'
+      case 'Unsaved Changes':
+        return 'bg-orange-50 border-orange-200 text-orange-800'
+      case 'Error':
+        return 'bg-red-50 border-red-200 text-red-800'
       default:
-        return "bg-gray-50 border-gray-200 text-gray-800";
+        return 'bg-gray-50 border-gray-200 text-gray-800'
     }
-  };
+  }
 
   return (
     <>
@@ -297,8 +297,8 @@ Best regards`;
                 value={cvName}
                 onChange={(e) => setCvName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleNameSave();
-                  if (e.key === "Escape") handleNameCancel();
+                  if (e.key === 'Enter') handleNameSave()
+                  if (e.key === 'Escape') handleNameCancel()
                 }}
                 autoFocus
                 className="text-md font-semibold h-9"
@@ -346,7 +346,7 @@ Best regards`;
             className="flex items-center gap-1.5 text-sm"
             onClick={() => setIsVisibilityModalOpen(true)}
           >
-            {getVisibility() === "Public" ? (
+            {getVisibility() === 'Public' ? (
               <IconLockOpen size={14} />
             ) : (
               <IconLock size={14} />
@@ -361,15 +361,15 @@ Best regards`;
             onShare={handleShare}
             onExportPdf={() => {
               // TODO: Implementar export PDF
-              console.log("Export PDF clicked");
+              console.log('Export PDF clicked')
             }}
             onDuplicate={() => {
               // TODO: Implementar duplicate
-              console.log("Duplicate clicked");
+              console.log('Duplicate clicked')
             }}
             onDelete={() => {
               // TODO: Implementar delete
-              console.log("Delete clicked");
+              console.log('Delete clicked')
             }}
           />
           {/* Right Sidebar Trigger */}
@@ -379,13 +379,11 @@ Best regards`;
               size="icon"
               className="h-8 w-8"
               onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-              title={rightSidebarOpen ? "Hide right panel" : "Show right panel"}
+              title={rightSidebarOpen ? 'Hide right panel' : 'Show right panel'}
             >
               <PanelLeftIcon
                 size={16}
-                className={`transition-transform duration-300 ${
-                  rightSidebarOpen ? "rotate-180" : ""
-                }`}
+                className={rightSidebarOpen ? 'rotate-180' : ''}
               />
             </Button>
           )}
@@ -397,7 +395,7 @@ Best regards`;
         isOpen={isVisibilityModalOpen}
         onOpenChange={setIsVisibilityModalOpen}
         visibility={getVisibility()}
-        password={currentCv?.password || ""}
+        password={currentCv?.password || ''}
         onVisibilityChange={handleVisibilityChange}
       />
 
@@ -411,5 +409,5 @@ Best regards`;
         onShareEmail={shareViaEmail}
       />
     </>
-  );
+  )
 }

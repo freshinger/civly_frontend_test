@@ -1,8 +1,8 @@
-import { ShowCVByTemplate } from "@/components/custom/cv-view/ShowCVByTemplate";
-import { CvData } from "@/schemas/cv_data_schema";
-import { useCvStore } from "@/stores/cv_store";
-import { useEffect } from "react";
-import { useState } from "react";
+import { ShowCVByTemplate } from '@/components/custom/cv-view/ShowCVByTemplate'
+import { CvData } from '@/schemas/cv_data_schema'
+import { useCvStore } from '@/stores/cv_store'
+import { useEffect } from 'react'
+import { useState } from 'react'
 
 enum LoadingStatus {
   Loading,
@@ -11,32 +11,32 @@ enum LoadingStatus {
 }
 
 export const TemplatePreview = ({ id }: { id: string }) => {
-  const getSingle = useCvStore((s) => s.getSingle);
-  const [cvData, setCvData] = useState<CvData | null>(null);
-  const subscribe = useCvStore.subscribe;
+  const getSingle = useCvStore((s) => s.getSingle)
+  const [cvData, setCvData] = useState<CvData | null>(null)
+  const subscribe = useCvStore.subscribe
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
-    LoadingStatus.Loading
-  );
+    LoadingStatus.Loading,
+  )
 
   useEffect(() => {
-    let alive = true;
+    let alive = true
     subscribe((state) => {
-      console.log("state change", state);
-      setCvData(state.localitems?.find((x) => x?.id === id) as CvData);
-    });
-    (async () => {
-      const data = await getSingle(id);
+      console.log('state change', state)
+      setCvData(state.localitems?.find((x) => x?.id === id) as CvData)
+    })
+    ;(async () => {
+      const data = await getSingle(id)
       if (!alive) {
         //setLoadingStatus(LoadingStatus.Error);
-        return;
+        return
       }
-      setCvData(data as CvData);
-      setLoadingStatus(LoadingStatus.Loaded);
-    })();
+      setCvData(data as CvData)
+      setLoadingStatus(LoadingStatus.Loaded)
+    })()
     return () => {
-      alive = false;
-    };
-  }, [loadingStatus]);
+      alive = false
+    }
+  }, [loadingStatus])
   return (
     <>
       {loadingStatus === LoadingStatus.Loading && (
@@ -53,5 +53,5 @@ export const TemplatePreview = ({ id }: { id: string }) => {
         </div>
       )}
     </>
-  );
-};
+  )
+}

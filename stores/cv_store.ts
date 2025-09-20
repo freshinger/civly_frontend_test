@@ -2,10 +2,11 @@ import { create } from "zustand";
 import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 import { type CvData } from "@/schemas/cv_data_schema";
 import {
-  fetchAllCvs,
   updateCv,
   deleteCv,
   fetchCv,
+  fetchAllCvsList,
+  duplicateCv,
 } from "@/services/cv_data.service";
 
 const ts = (s?: string) => (s ? Date.parse(s) : 0) || 0;
@@ -18,6 +19,7 @@ type CvStore = {
   saveRemote: (cv: CvData) => Promise<void>;
   getSingle: (id: string) => Promise<CvData | undefined>;
   deleteOne: (id: string) => Promise<void>;
+  duplicateOne: (id: string) => Promise<void>;
 };
 
 export const useCvStore = create<CvStore>()(
@@ -27,11 +29,10 @@ export const useCvStore = create<CvStore>()(
 
       // Merge policy: last-write-wins per CV (server vs local)
       fetchAll: async () => {
-        const server = await fetchAllCvs();
+        const server = await fetchAllCvsList();
         set({ items: server });
         return server;
       },
-
       saveLocally: (cv) => {
         if (!cv?.id) return;
         console.log("SAVE LOCALLY", cv.personalInformation?.name);
@@ -78,11 +79,17 @@ export const useCvStore = create<CvStore>()(
 
       deleteOne: async (id) => {
         await deleteCv(id);
-
-        // after server delete, drop it locally too
-        // (or call fetchAll() if you want to strictly mirror server)
         set((s) => ({
           items: s.items.filter((cv) => cv.id !== id),
+        }));
+      },
+
+      duplicateOne: async (id) => {
+        const duplicated = await duplicateCv(id);
+        const newItems = get().items;
+        newItems.push(duplicated as CvData);
+        set((s) => ({
+          items: newItems,
         }));
       },
     }),

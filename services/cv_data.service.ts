@@ -5,9 +5,8 @@ const sb = createClient();
 
 const path = "cv-data/";
 
-// Fetch ALL (collection)
-export async function fetchAllCvs(): Promise<CvData[]> {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+export async function fetchAllCvsList(): Promise<CvData[]> {
+  const { data, error } = await sb.functions.invoke(path, {
     method: "GET",
   });
   if (error) throw error;
@@ -16,7 +15,7 @@ export async function fetchAllCvs(): Promise<CvData[]> {
 
 // Single-item CRUD (server owns timestamps)
 export async function fetchCv(id: string): Promise<CvData> {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke(path + id, {
     method: "GET",
   });
   if (error) throw error;
@@ -24,7 +23,7 @@ export async function fetchCv(id: string): Promise<CvData> {
 }
 
 export async function createEmptyCv(): Promise<{ id: string }> {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke(path, {
     method: "POST",
     body: {},
   });
@@ -34,30 +33,33 @@ export async function createEmptyCv(): Promise<{ id: string }> {
 
 export async function duplicateCv(id: string | null): Promise<CvData | null> {
   if (id === null) return null;
-  const { data, error } = await sb.functions.invoke("cv-data/" + id, {
+  const { data, error } = await sb.functions.invoke(path + id, {
     method: "POST",
     body: {},
   });
   if (error) throw error;
-  return data;
+  return data.data;
 }
 
 export async function updateCVName(id: string, value: string) {
-  const { data, error } = await sb.functions.invoke("cv-data/" + id, {
+  const { data, error } = await sb.functions.invoke(path + id, {
     method: "PATCH",
     body: { name: value },
   });
 }
 
-export async function updateVisibility(id: string, value: string) {
-  const { data, error } = await sb.functions.invoke("cv-data/" + id, {
+export async function updateVisibility(cv: CvData, value: string) {
+  const { data, error } = await sb.functions.invoke(path + cv.id, {
     method: "PATCH",
-    body: { visibility: value },
+    body: { visibility: value, name: cv.name },
   });
+
+  if (error) throw error;
+  return data;
 }
 
 export async function updateCv(item: CvData): Promise<void> {
-  const { error } = await sb.functions.invoke("cv-data/" + item.id, {
+  const { error } = await sb.functions.invoke(path + item.id, {
     method: "PUT",
     body: { item },
   });
@@ -65,7 +67,7 @@ export async function updateCv(item: CvData): Promise<void> {
 }
 
 export async function deleteCv(id: string): Promise<void> {
-  const { error } = await sb.functions.invoke("cv-data/" + id, {
+  const { error } = await sb.functions.invoke(path + id, {
     method: "DELETE",
   });
   if (error) throw error;

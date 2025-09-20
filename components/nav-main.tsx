@@ -50,7 +50,8 @@ export function NavMain({
     icon?: Icon;
   };
 }) {
-  const fetchAll = useCvStore((s) => s.fetchAll);
+  const fetchAll = useCvStore((s) => s.fetchAllList);
+  const duplicate = useCvStore((s) => s.duplicateOne);
   const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
   const subscribe = useCvStore.subscribe;
 
@@ -62,7 +63,7 @@ export function NavMain({
     let alive = true;
     subscribe((state) => {
       console.log("state change", state);
-      setCvDataList(state.listItems);
+      setCvDataList(state.items);
     });
     (async () => {
       const data = await fetchAll();
@@ -137,7 +138,6 @@ export function NavMain({
 
     try {
       await createEmptyCv();
-      //refresh()
       setLoadingStatus(LoadingStatus.Loading);
     } catch (error) {
       console.error("Error creating CV:", error);
@@ -182,7 +182,7 @@ export function NavMain({
   };
 
   const shareViaEmail = () => {
-    const cvName = cvToShare ? getCvDisplayName(cvToShare) : "My CV";
+    const cvName = cvToShare ? cvToShare.name?.trim() : "My CV";
     const subject = `Check out my CV: ${cvName}`;
     const body = `Hi,
 
@@ -201,36 +201,6 @@ Best regards`;
     )}&body=${encodeURIComponent(body)}`;
     window.open(mailtoUrl);
     toast.success("Email client opened with CV sharing message!");
-  };
-
-  // Simple function to get CV display name for list items
-  const getCvDisplayName = (cv: CvData) => {
-    // Always prioritize the document name (cv.name)
-    console.log("getCvDisplayName called for CV:", cv.id, "name:", cv.name);
-    if (cv.name && cv.name.trim()) {
-      return cv.name.trim();
-    }
-
-    // Second priority: use personal information
-    const personalInfo = cv.personalInformation || ({} as PersonalInformation);
-    const name = personalInfo.name ?? "";
-    const surname = personalInfo.surname ?? "";
-
-    if (name || surname) {
-      return `CV - ${name} ${surname}`.trim();
-    }
-
-    // Third priority: use email
-    const email = personalInfo.email || "";
-    if (email) {
-      return `CV - ${email.split("@")[0]}`;
-    }
-
-    // Fallback to ID or date
-    const dateStr = cv.createdAt
-      ? new Date(cv.createdAt).toLocaleDateString()
-      : "";
-    return `CV - ${dateStr || cv.id?.toString().slice(0, 8)}`;
   };
 
   return (
@@ -299,9 +269,9 @@ Best regards`;
                 }`}
               >
                 <SidebarMenuSub className="mx-0 px-0 gap-0.5">
-                  {cvDataList ? (
+                  {cvDataList && cvDataList?.length > 0 ? (
                     <>
-                      {cvDataList.map((cv, index) => {
+                      {cvDataList?.map((cv, index) => {
                         // Only the selected CV is active
                         const isActiveCv = selectedCvId === cv.id?.toString();
                         const isVisible = visibleCvs.has(index);
@@ -347,9 +317,9 @@ Best regards`;
                                   className={`text-sm ${
                                     isActiveCv ? "font-bold" : ""
                                   }`}
-                                  title={getCvDisplayName(cv)}
+                                  title={cv.name?.trim()}
                                 >
-                                  {getCvDisplayName(cv)}
+                                  {cv.name?.trim()}
                                 </span>
                               </Button>
                               <div className="opacity-0 group-hover/item:opacity-100 transition-opacity py-1 pr-2 flex items-center justify-center">
@@ -364,7 +334,7 @@ Best regards`;
                                   onDuplicate={async () => {
                                     try {
                                       if (cv.id) {
-                                        await duplicateCv(cv.id);
+                                        duplicate(cv.id);
                                         //refresh()
                                         setLoadingStatus(LoadingStatus.Loading);
                                       }

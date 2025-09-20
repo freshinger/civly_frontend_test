@@ -2,7 +2,7 @@
 
 import { SiteHeader } from '@/components/site-header'
 import { ResumeGrid } from '@/components/custom/resume-grid'
-import { createEmptyCv, deleteCv, duplicateCv, handleExportPdf } from '@/services/cv_data.service'
+import { createEmptyCv, duplicateCv, handleExportPdf } from '@/services/cv_data.service'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { CvData } from '@/schemas/cv_data_schema'
@@ -13,7 +13,8 @@ import { useCvStore } from '../../stores/cv_store'
 import { LoadingStatus } from '@/types/LoadingStatus'
 
 export default function Page() {
-  const fetchAll = useCvStore((s) => s.fetchAll);
+  const fetchAll = useCvStore((s) => s.fetchAllList);
+  const remove = useCvStore((s) => s.deleteOne);
   const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
   const subscribe = useCvStore.subscribe;
 
@@ -26,7 +27,7 @@ export default function Page() {
     let alive = true;
     subscribe((state) => {
       console.log("state change", state);
-      setCvDataList(state.listItems);
+      setCvDataList(state.items);
     });
     (async () => {
       const data = await fetchAll();
@@ -103,7 +104,6 @@ export default function Page() {
   const handleDuplicateResume = (cv: CvData) => {
     if(cv.id){
       duplicateCv(cv.id).then(() => {
-        //refresh()
         setLoadingStatus(LoadingStatus.Loading)
       })
     }
@@ -111,8 +111,7 @@ export default function Page() {
 
   const handleDeleteResume = (cv: CvData) => {
     if(cv.id){
-      deleteCv(cv.id).then(() => {
-        //refresh()
+      remove(cv.id).then(() => {
         setLoadingStatus(LoadingStatus.Loading)
       })
     }

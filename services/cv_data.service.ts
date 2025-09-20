@@ -61,7 +61,7 @@ export async function updateVisibility(cv: CvData, value: string) {
 export async function updateCv(item: CvData): Promise<void> {
   const { error } = await sb.functions.invoke(path + item.id, {
     method: "PUT",
-    body: { item },
+    body: item,
   });
   if (error) throw error;
 }

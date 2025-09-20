@@ -349,7 +349,7 @@ function EducationRow({
         <FieldLabel htmlFor={id("endDate")}>End Date</FieldLabel>
         <FormField
           control={form.control}
-          name={`experience.${index}.endDate`}
+          name={`education.${index}.endDate`}
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -371,7 +371,7 @@ function EducationRow({
         <FieldLabel htmlFor={id("location")}>Location</FieldLabel>
         <FormField
           control={form.control}
-          name={`experience.${index}.location`}
+          name={`education.${index}.location`}
           render={({ field }) => (
             <FormItem>
               <FormControl>
@@ -386,7 +386,7 @@ function EducationRow({
         <FieldLabel htmlFor={id("description")}>Description</FieldLabel>
         <FormField
           control={form.control}
-          name={`experience.${index}.description`}
+          name={`education.${index}.description`}
           render={({ field }) => (
             <FormItem>
               <FormControl>

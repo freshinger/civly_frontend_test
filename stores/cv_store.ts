@@ -75,13 +75,7 @@ export const useCvStore = create<CvStore>()(
       getSingle: async (id) => {
         //console.log("GET SINGLE", id);
         const serverData = await fetchCv(id);
-        const localData = get().items.find((x) => x?.id === id);
-
-        if (isNewer(serverData.updatedAt, localData?.updatedAt)) {
-          get().saveLocally(serverData);
-          return serverData;
-        }
-        return localData;
+        return serverData;
       },
 
       saveRemote: async (cv) => {

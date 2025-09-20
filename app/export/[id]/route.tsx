@@ -3,8 +3,9 @@ import { createClient } from "@/utils/supabase/server";
 import { NextRequest } from "next/server";
 
 async function generatePDF(url: string) {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.getSession()
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getSession();
+  const token = data?.session?.access_token;
   if(error){
     throw error;
   }
@@ -30,9 +31,8 @@ async function generatePDF(url: string) {
 
     browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
-    await page.setExtraHTTPHeaders({ 'Authorization': 'Bearer '+data.session?.access_token });
-    await page.goto(url, { waitUntil: "networkidle0" });
-    const pdfBuffer = await page.pdf({ format: "A4", printBackground: true});
+    await page.goto(`${url}?token=${token}`, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({ format: "A4"});
     return pdfBuffer;
   } catch (error) {
     console.log(error);

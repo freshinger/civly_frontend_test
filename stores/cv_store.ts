@@ -13,7 +13,7 @@ const isNewer = (a?: string, b?: string) => ts(a) > ts(b);
 
 type CvStore = {
   items: CvData[];
-  fetchAll: () => Promise<void>;
+  fetchAll: () => Promise<CvData[]>;
   saveLocally: (cv: CvData) => void;
   saveRemote: (cv: CvData) => Promise<void>;
   getSingle: (id: string) => Promise<CvData | undefined>;
@@ -29,6 +29,7 @@ export const useCvStore = create<CvStore>()(
       fetchAll: async () => {
         const server = await fetchAllCvs();
         set({ items: server });
+        return server;
       },
 
       saveLocally: (cv) => {

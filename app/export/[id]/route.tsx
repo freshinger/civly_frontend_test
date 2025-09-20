@@ -17,7 +17,7 @@ async function generatePDF(url: string) {
   let browser;
   try {
     const isVercel = !!process.env.VERCEL_ENV;
-    let puppeteer: typeof import('puppeteer') | typeof import('puppeteer-core'), launchOptions: any;
+    let puppeteer: typeof import('puppeteer') | typeof import('puppeteer-core'), launchOptions: {headless: boolean,args?:string[],executablePath?:string};
     launchOptions = { headless: true };
 
     if (isVercel) {

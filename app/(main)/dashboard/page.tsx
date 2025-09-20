@@ -1,43 +1,53 @@
 "use client";
 
-import { SectionCards } from "@/components/section-cards";
 import { SiteHeader } from "@/components/site-header";
 import { ResumeGrid } from "@/components/custom/resume-grid";
-
-const mockResumes = [
-  {
-    id: "1",
-    title: "Senior Project Manager",
-    lastEdited: "2 days ago",
-    previewImage: "/resume-2cols-thumbnail.svg",
-  },
-  {
-    id: "2",
-    title: "Marketing Manager Zalando",
-    lastEdited: "3 days ago",
-    previewImage: "/resume-2cols-thumbnail.svg",
-  },
-];
+import {
+  createEmptyCv,
+  duplicateCv,
+  handleExportPdf,
+} from "@/services/cv_data.service";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { CvData } from "@/schemas/cv_data_schema";
+import router from "next/router";
+import { useUserProfile } from "@/hooks/use-user-profile";
+import { getDisplayName } from "@/services/user-profile.service";
+import { useCvStore } from "@/stores/cv_store";
+import { LoadingStatus } from "@/types/LoadingStatus";
 
 export default function Page() {
+  const fetchAll = useCvStore((s) => s.fetchAll);
+  const remove = useCvStore((s) => s.deleteOne);
+  const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
+  const subscribe = useCvStore.subscribe;
+
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+    LoadingStatus.Loading
+  );
+
+  useEffect(() => {
+    subscribe((state) => {
+      console.log("state change", state);
+      setCvDataList(state.remoteitems);
+    });
+    fetchAll()
+      .then(() => setLoadingStatus(LoadingStatus.Loaded))
+      .catch(() => setLoadingStatus(LoadingStatus.Error));
+  }, []);
+
+  const router = useRouter();
+  const { profile } = useUserProfile();
+  const userName = getDisplayName(profile);
+
   const handleCreateNew = () => {
-    //console.log('Create new resume')
+    createEmptyCv().then(() => {
+      setLoadingStatus(LoadingStatus.Loading);
+    });
   };
 
-  const handleEditResume = (id: string) => {
-    //console.log('Edit resume:', id)
-  };
-
-  const handleShareResume = (id: string) => {
-    //console.log('Share resume:', id)
-  };
-
-  const handleDuplicateResume = (id: string) => {
-    //console.log('Duplicate resume:', id)
-  };
-
-  const handleExportPdf = (id: string) => {
-    fetch("export/" + id)
+  const handleExportPdf = (cv: CvData) => {
+    fetch("/export/" + cv.id)
       .then(async (res) => {
         if (res.body !== null) {
           const reader = res.body.getReader();
@@ -66,19 +76,45 @@ export default function Page() {
         );
         const link = document.createElement("a");
         link.href = url;
-        link.download = `cv-${id}.pdf`;
+        link.download = `cv-${cv.id}.pdf`;
         document.body.appendChild(link);
         link.click();
         link.remove();
       });
+
+    createEmptyCv().then(() => {
+      //refresh()
+      setLoadingStatus(LoadingStatus.Loading);
+    });
   };
 
-  const handleDeleteResume = (id: string) => {
-    //console.log('Delete resume:', id)
+  const handleEditResume = (cv: CvData) => {
+    router.push("/editor/" + cv.id);
   };
 
-  const handleOpenResume = (id: string) => {
-    //console.log('Open resume:', id)
+  const handleShareResume = (cv: CvData) => {
+    //TODO: implement share dialog
+    console.log("Share resume:", cv.id);
+  };
+
+  const handleDuplicateResume = (cv: CvData) => {
+    if (cv.id) {
+      duplicateCv(cv.id).then(() => {
+        setLoadingStatus(LoadingStatus.Loading);
+      });
+    }
+  };
+
+  const handleDeleteResume = (cv: CvData) => {
+    if (cv.id) {
+      remove(cv.id).then(() => {
+        setLoadingStatus(LoadingStatus.Loading);
+      });
+    }
+  };
+
+  const handleOpenResume = (cv: CvData) => {
+    router.push("cv-preview/" + cv.id);
   };
 
   return (
@@ -89,12 +125,13 @@ export default function Page() {
           <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
             <div className="px-4 lg:px-6 pb-3">
               <h1 className="text-2xl font-semibold text-foreground">
-                Welcome back, Katrin!! 👋
+                Welcome back, {userName}! 👋
               </h1>
             </div>
-            <SectionCards />
+
+            {/*<SectionCards />*/}
             <ResumeGrid
-              resumes={mockResumes}
+              resumes={cvDataList}
               onCreateNew={handleCreateNew}
               onEditResume={handleEditResume}
               onShareResume={handleShareResume}

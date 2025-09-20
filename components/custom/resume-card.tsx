@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { IconPlus } from '@tabler/icons-react'
 import { ResumeCardMenu } from './resume-card-menu'
+import moment from 'moment'
 
 interface ResumeCardProps {
   type: 'create' | 'resume'
@@ -81,7 +82,7 @@ export function ResumeCard({
 
       <CardFooter className="flex-shrink-0 pr-2">
         <div className="flex items-center justify-between w-full">
-          <p className="text-xs text-muted-foreground">Edited {lastEdited}</p>
+          <p className="text-xs text-muted-foreground">Edited {moment(lastEdited).format('DD.MM.YYYY')}</p>
           <div className="ml-auto">
             <ResumeCardMenu
               onEdit={onEdit}

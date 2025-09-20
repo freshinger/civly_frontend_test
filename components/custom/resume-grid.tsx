@@ -2,23 +2,17 @@
 
 import * as React from 'react'
 import { ResumeCard } from './resume-card'
-
-interface Resume {
-  id: string
-  title: string
-  lastEdited: string
-  previewImage?: string
-}
+import { CvData } from '@/schemas/cv_data_schema'
 
 interface ResumeGridProps {
-  resumes?: Resume[]
+  resumes?: CvData[] | null
   onCreateNew?: () => void
-  onEditResume?: (id: string) => void
-  onShareResume?: (id: string) => void
-  onDuplicateResume?: (id: string) => void
-  onExportPdf?: (id: string) => void
-  onDeleteResume?: (id: string) => void
-  onOpenResume?: (id: string) => void
+  onEditResume?: (cv: CvData) => void
+  onShareResume?: (cv: CvData) => void
+  onDuplicateResume?: (cv: CvData) => void
+  onExportPdf?: (cv: CvData) => void
+  onDeleteResume?: (cv: CvData) => void
+  onOpenResume?: (cv: CvData) => void
 }
 
 export function ResumeGrid({
@@ -40,19 +34,19 @@ export function ResumeGrid({
       <div className="grid grid-cols-1 gap-4 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         <ResumeCard type="create" onClick={onCreateNew} />
 
-        {resumes.map((resume) => (
+        {resumes && resumes.length > 0 && resumes?.map((resume) => (
           <ResumeCard
             key={resume.id}
             type="resume"
-            title={resume.title}
-            lastEdited={resume.lastEdited}
-            previewImage={resume.previewImage}
-            onClick={() => onOpenResume?.(resume.id)}
-            onEdit={() => onEditResume?.(resume.id)}
-            onShare={() => onShareResume?.(resume.id)}
-            onDuplicate={() => onDuplicateResume?.(resume.id)}
-            onExportPdf={() => onExportPdf?.(resume.id)}
-            onDelete={() => onDeleteResume?.(resume.id)}
+            title={resume.name}
+            lastEdited={resume.updatedAt}
+            previewImage={'resume-2cols-thumbnail.svg'}
+            onClick={() => onOpenResume?.(resume)}
+            onEdit={() => onEditResume?.(resume)}
+            onShare={() => onShareResume?.(resume)}
+            onDuplicate={() => onDuplicateResume?.(resume)}
+            onExportPdf={() => onExportPdf?.(resume)}
+            onDelete={() => onDeleteResume?.(resume)}
           />
         ))}
       </div>

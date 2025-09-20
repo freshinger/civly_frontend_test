@@ -4,16 +4,16 @@ import { CvData } from "@/schemas/cv_data_schema";
 
 export function ShowCVByTemplate({ cvData }: { cvData: CvData }) {
   console.log("cvData: ", cvData);
-  if (!cvData || !cvData.layoutConfigs) {
-    return (
-      <div className="flex items-center justify-center w-[200px]">
-        <span className="text-md w-[200px]">
-          cvData: {JSON.stringify(cvData)}{" "}
-        </span>
-      </div>
-    );
-  }
-  switch ((cvData as CvData).layoutConfigs?.templateId) {
+  const newCvData = {
+    ...cvData,
+    layoutConfigs: {
+      templateId: 0,
+      colorId: 0,
+      fontId: 0,
+      fontSizeId: 0,
+    },
+  };
+  switch (newCvData.layoutConfigs?.templateId) {
     case 0:
       return (
         <>

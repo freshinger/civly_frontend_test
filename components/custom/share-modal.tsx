@@ -40,12 +40,12 @@ export function ShareModal({
   onCopyLink,
   onShareEmail,
 }: ShareModalProps) {
-  const { items } = useCvStore();
+  const { remoteitems } = useCvStore();
 
   if (!cv) return null;
 
   // Get the most up-to-date version of the CV from the store
-  const currentCv = items.find((item) => item.id === cv.id) || cv;
+  const currentCv = remoteitems.find((item) => item.id === cv.id) || cv;
 
   const isPublished =
     currentCv.visibility === "public" || currentCv.visibility === "private";

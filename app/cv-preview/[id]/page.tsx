@@ -1,16 +1,17 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { ShowCVByTemplate } from "@/components/custom/cv-view/ShowCVByTemplate";
+import { createClient } from "@/utils/supabase/server";
 
 export default async function Page({
-  params,
+  params
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = createClient();
+
+  const supabase = await createClient();
 
   const data = await supabase.functions.invoke("cv-data/" + id, {
     method: "GET",

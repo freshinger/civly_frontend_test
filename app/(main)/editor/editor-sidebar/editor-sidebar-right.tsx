@@ -51,6 +51,7 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     (async () => {
       if (id) {
         const cv = await getSingle(id);
+        console.log("CV in sidebar: ", cv);
         if (cv) {
           form.reset(cv);
           setLoadingStatus(LoadingStatus.Loaded);

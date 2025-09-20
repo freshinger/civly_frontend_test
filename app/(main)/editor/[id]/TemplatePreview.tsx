@@ -22,7 +22,7 @@ export const TemplatePreview = ({ id }: { id: string }) => {
     let alive = true;
     subscribe((state) => {
       console.log("state change", state);
-      setCvData(state.items.find((x) => x?.id === id) as CvData);
+      setCvData(state.localList?.find((x) => x?.id === id) as CvData);
     });
     (async () => {
       const data = await getSingle(id);

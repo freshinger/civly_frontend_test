@@ -25,15 +25,18 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { createClient } from "@/utils/supabase/client";
-import { handleExportPdf } from "@/services/cv_data.service";
-import { PersonalInformation } from "@/schemas/personal_information_schema";
+import {
+  createEmptyCv,
+  deleteCv,
+  duplicateCv,
+  handleExportPdf,
+} from "@/services/cv_data.service";
+import { LoadingStatus } from "@/types/LoadingStatus";
 import { Button } from "./ui/button";
 
 export function NavMain({
   items,
   resumes,
-  cvs,
 }: {
   items: {
     title: string;
@@ -45,13 +48,30 @@ export function NavMain({
     title: string;
     url: string;
     icon?: Icon;
-    items: CvData[];
   };
-  cvs: CvData[];
 }) {
+  const fetchAll = useCvStore((s) => s.fetchAll);
+  const duplicate = useCvStore((s) => s.duplicateOne);
+  const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
+  const subscribe = useCvStore.subscribe;
+
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+    LoadingStatus.Loading
+  );
+
+  useEffect(() => {
+    subscribe((state) => {
+      console.log("state change", state);
+      setCvDataList(state.remoteitems);
+    });
+    fetchAll()
+      .then(() => setLoadingStatus(LoadingStatus.Loaded))
+      .catch(() => setLoadingStatus(LoadingStatus.Error));
+  }, []);
+
   const router = useRouter();
   const { toast } = useToast();
-  const { deleteOne, fetchAll } = useCvStore();
+
   const [isResumesOpen, setIsResumesOpen] = useState(false);
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null);
   // State for cascade animation effects
@@ -69,11 +89,11 @@ export function NavMain({
 
   // Cascade effect for "My Resumes" section
   useEffect(() => {
-    if (cvs && cvs.length > 0) {
+    if (cvDataList && cvDataList.length > 0) {
       if (isResumesOpen) {
         // Opening: Show items progressively with cascade
         setDisappearingCvs(new Set()); // Clear any disappearing state
-        cvs.forEach((_: CvData, index: number) => {
+        cvDataList.forEach((_, index) => {
           setTimeout(() => {
             setVisibleCvs((prev) => new Set([...prev, index]));
           }, index * 35); // Faster, smoother cascade
@@ -81,72 +101,48 @@ export function NavMain({
       } else {
         // Closing: Hide items in reverse cascade (last item disappears first)
         setVisibleCvs(new Set()); // Clear visible state immediately
-        if (cvs) {
-          cvs
-            .slice()
-            .reverse()
-            .forEach((_: CvData, reverseIndex: number) => {
-              const originalIndex = cvs.length - 1 - reverseIndex;
-              setTimeout(() => {
-                setDisappearingCvs((prev) => new Set([...prev, originalIndex]));
-              }, reverseIndex * 35); // Faster, smoother reverse cascade
-            });
-          // Clear disappearing state after animation completes
-          setTimeout(
-            () => {
-              setDisappearingCvs(new Set());
-            },
-            cvs.length * 35 + 150
-          ); // Adjusted cleanup timing
-        }
+        cvDataList
+          .slice()
+          .reverse()
+          .forEach((_, reverseIndex) => {
+            const originalIndex = cvDataList.length - 1 - reverseIndex;
+            setTimeout(() => {
+              setDisappearingCvs((prev) => new Set([...prev, originalIndex]));
+            }, reverseIndex * 35); // Faster, smoother reverse cascade
+          });
+        // Clear disappearing state after animation completes
+        setTimeout(
+          () => {
+            setDisappearingCvs(new Set());
+          },
+          cvDataList.length * 35 + 150
+        ); // Adjusted cleanup timing
       }
     }
-  }, [isResumesOpen, cvs]);
+  }, [isResumesOpen, cvDataList]);
 
   // Create a new blank CV
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSelectedCvId(null); // Clear any selected CV
-    console.log("Creating new CV...");
 
     try {
-      const supabase = await createClient();
-      console.log("Supabase client created");
-
-      const response = await supabase.functions.invoke("cv-data/", {
-        body: {
-          name: "Resume",
-          visibility: "draft", // All new CVs start as draft
-        },
-      });
-
-      console.log("CV creation response:", response);
-
-      if (response.error) {
-        console.error("CV creation error:", response.error);
-        throw new Error(response.error.message || "Failed to create CV");
-      }
-
-      console.log("CV created successfully, refreshing store...");
-      // Refresh the store to get the new CV from server
-      await fetchAll();
-      console.log("Store refreshed");
-
-      toast.success("New CV created successfully!");
+      await createEmptyCv();
+      setLoadingStatus(LoadingStatus.Loading);
     } catch (error) {
       console.error("Error creating CV:", error);
       toast.error("Failed to create new CV");
     }
   }
 
-  const deleteCv = async () => {
+  const remove = async () => {
     if (!cvToDelete || !cvToDelete.id) return;
 
     try {
       setDeleteDialogOpen(false);
-      await deleteOne(cvToDelete.id);
-      toast.success("CV deleted successfully!");
-      router.refresh();
+      await deleteCv(cvToDelete.id);
+      //refresh()
+      setLoadingStatus(LoadingStatus.Loading);
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete CV");
@@ -176,7 +172,7 @@ export function NavMain({
   };
 
   const shareViaEmail = () => {
-    const cvName = cvToShare ? getCvDisplayName(cvToShare) : "My CV";
+    const cvName = cvToShare ? cvToShare.name?.trim() : "My CV";
     const subject = `Check out my CV: ${cvName}`;
     const body = `Hi,
 
@@ -196,41 +192,6 @@ Best regards`;
     window.open(mailtoUrl);
     toast.success("Email client opened with CV sharing message!");
   };
-
-  // Simple function to get CV display name for list items
-  const getCvDisplayName = (cv: CvData) => {
-    // Always prioritize the document name (cv.name)
-    console.log("getCvDisplayName called for CV:", cv.id, "name:", cv.name);
-    if (cv.name && cv.name.trim()) {
-      return cv.name.trim();
-    }
-
-    // Second priority: use personal information
-    const personalInfo = cv.personalInformation || ({} as PersonalInformation);
-    const name = personalInfo.name ?? "";
-    const surname = personalInfo.surname ?? "";
-
-    if (name || surname) {
-      return `CV - ${name} ${surname}`.trim();
-    }
-
-    // Third priority: use email
-    const email = personalInfo.email || "";
-    if (email) {
-      return `CV - ${email.split("@")[0]}`;
-    }
-
-    // Fallback to ID or date
-    const dateStr = cv.createdAt
-      ? new Date(cv.createdAt).toLocaleDateString()
-      : "";
-    return `CV - ${dateStr || cv.id?.toString().slice(0, 8)}`;
-  };
-
-  if (resumes) {
-    const resumesNew = resumes;
-    resumesNew.items = cvs;
-  }
 
   return (
     <SidebarGroup>
@@ -291,16 +252,16 @@ Best regards`;
                 />
               </SidebarMenuButton>
               <div
-                className={`overflow-y-auto overflow-x-hidden transition-all duration-300 ease-in-out ${
+                className={` transition-all duration-300 ease-in-out ${
                   isResumesOpen
                     ? "max-h-[70vh] opacity-100"
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <SidebarMenuSub className="mx-0 px-0 gap-0.5 overflow-x-hidden">
-                  {resumes && resumes.items && resumes.items.length > 0 ? (
+                <SidebarMenuSub className="mx-0 px-0 gap-0.5">
+                  {cvDataList && cvDataList?.length > 0 ? (
                     <>
-                      {resumes.items.map((cv, index) => {
+                      {cvDataList?.map((cv, index) => {
                         // Only the selected CV is active
                         const isActiveCv = selectedCvId === cv.id?.toString();
                         const isVisible = visibleCvs.has(index);
@@ -321,7 +282,10 @@ Best regards`;
                                 ? "0ms" // No delay for disappearing items
                                 : isVisible
                                   ? `${
-                                      cvs.findIndex((c) => c.id === cv.id) * 20
+                                      cvDataList &&
+                                      cvDataList.findIndex(
+                                        (c) => c.id === cv.id
+                                      ) * 20
                                     }ms` // Smoother staggered appearance
                                   : "0ms",
                             }}
@@ -343,27 +307,27 @@ Best regards`;
                                   className={`text-sm ${
                                     isActiveCv ? "font-bold" : ""
                                   }`}
-                                  title={getCvDisplayName(cv)}
+                                  title={cv.name?.trim()}
                                 >
-                                  {getCvDisplayName(cv)}
+                                  {cv.name?.trim()}
                                 </span>
                               </Button>
                               <div className="opacity-0 group-hover/item:opacity-100 transition-opacity py-1 pr-2 flex items-center justify-center">
                                 <ResumeCardMenu
                                   onEdit={() => {
                                     // Navigate to edit mode
-                                    router.push(`/editor?cv=${cv.id}`);
+                                    router.push(`/editor/${cv.id}`);
                                   }}
                                   onShare={async () => {
                                     openShareModal(cv);
                                   }}
                                   onDuplicate={async () => {
                                     try {
-                                      // TODO: Implement actual duplicate functionality
-                                      toast.info(
-                                        "Duplicate feature coming soon!"
-                                      );
-                                      console.log("Duplicate CV:", cv.id);
+                                      if (cv.id) {
+                                        duplicate(cv.id);
+                                        //refresh()
+                                        setLoadingStatus(LoadingStatus.Loading);
+                                      }
                                     } catch (error) {
                                       console.error("Duplicate error:", error);
                                       toast.error("Failed to duplicate CV");
@@ -372,7 +336,7 @@ Best regards`;
                                   onExportPdf={async () => {
                                     try {
                                       if (cv.id) {
-                                        handleExportPdf(cv.id);
+                                        handleExportPdf(cv);
                                       }
                                     } catch (error) {
                                       console.error("Export error:", error);
@@ -454,7 +418,7 @@ Best regards`;
         isOpen={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         cv={cvToDelete}
-        onDelete={deleteCv}
+        onDelete={remove}
       />
     </SidebarGroup>
   );

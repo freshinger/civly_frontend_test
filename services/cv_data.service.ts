@@ -5,18 +5,17 @@ const sb = createClient();
 
 const path = "cv-data/";
 
-// Fetch ALL (collection)
-export async function fetchAllCvs(): Promise<CvData[]> {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+export async function fetchAll(): Promise<CvData[]> {
+  const { data, error } = await sb.functions.invoke(path, {
     method: "GET",
   });
   if (error) throw error;
-  return (data as { items: CvData[] }).items;
+  return data.data;
 }
 
 // Single-item CRUD (server owns timestamps)
 export async function fetchCv(id: string): Promise<CvData> {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke(path + id, {
     method: "GET",
   });
   if (error) throw error;
@@ -24,7 +23,7 @@ export async function fetchCv(id: string): Promise<CvData> {
 }
 
 export async function createEmptyCv(): Promise<{ id: string }> {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke(path, {
     method: "POST",
     body: {},
   });
@@ -32,47 +31,50 @@ export async function createEmptyCv(): Promise<{ id: string }> {
   return data as { id: string };
 }
 
-export async function duplicateCv(id: string | null): Promise<CvData | null> {
-  if (id === null) return null;
-  const { data, error } = await sb.functions.invoke("cv-data/" + id, {
+export async function duplicateCv(id: string | null): Promise<string> {
+  if (id === null) return "";
+  const { data, error } = await sb.functions.invoke(path + id, {
     method: "POST",
     body: {},
   });
   if (error) throw error;
-  return data;
+  return data.data.id as string;
 }
 
 export async function updateCVName(id: string, value: string) {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+  const { data, error } = await sb.functions.invoke(path + id, {
     method: "PATCH",
-    body: {},
+    body: { name: value },
   });
 }
 
-export async function updateVisibility(id: string, value: string) {
-  const { data, error } = await sb.functions.invoke("cv-data/", {
+export async function updateVisibility(cv: CvData, value: string) {
+  const { data, error } = await sb.functions.invoke(path + cv.id, {
     method: "PATCH",
-    body: {},
+    body: { visibility: value, name: cv.name },
   });
+
+  if (error) throw error;
+  return data;
 }
 
 export async function updateCv(item: CvData): Promise<void> {
-  const { error } = await sb.functions.invoke("cv-data/" + item.id, {
+  const { error } = await sb.functions.invoke(path + item.id, {
     method: "PUT",
-    body: { item },
+    body: item,
   });
   if (error) throw error;
 }
 
 export async function deleteCv(id: string): Promise<void> {
-  const { error } = await sb.functions.invoke("cv-data/" + id, {
+  const { error } = await sb.functions.invoke(path + id, {
     method: "DELETE",
   });
   if (error) throw error;
 }
 
-export function handleExportPdf(id: string) {
-  fetch("export/" + id)
+export function handleExportPdf(cv: CvData) {
+  fetch("/export/" + cv.id)
     .then(async (res) => {
       if (res.body !== null) {
         const reader = res.body.getReader();
@@ -101,7 +103,7 @@ export function handleExportPdf(id: string) {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.download = `cv-${id}.pdf`;
+      link.download = `cv-${cv.id}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();

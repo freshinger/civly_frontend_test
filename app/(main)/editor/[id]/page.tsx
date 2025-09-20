@@ -1,26 +1,31 @@
-"use client";
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
-import { EditorSidebarRight } from "@/app/(main)/editor/editor-sidebar/editor-sidebar-right";
-import { useParams } from "next/navigation";
-import { TemplatePreview } from "./TemplatePreview";
-import { SiteHeader } from "@/components/site-header";
-import { EditorHeader } from "../editor-sidebar/editor-header";
+'use client'
+import { EditorSidebarRight } from '@/app/(main)/editor/editor-sidebar/editor-sidebar-right'
+import { useParams } from 'next/navigation'
+import { TemplatePreview } from './TemplatePreview'
+import { EditorHeader } from '../editor-sidebar/editor-header'
+import { useState } from 'react'
 
 export default function Page() {
-  const { id } = useParams() as { id: string };
+  const { id } = useParams() as { id: string }
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
+
   return (
-    <SidebarProvider isWide={true} className="overflow-hidden h-[100vh]">
-      <SidebarInset>
-        <SiteHeader />
-        <EditorHeader id={id} />
-        <div className="min-h-[100vh] gap-4 p-4 overflow-y-auto">
+    <div className="grid h-screen w-full max-w-full overflow-hidden" style={{gridTemplateColumns: rightSidebarOpen ? '1fr 400px' : '1fr 0px'}}>
+      <div className="flex flex-col overflow-hidden min-w-0">
+        <EditorHeader
+          cvId={id}
+          rightSidebarOpen={rightSidebarOpen}
+          setRightSidebarOpen={setRightSidebarOpen}
+        />
+        <div className="flex-1 gap-4 p-4 overflow-auto min-w-0">
           <TemplatePreview id={id} />
         </div>
-      </SidebarInset>
-      <EditorSidebarRight id={id} />
-    </SidebarProvider>
+      </div>
+      <div className={`transition-all duration-300 ${rightSidebarOpen ? '' : 'hidden lg:hidden'} lg:block overflow-hidden`}>
+        <div className="w-full h-full">
+          <EditorSidebarRight id={id} />
+        </div>
+      </div>
+    </div>
   )
 }

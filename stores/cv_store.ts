@@ -16,6 +16,7 @@ type CvStore = {
   items: CvData[];
   fetchAll: () => Promise<CvData[]>;
   saveLocally: (cv: CvData) => void;
+  saveName: (cv: CvData) => void;
   saveRemote: (cv: CvData) => Promise<void>;
   getSingle: (id: string) => Promise<CvData | undefined>;
   deleteOne: (id: string) => Promise<void>;
@@ -58,6 +59,16 @@ export const useCvStore = create<CvStore>()(
             updatedAt: current.updatedAt,
           };
           return { items: next };
+        });
+      },
+
+      saveName: (cv) => {
+        set((s) => {
+          const newItems = get().items;
+          const idx = newItems.findIndex((x) => x?.id === cv.id);
+          newItems[idx].name = cv.name;
+          console.log("new items", newItems)
+          return { items: newItems };
         });
       },
 

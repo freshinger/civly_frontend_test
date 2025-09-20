@@ -9,6 +9,7 @@ import {
   updateCVName,
   fetchCv,
   updateVisibility,
+  handleExportPdf,
 } from '@/services/cv_data.service'
 import type { CvData } from '@/schemas/cv_data_schema'
 
@@ -38,7 +39,9 @@ export type Visibility = 'Public' | 'Private' | 'Draft'
 export function EditorHeader({ cvId = 'dummy' }: { cvId?: string }) {
   // --- Store ---
   const { items: cvs } = useCvStore()
-
+  const remove = useCvStore((s) => s.deleteOne);
+  const duplicate = useCvStore((s) => s.duplicateOne);
+  const saveName = useCvStore((s) => s.saveName);
   // --- State Management ---
   const [currentCv, setCurrentCv] = useState<CvData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -192,7 +195,10 @@ Best regards`
         ...currentCv,
         name: cvName.trim(),
       })
-
+      saveName({
+        ...currentCv,
+        name: cvName.trim(),
+      })
       setSaveStatus('Saved')
     } catch (error) {
       console.error('Error updating CV name:', error)
@@ -347,17 +353,18 @@ Best regards`
             side="bottom"
             showEdit={false}
             onShare={handleShare}
-            onExportPdf={() => {
-              // TODO: Implementar export PDF
-              console.log('Export PDF clicked')
-            }}
+            onExportPdf={() =>
+              handleExportPdf(currentCv as CvData)
+            }
             onDuplicate={() => {
-              // TODO: Implementar duplicate
-              console.log('Duplicate clicked')
+              if(currentCv !== undefined && currentCv !== null){
+                duplicate(currentCv.id!)
+              }
             }}
             onDelete={() => {
-              // TODO: Implementar delete
-              console.log('Delete clicked')
+              if(currentCv !== undefined && currentCv !== null){
+                remove(currentCv.id!)
+              }
             }}
           />
         </div>

@@ -96,7 +96,7 @@ export function EditorSidebarRight({ id, ...props }: Props) {
   return (
     <Sidebar
       collapsible="none"
-      className="top-0 hidden h-svh border-l lg:flex"
+      className="top-0 h-svh border-l w-full"
       {...props}
     >
       <Form {...form}>

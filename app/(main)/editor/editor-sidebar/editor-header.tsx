@@ -19,6 +19,8 @@ import { ResumeCardMenu } from "@/components/custom/resume-card-menu";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { PanelLeftIcon } from "lucide-react";
 import {
   IconPencil,
   IconLock,
@@ -35,7 +37,15 @@ type SaveStatus = "Saved" | "Saving..." | "Unsaved Changes" | "Error";
 export type Visibility = "Public" | "Private" | "Draft";
 
 // --- The Main Header Component ---
-export function EditorHeader({ cvId = "dummy" }: { cvId?: string }) {
+export function EditorHeader({
+  cvId = "dummy",
+  rightSidebarOpen,
+  setRightSidebarOpen,
+}: {
+  cvId?: string;
+  rightSidebarOpen?: boolean;
+  setRightSidebarOpen?: (open: boolean) => void;
+}) {
   // --- Store ---
   const { remoteitems: cvs } = useCvStore();
 
@@ -104,7 +114,7 @@ export function EditorHeader({ cvId = "dummy" }: { cvId?: string }) {
     newVisibility: Visibility,
     newPassword?: string
   ) => {
-    if (!currentCv || currentCv.id === "dummy") {
+    if (!currentCv) {
       return;
     }
 
@@ -210,8 +220,9 @@ Best regards`;
   // If loading or CV not found, show appropriate state
   if (isLoading) {
     return (
-      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white z-[5] h-16">
+      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-16">
         <div className="flex items-center gap-3">
+          <SidebarTrigger className="relative z-[60]" />
           <span className="text-md font-semibold text-gray-500">
             Loading CV...
           </span>
@@ -230,8 +241,9 @@ Best regards`;
 
   if (!currentCv && cvId !== "dummy") {
     return (
-      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white z-[5] h-16">
+      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-16">
         <div className="flex items-center gap-3">
+          <SidebarTrigger className="relative z-[60]" />
           <span className="text-md font-semibold text-gray-500">
             CV not found
           </span>
@@ -265,8 +277,19 @@ Best regards`;
 
   return (
     <>
-      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white z-[5] h-[50px]">
-        {/* Left Side: Document Info & Status */}
+      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-[50px]">
+        {/* Left Side: Trigger & Save Status */}
+        <div className="flex items-center gap-3">
+          <SidebarTrigger className="relative z-[60]" />
+          <Badge
+            variant="outline"
+            className={`text-xs px-2 py-1 font-medium border ${getSaveStatusBadgeVariant()}`}
+          >
+            {saveStatus}
+          </Badge>
+        </div>
+
+        {/* Center: Document Name */}
         <div className="flex items-center gap-3">
           {isEditingName ? (
             <div className="flex items-center gap-2">
@@ -314,16 +337,6 @@ Best regards`;
           )}
         </div>
 
-        {/* Center: Save Status */}
-        <div className="flex items-center">
-          <Badge
-            variant="outline"
-            className={`text-xs px-2 py-1 font-medium border ${getSaveStatusBadgeVariant()}`}
-          >
-            {saveStatus}
-          </Badge>
-        </div>
-
         {/* Right Side: Visibility */}
         <div className="flex items-center gap-2">
           {/* Draft/Visibility Button */}
@@ -340,7 +353,6 @@ Best regards`;
             )}
             {getVisibility()}
           </Button>
-
           {/* Options Menu */}
           <ResumeCardMenu
             align="end"
@@ -360,6 +372,23 @@ Best regards`;
               console.log("Delete clicked");
             }}
           />
+          {/* Right Sidebar Trigger */}
+          {setRightSidebarOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+              title={rightSidebarOpen ? "Hide right panel" : "Show right panel"}
+            >
+              <PanelLeftIcon
+                size={16}
+                className={`transition-transform duration-300 ${
+                  rightSidebarOpen ? "rotate-180" : ""
+                }`}
+              />
+            </Button>
+          )}
         </div>
       </header>
 

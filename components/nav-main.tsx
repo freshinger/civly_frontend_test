@@ -25,16 +25,14 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { createClient } from "@/utils/supabase/client";
 import {
   createEmptyCv,
   deleteCv,
   duplicateCv,
   handleExportPdf,
 } from "@/services/cv_data.service";
-import { PersonalInformation } from "@/schemas/personal_information_schema";
-import { Button } from "./ui/button";
-import { useCVListStore } from "@/providers/cvListProvider";
+import { useCvStore } from "@/app/(main)/editor/cv_store";
+import { LoadingStatus } from "@/types/LoadingStatus";
 
 export function NavMain({
   items,
@@ -50,14 +48,39 @@ export function NavMain({
     title: string;
     url: string;
     icon?: Icon;
-    items: CvData[];
   };
 }) {
+  const fetchAll = useCvStore((s) => s.fetchAll);
+  const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
+  const subscribe = useCvStore.subscribe;
+
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+    LoadingStatus.Loading
+  );
+
+  useEffect(() => {
+    let alive = true;
+    subscribe((state) => {
+      console.log("state change", state);
+      setCvDataList(state.listItems);
+    });
+    (async () => {
+      const data = await fetchAll();
+      if (!alive) {
+        //setLoadingStatus(LoadingStatus.Error);
+        return;
+      }
+      setCvDataList(data as CvData[]);
+      setLoadingStatus(LoadingStatus.Loaded);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [loadingStatus]);
+
   const router = useRouter();
   const { toast } = useToast();
 
-  const { updateList, getCVS } = useCVListStore((state) => state);
-  const [cvs, setCVS] = useState<CvData[]>([]);
   const [isResumesOpen, setIsResumesOpen] = useState(false);
   const [selectedCvId, setSelectedCvId] = useState<string | null>(null);
   // State for cascade animation effects
@@ -73,26 +96,13 @@ export function NavMain({
   const [linkCopied, setLinkCopied] = useState(false);
   const pathname = usePathname();
 
-  function refresh() {
-    updateList().then((data) => {
-      setCVS(getCVS());
-      if (resumes) {
-        resumes.items = data;
-      }
-    });
-  }
-
-  useEffect(() => {
-    refresh();
-  }, []);
-
   // Cascade effect for "My Resumes" section
   useEffect(() => {
-    if (cvs && cvs.length > 0) {
+    if (cvDataList && cvDataList.length > 0) {
       if (isResumesOpen) {
         // Opening: Show items progressively with cascade
         setDisappearingCvs(new Set()); // Clear any disappearing state
-        cvs.forEach((_: CvData, index: number) => {
+        cvDataList.forEach((_, index) => {
           setTimeout(() => {
             setVisibleCvs((prev) => new Set([...prev, index]));
           }, index * 35); // Faster, smoother cascade
@@ -100,27 +110,25 @@ export function NavMain({
       } else {
         // Closing: Hide items in reverse cascade (last item disappears first)
         setVisibleCvs(new Set()); // Clear visible state immediately
-        if (cvs) {
-          cvs
-            .slice()
-            .reverse()
-            .forEach((_: CvData, reverseIndex: number) => {
-              const originalIndex = cvs.length - 1 - reverseIndex;
-              setTimeout(() => {
-                setDisappearingCvs((prev) => new Set([...prev, originalIndex]));
-              }, reverseIndex * 35); // Faster, smoother reverse cascade
-            });
-          // Clear disappearing state after animation completes
-          setTimeout(
-            () => {
-              setDisappearingCvs(new Set());
-            },
-            cvs.length * 35 + 150
-          ); // Adjusted cleanup timing
-        }
+        cvDataList
+          .slice()
+          .reverse()
+          .forEach((_, reverseIndex) => {
+            const originalIndex = cvDataList.length - 1 - reverseIndex;
+            setTimeout(() => {
+              setDisappearingCvs((prev) => new Set([...prev, originalIndex]));
+            }, reverseIndex * 35); // Faster, smoother reverse cascade
+          });
+        // Clear disappearing state after animation completes
+        setTimeout(
+          () => {
+            setDisappearingCvs(new Set());
+          },
+          cvDataList.length * 35 + 150
+        ); // Adjusted cleanup timing
       }
     }
-  }, [isResumesOpen, cvs]);
+  }, [isResumesOpen, cvDataList]);
 
   // Create a new blank CV
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -129,7 +137,8 @@ export function NavMain({
 
     try {
       await createEmptyCv();
-      router.refresh();
+      //refresh()
+      setLoadingStatus(LoadingStatus.Loading);
     } catch (error) {
       console.error("Error creating CV:", error);
       toast.error("Failed to create new CV");
@@ -142,8 +151,8 @@ export function NavMain({
     try {
       setDeleteDialogOpen(false);
       await deleteCv(cvToDelete.id);
-      toast.success("CV deleted successfully!");
-      router.refresh();
+      //refresh()
+      setLoadingStatus(LoadingStatus.Loading);
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete CV");
@@ -289,10 +298,10 @@ Best regards`;
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <SidebarMenuSub className="mx-0 px-0 gap-0.5 overflow-x-hidden">
-                  {resumes && resumes.items && resumes.items.length > 0 ? (
+                <SidebarMenuSub className="mx-0 px-0 gap-0.5">
+                  {cvDataList ? (
                     <>
-                      {resumes.items.map((cv, index) => {
+                      {cvDataList.map((cv, index) => {
                         // Only the selected CV is active
                         const isActiveCv = selectedCvId === cv.id?.toString();
                         const isVisible = visibleCvs.has(index);
@@ -313,7 +322,10 @@ Best regards`;
                                 ? "0ms" // No delay for disappearing items
                                 : isVisible
                                   ? `${
-                                      cvs.findIndex((c) => c.id === cv.id) * 20
+                                      cvDataList &&
+                                      cvDataList.findIndex(
+                                        (c) => c.id === cv.id
+                                      ) * 20
                                     }ms` // Smoother staggered appearance
                                   : "0ms",
                             }}
@@ -353,7 +365,8 @@ Best regards`;
                                     try {
                                       if (cv.id) {
                                         await duplicateCv(cv.id);
-                                        router.refresh();
+                                        //refresh()
+                                        setLoadingStatus(LoadingStatus.Loading);
                                       }
                                     } catch (error) {
                                       console.error("Duplicate error:", error);

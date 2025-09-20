@@ -1,27 +1,52 @@
 "use client";
 
-import { SectionCards } from '@/components/section-cards'
 import { SiteHeader } from '@/components/site-header'
 import { ResumeGrid } from '@/components/custom/resume-grid'
 import { createEmptyCv, deleteCv, duplicateCv, handleExportPdf } from '@/services/cv_data.service'
 import { useRouter } from 'next/navigation'
-import { useCVListStore } from '@/providers/cvListProvider'
 import { useEffect, useState } from 'react'
 import { CvData } from '@/schemas/cv_data_schema'
 import router from 'next/router';
 import { useUserProfile } from '@/hooks/use-user-profile'
 import { getDisplayName } from '@/services/user-profile.service'
+import { useCvStore } from './editor/cv_store'
+import { LoadingStatus } from '@/types/LoadingStatus'
 
 export default function Page() {
+  const fetchAll = useCvStore((s) => s.fetchAll);
+  const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
+  const subscribe = useCvStore.subscribe;
+
+  
+  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+    LoadingStatus.Loading
+  );
+
+  useEffect(() => {
+    let alive = true;
+    subscribe((state) => {
+      console.log("state change", state);
+      setCvDataList(state.listItems);
+    });
+    (async () => {
+      const data = await fetchAll();
+      if (!alive) {
+        //setLoadingStatus(LoadingStatus.Error);
+        return;
+      }
+      setCvDataList(data as CvData[]);
+      setLoadingStatus(LoadingStatus.Loaded);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [loadingStatus]);
 
   const router = useRouter()
   const { profile } = useUserProfile()
   const userName = getDisplayName(profile)
 
-  const { updateList, getCVS } = useCVListStore(
-    (state) => state,
-  )
-  const [cvs, setCVS] = useState<CvData[]>([])
+  const [cvList, setCvList] = useState<CvData[]>([] as CvData[])
 
 
   const handleExportPdf = (id: string) => {
@@ -62,7 +87,8 @@ export default function Page() {
   };
 
     createEmptyCv().then(() => {
-      refresh()
+      //refresh()
+      setLoadingStatus(LoadingStatus.Loading)
     })
   }
 
@@ -78,7 +104,8 @@ export default function Page() {
   const handleDuplicateResume = (cv: CvData) => {
     if(cv.id){
       duplicateCv(cv.id).then(() => {
-        refresh()
+        //refresh()
+        setLoadingStatus(LoadingStatus.Loading)
       })
     }
   }
@@ -86,7 +113,8 @@ export default function Page() {
   const handleDeleteResume = (cv: CvData) => {
     if(cv.id){
       deleteCv(cv.id).then(() => {
-        refresh()
+        //refresh()
+        setLoadingStatus(LoadingStatus.Loading)
       })
     }
   }
@@ -94,17 +122,6 @@ export default function Page() {
   const handleOpenResume = (cv: CvData) => {
     router.push('cv-preview/'+cv.id)
   }
-
-  function refresh() {
-    updateList().then(() => {
-        setCVS(getCVS())
-      }
-    )
-  }
-
-  useEffect(() => {
-    refresh()
-  }, [])
 
   return (
     <>
@@ -120,7 +137,7 @@ export default function Page() {
             
             {/*<SectionCards />*/}
             <ResumeGrid
-              resumes={cvs}
+              resumes={cvDataList}
               onCreateNew={handleCreateNew}
               onEditResume={handleEditResume}
               onShareResume={handleShareResume}

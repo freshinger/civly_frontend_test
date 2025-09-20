@@ -29,7 +29,7 @@ export function AppSidebar({
   cvs: serverCvs = [],
   ...props
 }: React.ComponentProps<typeof Sidebar> & { cvs?: CvData[] }) {
-  const { items: storeCvs, fetchAll } = useCvStore();
+  const { remoteitems: storeCvs, fetchAll } = useCvStore();
 
   // Sync store with server data on mount if store is empty or server has more data
   React.useEffect(() => {

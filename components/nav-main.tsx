@@ -31,8 +31,8 @@ import {
   duplicateCv,
   handleExportPdf,
 } from "@/services/cv_data.service";
-import { useCvStore } from "@/stores/cv_store";
 import { LoadingStatus } from "@/types/LoadingStatus";
+import { Button } from "./ui/button";
 
 export function NavMain({
   items,
@@ -50,7 +50,7 @@ export function NavMain({
     icon?: Icon;
   };
 }) {
-  const fetchAll = useCvStore((s) => s.fetchAllList);
+  const fetchAll = useCvStore((s) => s.fetchAll);
   const duplicate = useCvStore((s) => s.duplicateOne);
   const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
   const subscribe = useCvStore.subscribe;
@@ -60,24 +60,14 @@ export function NavMain({
   );
 
   useEffect(() => {
-    let alive = true;
     subscribe((state) => {
       console.log("state change", state);
-      setCvDataList(state.items);
+      setCvDataList(state.remoteitems);
     });
-    (async () => {
-      const data = await fetchAll();
-      if (!alive) {
-        //setLoadingStatus(LoadingStatus.Error);
-        return;
-      }
-      setCvDataList(data as CvData[]);
-      setLoadingStatus(LoadingStatus.Loaded);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [loadingStatus]);
+    fetchAll()
+      .then(() => setLoadingStatus(LoadingStatus.Loaded))
+      .catch(() => setLoadingStatus(LoadingStatus.Error));
+  }, []);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -346,7 +336,7 @@ Best regards`;
                                   onExportPdf={async () => {
                                     try {
                                       if (cv.id) {
-                                        handleExportPdf(cv.id);
+                                        handleExportPdf(cv);
                                       }
                                     } catch (error) {
                                       console.error("Export error:", error);

@@ -5,7 +5,7 @@ const sb = createClient();
 
 const path = "cv-data/";
 
-export async function fetchAllCvsList(): Promise<CvData[]> {
+export async function fetchAll(): Promise<CvData[]> {
   const { data, error } = await sb.functions.invoke(path, {
     method: "GET",
   });
@@ -31,14 +31,14 @@ export async function createEmptyCv(): Promise<{ id: string }> {
   return data as { id: string };
 }
 
-export async function duplicateCv(id: string | null): Promise<CvData | null> {
-  if (id === null) return null;
+export async function duplicateCv(id: string | null): Promise<string> {
+  if (id === null) return "";
   const { data, error } = await sb.functions.invoke(path + id, {
     method: "POST",
     body: {},
   });
   if (error) throw error;
-  return data.data;
+  return data.data.id as string;
 }
 
 export async function updateCVName(id: string, value: string) {

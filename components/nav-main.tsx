@@ -31,7 +31,7 @@ import {
   duplicateCv,
   handleExportPdf,
 } from "@/services/cv_data.service";
-import { useCvStore } from "@/app/(main)/editor/cv_store";
+import { useCvStore } from "@/stores/cv_store";
 import { LoadingStatus } from "@/types/LoadingStatus";
 
 export function NavMain({

@@ -9,7 +9,7 @@ import { CvData } from '@/schemas/cv_data_schema'
 import router from 'next/router';
 import { useUserProfile } from '@/hooks/use-user-profile'
 import { getDisplayName } from '@/services/user-profile.service'
-import { useCvStore } from './editor/cv_store'
+import { useCvStore } from '../../stores/cv_store'
 import { LoadingStatus } from '@/types/LoadingStatus'
 
 export default function Page() {
@@ -46,7 +46,6 @@ export default function Page() {
   const { profile } = useUserProfile()
   const userName = getDisplayName(profile)
 
-  const [cvList, setCvList] = useState<CvData[]>([] as CvData[])
 
 
   const handleExportPdf = (id: string) => {

@@ -52,7 +52,7 @@ export function EditorHeader({
   setRightSidebarOpen?: (open: boolean) => void;
 }) {
   // --- Store ---
-  const { remoteitems: cvs } = useCvStore();
+  const { remoteItems: cvs } = useCvStore();
 
   // --- State Management ---
   const [currentCv, setCurrentCv] = useState<CvData | null>(null);

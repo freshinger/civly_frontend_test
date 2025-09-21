@@ -1,26 +1,26 @@
-'use client'
-import { useCallback, useEffect, useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { type User } from '@supabase/supabase-js'
-import { useToast } from '@/hooks/use-toast'
-import ProfilePicturePicker from './ProfilePicturePicker'
-import { Calendar } from '@/components/ui/calendar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+"use client";
+import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { type User } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
+import ProfilePicturePicker from "../../../components/custom/form/ImagePicker";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -29,76 +29,77 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { CalendarIcon, LogOut, Save, Trash2 } from 'lucide-react'
-import { format } from 'date-fns'
-import moment from 'moment'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/dialog";
+import { CalendarIcon, LogOut, Save, Trash2 } from "lucide-react";
+import { format } from "date-fns";
+import moment from "moment";
+import { cn } from "@/lib/utils";
+import ImagePicker from "../../../components/custom/form/ImagePicker";
 
 export default function AccountForm({ user }: { user: User | null }) {
-  const supabase = createClient()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(true)
-  const [name, setName] = useState<string | null>(null)
-  const [surname, setSurname] = useState<string | null>(null)
-  const [birthdate, setBirthdate] = useState<Date | undefined>(undefined)
-  const [website, setWebsite] = useState<string | null>(null)
-  const [avatar_url, setAvatarUrl] = useState<string | null>(null)
-  const [email, setEmail] = useState<string | null>(null)
-  const [phone, setPhone] = useState<string | null>(null)
-  const [location, setLocation] = useState<string | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
-  const [summary, setSummary] = useState<string | null>(null)
+  const supabase = createClient();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState<string | null>(null);
+  const [surname, setSurname] = useState<string | null>(null);
+  const [birthdate, setBirthdate] = useState<Date | undefined>(undefined);
+  const [website, setWebsite] = useState<string | null>(null);
+  const [avatar_url, setAvatarUrl] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
 
   const getProfile = useCallback(async () => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       // Get basic profile data from profiles table
       const { data: profileData, error } = await supabase
-        .from('profiles')
-        .select('name, surname, email, phone, avatarUrl')
-        .eq('id', user?.id)
-        .single()
+        .from("profiles")
+        .select("name, surname, email, phone, avatarUrl")
+        .eq("id", user?.id)
+        .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== "PGRST116") {
         // PGRST116 = no rows found
-        console.log('Profile fetch error:', error)
+        console.log("Profile fetch error:", error);
       }
 
       // Set basic profile data
       if (profileData) {
-        setName(profileData.name || '')
-        setSurname(profileData.surname || '')
-        setEmail(profileData.email || user?.email || '')
-        setPhone(profileData.phone || '')
-        setAvatarUrl(profileData.avatarUrl || '')
+        setName(profileData.name || "");
+        setSurname(profileData.surname || "");
+        setEmail(profileData.email || user?.email || "");
+        setPhone(profileData.phone || "");
+        setAvatarUrl(profileData.avatarUrl || "");
       } else {
         // Fallback to auth user data
-        setEmail(user?.email || '')
+        setEmail(user?.email || "");
       }
 
       // Get extended data from user metadata
-      const metadata = user?.user_metadata || {}
+      const metadata = user?.user_metadata || {};
       setBirthdate(
-        metadata.birthdate ? new Date(metadata.birthdate) : undefined,
-      )
-      setLocation(metadata.location || '')
-      setSummary(metadata.summary || '')
-      setWebsite(metadata.website || '')
+        metadata.birthdate ? new Date(metadata.birthdate) : undefined
+      );
+      setLocation(metadata.location || "");
+      setSummary(metadata.summary || "");
+      setWebsite(metadata.website || "");
     } catch (error) {
-      console.log('Error loading user data:', error)
+      console.log("Error loading user data:", error);
       // Set fallback values from auth user
-      setEmail(user?.email || '')
+      setEmail(user?.email || "");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [user, supabase])
+  }, [user, supabase]);
 
   useEffect(() => {
-    getProfile()
-  }, [getProfile])
+    getProfile();
+  }, [getProfile]);
 
   const updateProfile = async ({
     name,
@@ -111,18 +112,18 @@ export default function AccountForm({ user }: { user: User | null }) {
     website,
     avatar_url,
   }: {
-    name: string | null
-    surname: string | null
-    birthdate: Date | undefined
-    email: string | null
-    phone: string | null
-    location: string | null
-    summary: string | null
-    website: string | null
-    avatar_url: string | null
+    name: string | null;
+    surname: string | null;
+    birthdate: Date | undefined;
+    email: string | null;
+    phone: string | null;
+    location: string | null;
+    summary: string | null;
+    website: string | null;
+    avatar_url: string | null;
   }) => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       // Basic profile data for profiles table
       const profileData = {
@@ -132,38 +133,38 @@ export default function AccountForm({ user }: { user: User | null }) {
         phone,
         avatarUrl: avatar_url, // Fixed: database uses camelCase
         updatedAt: new Date().toISOString(), // Fixed: database uses camelCase
-      }
+      };
 
       // Extended profile data (store in user_metadata or separate table)
       const extendedData = {
         birthdate:
           birthdate instanceof Date
-            ? moment(birthdate).format('YYYY-MM-DD')
+            ? moment(birthdate).format("YYYY-MM-DD")
             : null,
         location,
         summary,
         website,
-      }
+      };
 
-      console.log('Updating profile with data:', profileData)
-      console.log('Extended data:', extendedData)
-      console.log('User ID:', user?.id)
+      console.log("Updating profile with data:", profileData);
+      console.log("Extended data:", extendedData);
+      console.log("User ID:", user?.id);
 
       // Update basic profile
       const { error, data } = await supabase
-        .from('profiles')
+        .from("profiles")
         .upsert({
           id: user?.id,
           ...profileData,
         })
-        .select()
+        .select();
 
-      console.log('Supabase response:', { data, error })
+      console.log("Supabase response:", { data, error });
 
       if (error) {
-        console.error('Database error:', error)
-        console.error('Error details:', JSON.stringify(error, null, 2))
-        throw error
+        console.error("Database error:", error);
+        console.error("Error details:", JSON.stringify(error, null, 2));
+        throw error;
       }
 
       // Store extended data in user metadata for now
@@ -173,61 +174,61 @@ export default function AccountForm({ user }: { user: User | null }) {
           name,
           surname,
         },
-      })
+      });
 
       if (metadataError) {
-        console.error('Metadata update error:', metadataError)
+        console.error("Metadata update error:", metadataError);
         // Don't throw error for metadata, it's supplementary
       }
 
-      toast.success('Profile updated successfully!')
+      toast.success("Profile updated successfully!");
     } catch (error) {
-      console.error('Error updating the data:', error)
+      console.error("Error updating the data:", error);
 
       if (error instanceof Error) {
-        toast.error(`Error updating profile: ${error.message}`)
+        toast.error(`Error updating profile: ${error.message}`);
       } else {
         toast.error(
-          'Error updating the data! Please check the console for details.',
-        )
+          "Error updating the data! Please check the console for details."
+        );
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const deleteAccount = async () => {
     try {
-      setLoading(true)
-      setDeleteDialogOpen(false) // Close dialog when action starts
+      setLoading(true);
+      setDeleteDialogOpen(false); // Close dialog when action starts
 
       // Delete user account using Supabase Admin API
-      const { error } = await supabase.auth.admin.deleteUser(user?.id || '')
+      const { error } = await supabase.auth.admin.deleteUser(user?.id || "");
 
-      if (error) throw error
+      if (error) throw error;
 
       // Sign out after successful deletion
-      await supabase.auth.signOut()
+      await supabase.auth.signOut();
 
-      toast.success('Account deleted successfully')
-      window.location.href = '/'
+      toast.success("Account deleted successfully");
+      window.location.href = "/";
     } catch (error) {
-      console.error('Error deleting account:', error)
-      toast.error('Error deleting account. Please contact support.')
+      console.error("Error deleting account:", error);
+      toast.error("Error deleting account. Please contact support.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleLogout = () => {
-    setLogoutDialogOpen(false)
+    setLogoutDialogOpen(false);
     // Submit the form to handle server-side logout
-    const form = document.createElement('form')
-    form.action = '/auth/signout'
-    form.method = 'post'
-    document.body.appendChild(form)
-    form.submit()
-  }
+    const form = document.createElement("form");
+    form.action = "/auth/signout";
+    form.method = "post";
+    document.body.appendChild(form);
+    form.submit();
+  };
 
   return (
     <div className="container max-w-4xl mx-auto p-6 space-y-6">
@@ -253,12 +254,14 @@ export default function AccountForm({ user }: { user: User | null }) {
           {/* Profile Picture Section */}
           <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg border">
             <div className="flex flex-col items-center space-y-1">
-              <ProfilePicturePicker
+              <ImagePicker
                 uid={user?.id ?? null}
                 url={avatar_url}
                 size={80}
+                bucket="avatars"
+                title="Profile Picture"
                 onUpload={(url) => {
-                  setAvatarUrl(url)
+                  setAvatarUrl(url);
                 }}
               />
             </div>
@@ -281,7 +284,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="username"
                 type="text"
-                value={user?.email || ''}
+                value={user?.email || ""}
                 disabled
                 className="bg-muted"
               />
@@ -294,15 +297,15 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant={'outline'}
+                    variant={"outline"}
                     className={cn(
-                      'w-full justify-start text-left font-normal focus-visible:ring-primary',
-                      !birthdate && 'text-muted-foreground',
+                      "w-full justify-start text-left font-normal focus-visible:ring-primary",
+                      !birthdate && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {birthdate ? (
-                      format(birthdate, 'PPP')
+                      format(birthdate, "PPP")
                     ) : (
                       <span>Pick a date</span>
                     )}
@@ -330,7 +333,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="name"
                 type="text"
-                value={name || ''}
+                value={name || ""}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your first name"
                 className="focus-visible:ring-primary"
@@ -344,7 +347,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="surname"
                 type="text"
-                value={surname || ''}
+                value={surname || ""}
                 onChange={(e) => setSurname(e.target.value)}
                 placeholder="Enter your last name"
                 className="focus-visible:ring-primary"
@@ -361,7 +364,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="email"
                 type="email"
-                value={email || ''}
+                value={email || ""}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 className="focus-visible:ring-primary"
@@ -375,7 +378,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="phone"
                 type="tel"
-                value={phone || ''}
+                value={phone || ""}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Enter your phone number"
                 className="focus-visible:ring-primary"
@@ -392,7 +395,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="location"
                 type="text"
-                value={location || ''}
+                value={location || ""}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Enter your location"
                 className="focus-visible:ring-primary"
@@ -406,7 +409,7 @@ export default function AccountForm({ user }: { user: User | null }) {
               <Input
                 id="website"
                 type="url"
-                value={website || ''}
+                value={website || ""}
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="Enter your website URL"
                 className="focus-visible:ring-primary"
@@ -421,7 +424,7 @@ export default function AccountForm({ user }: { user: User | null }) {
             </Label>
             <Textarea
               id="summary"
-              value={summary || ''}
+              value={summary || ""}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="Write a brief summary about yourself"
               rows={4}
@@ -453,7 +456,7 @@ export default function AccountForm({ user }: { user: User | null }) {
             className="flex items-center gap-2 bg-primary hover:bg-primary/90"
           >
             <Save className="h-4 w-4" />
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
 
           <Button
@@ -564,8 +567,8 @@ export default function AccountForm({ user }: { user: User | null }) {
                     >
                       <Trash2 className="h-4 w-4" />
                       {loading
-                        ? 'Deleting Account...'
-                        : 'Delete Account Permanently'}
+                        ? "Deleting Account..."
+                        : "Delete Account Permanently"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -626,5 +629,5 @@ export default function AccountForm({ user }: { user: User | null }) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

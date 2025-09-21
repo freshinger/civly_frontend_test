@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Section } from "@/components/custom/cv-form/form-section";
-import { FieldLabel } from "@/components/custom/cv-form/field-label";
+import { Section } from "@/components/custom/form/form-section";
+import { FieldLabel } from "@/components/custom/form/field-label";
 import { Button } from "@/components/ui/button";
 import { DatePickerInput } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";

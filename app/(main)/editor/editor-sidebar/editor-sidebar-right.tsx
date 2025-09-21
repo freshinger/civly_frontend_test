@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PersonalInformationTab } from "./personal-information"; // RHF version
 import { ExperienceTab } from "./experience-tab"; // RHF + useFieldArray
 import { LayoutTabPanel } from "./layout-tab";
+import { createClient } from "@/utils/supabase/client";
 
 import type { CvData } from "@/schemas/cv_data_schema";
 import { useEffect, useState } from "react";
@@ -28,6 +29,11 @@ import { Button } from "@/components/ui/button";
 import { LoadingStatus } from "@/types/loadingState";
 
 type Props = { id: string } & React.ComponentProps<typeof Sidebar>;
+const supabase = createClient();
+const {
+  data: { user },
+  error,
+} = await supabase.auth.getUser();
 
 export function EditorSidebarRight({ id, ...props }: Props) {
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
@@ -146,7 +152,7 @@ export function EditorSidebarRight({ id, ...props }: Props) {
 
               {/* RHF tabs: no props, they read from form context */}
               <CustomTabsContent value="profile">
-                <PersonalInformationTab />
+                <PersonalInformationTab userId={user?.id ?? ""} cvId={id} />
               </CustomTabsContent>
 
               <CustomTabsContent value="skills">

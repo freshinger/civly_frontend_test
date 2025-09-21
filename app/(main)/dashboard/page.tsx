@@ -29,7 +29,7 @@ export default function Page() {
   useEffect(() => {
     subscribe((state) => {
       console.log("state change", state);
-      setCvDataList(state.remoteitems);
+      setCvDataList(state.remoteItems);
     });
     fetchAll()
       .then(() => setLoadingStatus(LoadingStatus.Loaded))

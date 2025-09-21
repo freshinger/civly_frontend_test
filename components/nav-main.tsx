@@ -44,7 +44,7 @@ export function NavMain({
   // ---- Store selectors (no manual subscribe) ----
   const fetchAll = useCvStore((s) => s.fetchAll);
   const duplicate = useCvStore((s) => s.duplicateOne);
-  const cvDataList = useCvStore((s) => s.remoteitems ?? []) as CvData[];
+  const cvDataList = useCvStore((s) => s.remoteItems ?? []) as CvData[];
 
   // ---- Local UI state ----
   const [isResumesOpen, setIsResumesOpen] = useState(true);

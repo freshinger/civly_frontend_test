@@ -17,7 +17,8 @@ export default function Page() {
         gridTemplateColumns: rightSidebarOpen ? "1fr 400px" : "1fr 0px",
       }}
     >
-      <div className="flex flex-col overflow-hidden min-w-0 bg-red-100">
+      {/* LEFT COLUMN */}
+      <div className="flex flex-col overflow-hidden min-w-0">
         <div className="flex-shrink-0">
           <EditorHeader
             cvId={id}
@@ -25,36 +26,37 @@ export default function Page() {
             setRightSidebarOpen={setRightSidebarOpen}
           />
         </div>
-        <div className="flex flex-col w-full h-full bg-blue-100">
+
+        {/* FILL THE REST */}
+        <div className="flex-1 min-h-0 w-full bg-blue-100">
           <TransformWrapper
             initialScale={1}
-            initialPositionX={0}
-            initialPositionY={100}
             minScale={0.5}
             maxScale={4}
             limitToBounds={false}
-            wheel={{
-              disabled: false,
-              step: 0.1,
-              smoothStep: 0.01,
-              touchPadDisabled: false,
-            }}
-            pinch={{ disabled: false, step: 0.1 }}
+            centerOnInit
+            wheel={{ disabled: false, step: 0.15 }} // <-- remove smoothStep
+            pinch={{ disabled: false, step: 0.15 }}
+            panning={{ disabled: false }}
           >
             <TransformComponent
-              wrapperStyle={{
-                width: "100%",
-                height: "100%",
-              }}
+              wrapperStyle={{ width: "100%", height: "100%" }}
               contentStyle={{ width: "100%", height: "100%" }}
             >
-              <div className="w-full h-[100%]">
-                <TemplatePreview id={id} />
+              {/* Give the content real height so zoom has something to scale */}
+              <div className="w-full h-full grid place-items-center">
+                {/* If TemplatePreview sizes itself, keep as-is; 
+                   otherwise wrap it with a fixed canvas size */}
+                <div className="inline-block">
+                  <TemplatePreview id={id} />
+                </div>
               </div>
             </TransformComponent>
           </TransformWrapper>
         </div>
       </div>
+
+      {/* RIGHT SIDEBAR */}
       <div
         className={`transition-all duration-300 ${
           rightSidebarOpen ? "" : "hidden lg:hidden"

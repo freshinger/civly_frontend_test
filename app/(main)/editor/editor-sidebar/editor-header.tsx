@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 // --- Store ---
 import { useCvStore } from "@/stores/cv_store";
@@ -36,6 +36,7 @@ import {
   IconFileTypePdf,
   IconTrash,
 } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 
 // --- Type Definitions  ---
 type SaveStatus = "Saved" | "Saving..." | "Unsaved Changes" | "Error";
@@ -51,8 +52,10 @@ export function EditorHeader({
   rightSidebarOpen?: boolean;
   setRightSidebarOpen?: (open: boolean) => void;
 }) {
-  // --- Store ---
-  const { remoteItems: cvs } = useCvStore();
+  // --- Store (robust selector in case field name differs) ---
+  const cvs = useCvStore(
+    (s) => (s.remoteItems ?? (s as any).remoteItems ?? []) as CvData[]
+  );
 
   // --- State Management ---
   const [currentCv, setCurrentCv] = useState<CvData | null>(null);
@@ -66,181 +69,163 @@ export function EditorHeader({
   const [linkCopied, setLinkCopied] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  const router = useRouter();
+
   // Load CV from server
   useEffect(() => {
+    let alive = true;
     const loadCV = async () => {
       if (cvId === "dummy") {
+        if (!alive) return;
         setCurrentCv(null);
         setIsLoading(false);
         return;
       }
-
       try {
         setIsLoading(true);
         const cv = await fetchCv(cvId);
-
-        console.log("Loaded CV from server:", cv);
-        setCurrentCv(cv);
-        setCvName(cv?.name || "Resume");
-      } catch (error) {
-        console.error("Error loading CV:", error);
+        if (!alive) return;
+        setCurrentCv(cv ?? null);
+        setCvName((cv?.name ?? "Resume").trim() || "Resume");
+      } catch {
+        if (!alive) return;
         setCurrentCv(null);
       } finally {
-        setIsLoading(false);
+        if (alive) setIsLoading(false);
       }
     };
-
     loadCV();
+    return () => {
+      alive = false;
+    };
   }, [cvId]);
 
-  // Debug logs
-  console.log(
-    "EditorHeader - cvId:",
-    cvId,
-    "currentCv:",
-    currentCv?.id,
-    "isLoading:",
-    isLoading,
-    "cvName:",
-    cvName
+  // Compute visibility once
+  const visibility: Visibility = useMemo(() => {
+    const v = currentCv?.visibility;
+    return v === "public" ? "Public" : v === "private" ? "Private" : "Draft";
+  }, [currentCv?.visibility]);
+
+  // Visibility change
+  const handleVisibilityChange = useCallback(
+    async (newVisibility: Visibility, newPassword?: string) => {
+      if (!currentCv) return;
+      const schemaVisibility =
+        newVisibility === "Public"
+          ? ("public" as const)
+          : newVisibility === "Private"
+            ? ("private" as const)
+            : ("draft" as const);
+      try {
+        setSaveStatus("Saving...");
+        // Update server (extend service to accept password if needed)
+        await updateVisibility(currentCv, schemaVisibility, newPassword);
+        setCurrentCv({
+          ...currentCv,
+          visibility: schemaVisibility,
+          password:
+            schemaVisibility === "private" ? newPassword || "" : undefined,
+        });
+        setSaveStatus("Saved");
+      } catch (e) {
+        console.error("Error updating visibility", e);
+        setSaveStatus("Error");
+      }
+    },
+    [currentCv]
   );
 
-  // Get visibility from currentCv (service data)
-  const getVisibility = (): Visibility => {
-    const visibility = currentCv?.visibility;
+  // Share
+  const handleShare = useCallback(() => {
+    if (!currentCv?.id) return;
+    const url = `${window.location.origin}/view/${currentCv.id}`;
+    setShareUrl(url);
+    setLinkCopied(false);
+    setIsShareModalOpen(true);
+  }, [currentCv?.id]);
 
-    if (visibility === "public") return "Public";
-    if (visibility === "private") return "Private";
-    return "Draft";
-  };
-
-  // Handle visibility changes - update CV via service
-  // Handle visibility changes - update CV via service
-  const handleVisibilityChange = async (
-    newVisibility: Visibility,
-    newPassword?: string
-  ) => {
-    if (!currentCv) {
-      return;
-    }
-
-    // Map UI visibility to schema visibility
-    const schemaVisibility =
-      newVisibility === "Public"
-        ? ("public" as const)
-        : newVisibility === "Private"
-          ? ("private" as const)
-          : ("draft" as const);
-
-    try {
-      setSaveStatus("Saving...");
-
-      // Update on server
-      await updateVisibility(currentCv, schemaVisibility);
-
-      // Update local CV object
-      setCurrentCv({
-        ...currentCv,
-        visibility: schemaVisibility,
-        password: newVisibility === "Private" ? newPassword || "" : undefined,
-      });
-
-      setSaveStatus("Saved");
-    } catch (error) {
-      console.error("Error updating CV visibility:", error);
-      setSaveStatus("Error");
-    }
-  }; // --- Share Functions ---
-  const handleShare = () => {
-    if (currentCv) {
-      const url = `${window.location.origin}/view/${currentCv.id}`;
-      setShareUrl(url);
-      setLinkCopied(false);
-      setIsShareModalOpen(true);
-    }
-  };
-
-  const copyShareLink = async () => {
+  const copyShareLink = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 3000);
-    } catch (error) {
-      console.error("Failed to copy link:", error);
+    } catch (e) {
+      console.error("Failed to copy link", e);
     }
-  };
+  }, [shareUrl]);
 
-  const shareViaEmail = () => {
-    const cvName = currentCv?.name || "My CV";
-    const subject = `Check out my CV: ${cvName}`;
+  const shareViaEmail = useCallback(() => {
+    const name = (currentCv?.name || "My CV").trim() || "My CV";
+    const subject = `Check out my CV: ${name}`;
     const body = `Hi,
 
-I hope this message finds you well. I wanted to share my CV with you for your review.
+I wanted to share my CV with you.
 
 🔗 Link: ${shareUrl}
 
-This link provides access to my current CV with all my professional experience, skills, and qualifications. Please feel free to download or share it as needed.
-
 Best regards`;
+    window.open(
+      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+        body
+      )}`
+    );
+  }, [currentCv?.name, shareUrl]);
 
-    const mailtoUrl = `mailto:?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    window.open(mailtoUrl);
-  };
-
-  // --- Delete Functions ---
-  const handleDelete = async () => {
-    if (!currentCv || !currentCv.id) return;
-
+  // Delete
+  const handleDelete = useCallback(async () => {
+    if (!currentCv?.id) return;
     try {
       setDeleteDialogOpen(false);
       await deleteCv(currentCv.id);
-      // Redirect to dashboard after successful deletion
-      window.location.href = "/dashboard";
-    } catch (error) {
-      console.error("Delete error:", error);
+      router.push("/dashboard");
+    } catch (e) {
+      console.error("Delete error", e);
     }
-  };
+  }, [currentCv?.id, router]);
 
-  // --- Name Editing Functions ---
-  const handleNameSave = async () => {
-    setIsEditingName(false);
-
-    if (!currentCv || !cvName.trim() || currentCv.id === "dummy") {
+  // Name editing
+  const handleNameSave = useCallback(async () => {
+    if (!currentCv?.id) {
+      setIsEditingName(false);
       return;
     }
-
-    try {
-      setSaveStatus("Saving...");
-
-      // Update on server
-      await updateCVName(currentCv.id!, cvName.trim());
-
-      // Update local CV object
-      setCurrentCv({
-        ...currentCv,
-        name: cvName.trim(),
-      });
-
-      setSaveStatus("Saved");
-    } catch (error) {
-      console.error("Error updating CV name:", error);
-      setSaveStatus("Error");
-      // Revert name on error
+    const next = cvName.trim();
+    if (!next || next === currentCv.name) {
+      setIsEditingName(false);
       setCvName(currentCv.name || "Resume");
+      return;
     }
-  };
+    setIsEditingName(false);
+    const prev = currentCv.name;
+    setSaveStatus("Saving...");
+    setCurrentCv({ ...currentCv, name: next });
+    try {
+      await updateCVName(currentCv.id, next);
+      setSaveStatus("Saved");
+    } catch (e) {
+      console.error("Error updating CV name", e);
+      setCurrentCv({ ...currentCv, name: prev });
+      setCvName(prev || "Resume");
+      setSaveStatus("Error");
+    }
+  }, [currentCv, cvName]);
 
-  const handleNameCancel = () => {
+  const handleNameCancel = useCallback(() => {
     setCvName(currentCv?.name || "Resume");
     setIsEditingName(false);
+  }, [currentCv?.name]);
+
+  const badgeTone: Record<SaveStatus, string> = {
+    Saved: "bg-green-50 border-green-200 text-green-800",
+    "Saving...": "bg-blue-50 border-blue-200 text-blue-800",
+    "Unsaved Changes": "bg-orange-50 border-orange-200 text-orange-800",
+    Error: "bg-red-50 border-red-200 text-red-800",
   };
 
-  // If loading or CV not found, show appropriate state
+  // --- Render states with stable height ---
   if (isLoading) {
     return (
-      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-16">
+      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-[50px]">
         <div className="flex items-center gap-3">
           <SidebarTrigger className="relative z-[60]" />
           <span className="text-md font-semibold text-gray-500">
@@ -250,7 +235,7 @@ Best regards`;
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="text-xs px-2 py-1 font-medium border bg-blue-50 border-blue-200 text-blue-800"
+            className={`text-xs px-2 py-1 font-medium border ${badgeTone["Saving..."]}`}
           >
             Loading...
           </Badge>
@@ -261,7 +246,7 @@ Best regards`;
 
   if (!currentCv && cvId !== "dummy") {
     return (
-      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-16">
+      <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-[50px]">
         <div className="flex items-center gap-3">
           <SidebarTrigger className="relative z-[60]" />
           <span className="text-md font-semibold text-gray-500">
@@ -271,7 +256,7 @@ Best regards`;
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="text-xs px-2 py-1 font-medium border bg-red-50 border-red-200 text-red-800"
+            className={`text-xs px-2 py-1 font-medium border ${badgeTone["Error"]}`}
           >
             Error
           </Badge>
@@ -280,30 +265,15 @@ Best regards`;
     );
   }
 
-  const getSaveStatusBadgeVariant = () => {
-    switch (saveStatus) {
-      case "Saved":
-        return "bg-green-50 border-green-200 text-green-800";
-      case "Saving...":
-        return "bg-blue-50 border-blue-200 text-blue-800";
-      case "Unsaved Changes":
-        return "bg-orange-50 border-orange-200 text-orange-800";
-      case "Error":
-        return "bg-red-50 border-red-200 text-red-800";
-      default:
-        return "bg-gray-50 border-gray-200 text-gray-800";
-    }
-  };
-
   return (
     <>
       <header className="flex-shrink-0 flex items-center justify-between p-3 border-b bg-white relative z-50 h-[50px]">
-        {/* Left Side: Trigger & Save Status */}
+        {/* Left: Sidebar + Save status */}
         <div className="flex items-center gap-3">
           <SidebarTrigger className="relative z-[60]" />
           <Badge
             variant="outline"
-            className={`text-xs px-2 py-1 font-medium border ${getSaveStatusBadgeVariant()}`}
+            className={`text-xs px-2 py-1 font-medium border ${badgeTone[saveStatus]}`}
           >
             {saveStatus}
           </Badge>
@@ -357,24 +327,22 @@ Best regards`;
           )}
         </div>
 
-        {/* Right Side: Visibility */}
+        {/* Right: Visibility + actions + right panel toggle */}
         <div className="flex items-center gap-2">
-          {/* Draft/Visibility Button */}
           <Button
             variant="ghost"
             size="sm"
             className="flex items-center gap-1.5 text-sm"
             onClick={() => setIsVisibilityModalOpen(true)}
           >
-            {getVisibility() === "Public" ? (
+            {visibility === "Public" ? (
               <IconLockOpen size={14} />
             ) : (
               <IconLock size={14} />
             )}
-            {getVisibility()}
+            {visibility}
           </Button>
 
-          {/* Action Icons Group */}
           <div className="flex items-center gap-1 px-2 border-l border-gray-200">
             <Button
               variant="ghost"
@@ -391,12 +359,11 @@ Best regards`;
               size="icon"
               className="h-8 w-8"
               onClick={async () => {
-                if (currentCv) {
-                  try {
-                    await handleExportPdf(currentCv);
-                  } catch (error) {
-                    console.error("Export error:", error);
-                  }
+                if (!currentCv) return;
+                try {
+                  await handleExportPdf(currentCv);
+                } catch (e) {
+                  console.error("Export error", e);
                 }
               }}
               title="Export as PDF"
@@ -415,7 +382,6 @@ Best regards`;
             </Button>
           </div>
 
-          {/* Right Sidebar Trigger - Separated */}
           {setRightSidebarOpen && (
             <div className="flex items-center pl-2 border-l border-gray-200">
               <Button
@@ -437,19 +403,20 @@ Best regards`;
         </div>
       </header>
 
-      {/* The Visibility Modal is rendered here */}
+      {/* Visibility Modal */}
       <VisibilityModal
         isOpen={isVisibilityModalOpen}
         onOpenChange={setIsVisibilityModalOpen}
-        visibility={getVisibility()}
+        visibility={visibility}
         password={currentCv?.password || ""}
         onVisibilityChange={handleVisibilityChange}
       />
 
+      {/* Share Modal */}
       <ShareModal
         isOpen={isShareModalOpen}
         onOpenChange={setIsShareModalOpen}
-        cv={currentCv || cvs[0]}
+        cv={currentCv ?? cvs[0] ?? null}
         shareUrl={shareUrl}
         linkCopied={linkCopied}
         onCopyLink={copyShareLink}
@@ -460,7 +427,7 @@ Best regards`;
       <DeleteCvModal
         isOpen={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        cv={currentCv}
+        cv={currentCv ?? cvs[0] ?? null}
         onDelete={handleDelete}
       />
     </>

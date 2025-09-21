@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   IconDashboard,
   IconFileDescription,
@@ -22,60 +23,65 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { CivlyLogo } from "@/components/custom/civly-logo";
-import { CvData } from "@/schemas/cv_data_schema";
+import type { CvData } from "@/schemas/cv_data_schema";
 import { useCvStore } from "@/stores/cv_store";
 
 export function AppSidebar({
   cvs: serverCvs = [],
   ...props
 }: React.ComponentProps<typeof Sidebar> & { cvs?: CvData[] }) {
-  const { remoteItems: storeCvs, fetchAll } = useCvStore();
+  const pathname = usePathname();
 
-  // Sync store with server data on mount if store is empty or server has more data
+  // Select from store
+  const storeCvs = useCvStore((s) => (s.remoteItems ?? []) as CvData[]);
+  const fetchAll = useCvStore((s) => s.fetchAll);
+
   React.useEffect(() => {
-    if (
-      serverCvs.length > 0 &&
-      (storeCvs.length === 0 || serverCvs.length > storeCvs.length)
-    ) {
-      fetchAll();
-    }
-  }, [serverCvs.length, storeCvs.length, fetchAll]);
+    if (storeCvs.length === 0) void fetchAll();
+  }, [storeCvs.length, fetchAll]);
 
-  // Use server CVs if available (they are authoritative), otherwise use store CVs
-  const cvs = serverCvs.length > 0 ? serverCvs : storeCvs;
+  // Merge server + store
+  const cvs = React.useMemo(() => {
+    const byId = new Map<string, CvData>();
+    for (const cv of serverCvs) if (cv?.id) byId.set(cv.id, cv);
+    for (const cv of storeCvs) if (cv?.id) byId.set(cv.id, cv); // store wins
+    const arr = Array.from(byId.values());
+    arr.sort(
+      (a, b) =>
+        new Date(a.createdAt ?? 0).getTime() -
+        new Date(b.createdAt ?? 0).getTime()
+    );
+    return arr;
+  }, [serverCvs, storeCvs]);
+
+  // Debug: what’s being rendered
   console.log("AppSidebar rendering", {
-    storeCvs: storeCvs.length,
     serverCvs: serverCvs.length,
-    using: cvs.length,
+    storeCvs: storeCvs.length,
+    merged: cvs.length,
+    ids: cvs.map((c) => c.id),
   });
-  const data = {
-    navMain: [
-      {
-        title: "Dashboard",
-        url: "/",
-        icon: IconDashboard,
-        isActive: true,
-      },
-    ],
-    resumes: {
-      title: "My Resumes",
-      url: "/cv",
-      icon: IconFileDescription,
-      items: [],
+
+  const navMain = [
+    {
+      title: "Dashboard",
+      url: "/",
+      icon: IconDashboard,
+      isActive: pathname === "/",
     },
-    navSecondary: [
-      {
-        title: "Help",
-        url: "#",
-        icon: IconHelp,
-      },
-      {
-        title: "Settings",
-        url: "#",
-        icon: IconSettings,
-      },
-    ],
+  ];
+
+  const resumesMeta = {
+    title: "My Resumes",
+    url: "/cv",
+    icon: IconFileDescription,
   };
+
+  const navSecondary = [
+    { title: "Help", url: "/help", icon: IconHelp },
+    { title: "Settings", url: "/settings", icon: IconSettings },
+  ];
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -94,8 +100,8 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain items={data.navMain} resumes={data.resumes} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navMain} resumes={resumesMeta} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
       </SidebarContent>
 
       <SidebarFooter>

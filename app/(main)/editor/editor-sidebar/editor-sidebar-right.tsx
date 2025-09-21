@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Form } from "@/components/ui/form";
 import {
   Sidebar,
@@ -10,41 +12,37 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
-import { PersonalInformationTab } from "./personal-information"; // RHF version
-import { ExperienceTab } from "./experience-tab"; // RHF + useFieldArray
+import { PersonalInformationTab } from "./personal-information";
+import { ExperienceTab } from "./experience-tab";
 import { LayoutTabPanel } from "./layout-tab";
-import { createClient } from "@/utils/supabase/client";
-
-import type { CvData } from "@/schemas/cv_data_schema";
-import { useEffect, useState } from "react";
 import { EducationTab } from "./education-tab";
 import { SkillsTab } from "./skill-tab";
 
-import { useCvStore } from "@/stores/cv_store";
-
+import type { CvData } from "@/schemas/cv_data_schema";
 import { cvDataSchema, defaultCvData } from "@/schemas/cv_data_schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+
+import { useCvStore } from "@/stores/cv_store";
 import { LoadingStatus } from "@/types/loadingState";
 
+import { createClient } from "@/utils/supabase/client";
+
 type Props = { id: string } & React.ComponentProps<typeof Sidebar>;
-const supabase = createClient();
-const {
-  data: { user },
-  error,
-} = await supabase.auth.getUser();
 
 export function EditorSidebarRight({ id, ...props }: Props) {
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+  const supabase = React.useMemo(() => createClient(), []);
+  const [userId, setUserId] = React.useState<string>("");
+
+  const [loadingStatus, setLoadingStatus] = React.useState<LoadingStatus>(
     LoadingStatus.Loading
   );
+
   const getSingle = useCvStore((s) => s.getSingle);
   const saveRemote = useCvStore((s) => s.saveRemote);
   const saveLocally = useCvStore((s) => s.saveLocally);
 
-  //console.log("ID in sidebar: ", id);
-  const [value, setValue] = React.useState("layout");
+  const [tab, setTab] = React.useState("layout");
 
   const form = useForm<CvData>({
     defaultValues: defaultCvData,
@@ -53,52 +51,69 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     resolver: zodResolver(cvDataSchema),
   });
 
-  useEffect(() => {
+  // Load user (client-safe, no top-level await)
+  React.useEffect(() => {
+    let alive = true;
     (async () => {
-      if (id) {
+      const { data, error } = await supabase.auth.getUser();
+      if (!alive) return;
+      if (!error) setUserId(data.user?.id ?? "");
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [supabase]);
+
+  // Load CV + local autosave
+  React.useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      if (!id) return;
+      try {
         const cv = await getSingle(id);
-        console.log("CV in sidebar: ", cv);
+        if (!alive) return;
         if (cv) {
           form.reset(cv);
           setLoadingStatus(LoadingStatus.Loaded);
+        } else {
+          setLoadingStatus(LoadingStatus.Error);
         }
+      } catch {
+        if (alive) setLoadingStatus(LoadingStatus.Error);
       }
     })();
-    const subscription = form.watch((values, { name, type }) => {
+
+    const subscription = form.watch((values) => {
       if (loadingStatus === LoadingStatus.Loaded) {
         saveLocally(values as CvData);
-      } else {
-        console.log("not loaded");
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [loadingStatus]);
+    return () => {
+      subscription.unsubscribe();
+      alive = false;
+    };
+  }, [id, form, getSingle, saveLocally, loadingStatus]);
 
-  function onSubmit() {
+  async function onSubmit() {
     const data = form.getValues();
-    try {
-      const result = cvDataSchema.safeParse(data);
-      if (!result.success) {
-        console.error("Invalid data:", result.error);
-        return;
-      }
-    } catch (error) {
-      console.error("Error saving CV:", error);
+    const parsed = cvDataSchema.safeParse(data);
+    if (!parsed.success) {
+      console.error("Invalid data:", parsed.error);
+      return;
     }
-
-    return saveRemote(data);
+    try {
+      await saveRemote(parsed.data);
+    } catch (e) {
+      console.error("Error saving CV:", e);
+    }
   }
 
-  const CustomTabsContent: React.FC<{
-    value: string;
-    className?: string;
-    children: React.ReactNode;
-  }> = ({ value, className, children }) => (
-    <TabsContent
-      value={value}
-      className={`flex-1 flex-col gap-4 ${className ?? ""}`}
-    >
+  const CustomTabsContent: React.FC<
+    React.PropsWithChildren<{ value: string; className?: string }>
+  > = ({ value, className, children }) => (
+    <TabsContent value={value} className={`flex-1 flex-col ${className ?? ""}`}>
       {children}
     </TabsContent>
   );
@@ -114,15 +129,15 @@ export function EditorSidebarRight({ id, ...props }: Props) {
           className="w-full h-full flex flex-col"
           onSubmit={(e) => {
             e.preventDefault();
-            onSubmit();
+            void onSubmit();
           }}
         >
           <Tabs
-            value={value}
-            onValueChange={setValue}
-            className="w-full gap-0 h-screen flex flex-col"
+            value={tab}
+            onValueChange={setTab}
+            className="w-full h-full flex flex-col"
           >
-            <SidebarHeader className="border-sidebar-border border-b h-[50px] w-full ">
+            <SidebarHeader className="border-sidebar-border border-b h-[50px] w-full">
               <TabsList className="w-full h-full bg-white flex justify-start gap-1">
                 <TabsTrigger value="layout" className="text-xs flex-shrink-0">
                   Layout
@@ -145,14 +160,14 @@ export function EditorSidebarRight({ id, ...props }: Props) {
               </TabsList>
             </SidebarHeader>
 
-            <SidebarContent className="flex-none gap-4 overflow-y-auto h-[calc(100vh-140px)]">
+            {/* Make the middle stretch & scroll */}
+            <SidebarContent className="flex-1 min-h-0 gap-4 overflow-y-auto">
               <CustomTabsContent value="layout">
                 <LayoutTabPanel />
               </CustomTabsContent>
 
-              {/* RHF tabs: no props, they read from form context */}
               <CustomTabsContent value="profile">
-                <PersonalInformationTab userId={user?.id ?? ""} cvId={id} />
+                <PersonalInformationTab userId={userId} cvId={id} />
               </CustomTabsContent>
 
               <CustomTabsContent value="skills">

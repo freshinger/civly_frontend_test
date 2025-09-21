@@ -9,6 +9,7 @@ import {
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { shallow } from "zustand/shallow";
 import { CvData } from "@/schemas/cv_data_schema";
 import { useToast } from "@/hooks/use-toast";
 import { useCvStore } from "@/stores/cv_store";
@@ -41,10 +42,13 @@ export function NavMain({
   items: NavItem[];
   resumes?: ResumesItem;
 }) {
-  // ---- Store selectors (no manual subscribe) ----
-  const fetchAll = useCvStore((s) => s.fetchAll);
-  const duplicate = useCvStore((s) => s.duplicateOne);
-  const cvDataList = useCvStore((s) => s.remoteItems ?? []) as CvData[];
+  // ---- Store selectors (stable) ----
+  const fetchAll = useCvStore((s) => s.fetchAll); // fn is stable
+  const duplicate = useCvStore((s) => s.duplicateOne); // fn is stable
+  const cvDataList = useCvStore(
+    (s) => s.remoteItems ?? [],
+    shallow
+  ) as CvData[];
 
   // ---- Local UI state ----
   const [isResumesOpen, setIsResumesOpen] = useState(true);
@@ -60,10 +64,37 @@ export function NavMain({
   const pathname = usePathname();
   const { toast } = useToast();
 
-  // ---- Fetch once on mount ----
+  // ---- Fetch once on mount (avoid toast as dep) ----
   useEffect(() => {
-    fetchAll().catch(() => toast.error("Failed to load resumes"));
-  }, [fetchAll, toast]);
+    fetchAll().catch(() => {
+      // call toast inside, but don't depend on it
+      try {
+        toast.error("Failed to load resumes");
+      } catch {}
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once
+
+  // ---- Sorted list: oldest -> newest (new items at end) ----
+  const sortedCvs = useMemo(() => {
+    if (!cvDataList || cvDataList.length === 0) return [];
+    const arr = cvDataList.slice();
+    arr.sort(
+      (a, b) =>
+        new Date(a.createdAt ?? 0).getTime() -
+        new Date(b.createdAt ?? 0).getTime()
+    );
+    return arr;
+  }, [cvDataList]);
+
+  // ---- Stagger delays must match sorted list ----
+  const delays = useMemo(
+    () =>
+      sortedCvs.map((_, i) =>
+        isResumesOpen ? i * 35 : (sortedCvs.length - 1 - i) * 35
+      ),
+    [sortedCvs, isResumesOpen]
+  );
 
   // ---- Handlers (memoized) ----
   const onCreate = useCallback(
@@ -79,14 +110,6 @@ export function NavMain({
     },
     [fetchAll, toast]
   );
-
-  const sortedCvs = useMemo(() => {
-    return [...cvDataList].sort(
-      (a, b) =>
-        new Date(a.createdAt ?? 0).getTime() -
-        new Date(b.createdAt ?? 0).getTime()
-    );
-  }, [cvDataList]);
 
   const onRemove = useCallback(async () => {
     if (!cvToDelete?.id) return;
@@ -132,22 +155,10 @@ Link: ${shareUrl}
 
 Best regards`;
     window.open(
-      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
-        body
-      )}`
+      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     );
     toast.success("Email client opened");
   }, [cvToShare, shareUrl, toast]);
-
-  // ---- Staggered animation via CSS only ----
-  // When closed, reverse the delay so it collapses “top to bottom”
-  const delays = useMemo(
-    () =>
-      cvDataList.map((_, i) =>
-        isResumesOpen ? i * 35 : (cvDataList.length - 1 - i) * 35
-      ),
-    [cvDataList, isResumesOpen]
-  );
 
   return (
     <SidebarGroup>
@@ -158,7 +169,7 @@ Best regards`;
               <SidebarMenuButton
                 tooltip="Create new CV"
                 type="submit"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-8 duration-200"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 min-w-8 duration-200 hover:text-primary-foreground"
               >
                 <IconCirclePlusFilled />
                 <span>New Resume</span>
@@ -220,8 +231,7 @@ Best regards`;
                   {sortedCvs.length > 0 ? (
                     <>
                       {sortedCvs.map((cv, index) => {
-                        const isActiveCv =
-                          selectedCvId === (cv.id ?? null)?.toString();
+                        const isActiveCv = selectedCvId === cv.id?.toString();
                         return (
                           <SidebarMenuSubItem
                             key={cv.id}
@@ -230,9 +240,7 @@ Best regards`;
                                 ? "opacity-100 translate-y-0"
                                 : "opacity-0 -translate-y-2"
                             }`}
-                            style={{
-                              transitionDelay: `${delays[index]}ms`,
-                            }}
+                            style={{ transitionDelay: `${delays[index]}ms` }}
                           >
                             <div
                               className={`group/item flex items-start w-full hover:bg-primary/10 rounded-md transition-colors ${
@@ -248,9 +256,7 @@ Best regards`;
                                 }}
                               >
                                 <span
-                                  className={`text-sm ${
-                                    isActiveCv ? "font-bold" : ""
-                                  }`}
+                                  className={`text-sm ${isActiveCv ? "font-bold" : ""}`}
                                   title={cv.name?.trim()}
                                 >
                                   {cv.name?.trim()}
@@ -289,7 +295,6 @@ Best regards`;
                         );
                       })}
 
-                      {/* Add New Resume Button */}
                       <SidebarMenuSubItem className="w-full">
                         <form onSubmit={onCreate} className="flex w-full">
                           <div className="p-3" />
@@ -331,7 +336,7 @@ Best regards`;
       <ShareModal
         isOpen={shareDialogOpen}
         onOpenChange={setShareDialogOpen}
-        cv={cvToShare}
+        cv={cvToShare ?? null}
         shareUrl={shareUrl}
         linkCopied={linkCopied}
         onCopyLink={copyShareLink}
@@ -341,7 +346,7 @@ Best regards`;
       <DeleteCvModal
         isOpen={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        cv={cvToDelete}
+        cv={cvToDelete ?? null}
         onDelete={onRemove}
       />
     </SidebarGroup>

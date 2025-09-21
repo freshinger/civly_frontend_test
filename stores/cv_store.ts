@@ -64,7 +64,7 @@ export const useCvStore = create<CvStore>()(
             ...cv,
             updatedAt: current.updatedAt,
           };
-          return { localitems: next };
+          return { localItems: next };
         });
       },
 

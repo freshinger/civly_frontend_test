@@ -1,7 +1,7 @@
 // app/(main)/editor/[id]/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useMediaQuery } from "usehooks-ts";
@@ -28,22 +28,38 @@ function Backdrop({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 export default function Page() {
   const { id } = useParams() as { id: string };
-  const [rightSidebarOpen] = useState(true);
-  const isDesktop = useMediaQuery("(min-width: 1260px)");
+  const [mounted, setMounted] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
 
+  const isDesktop = useMediaQuery("(min-width: 1260px)");
   const editorOpen = useSheetStore((s) => s.editorOpen);
   const hideEditor = useSheetStore((s) => s.hideEditor);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const gridTemplateColumns = mounted
+    ? isDesktop
+      ? rightSidebarOpen
+        ? "1fr 400px"
+        : "1fr 0px"
+      : "1fr"
+    : "1fr";
+  const rightSidebar = mounted
+    ? isDesktop
+      ? `relative h-full w-[400px] overflow-hidden ${
+          rightSidebarOpen ? "" : "hidden lg:hidden"
+        } lg:block`
+      : // Mobile overlay: sits ABOVE the Backdrop using higher z
+        `fixed right-0 top-0 z-[500] h-screen w-[400px] max-w-[100%] transform bg-background shadow-lg transition-transform duration-300 ${
+          editorOpen ? "translate-x-0" : "translate-x-full"
+        }`
+      : ''
   return (
     <div
       className="grid h-screen w-full max-w-full overflow-hidden"
-      style={{
-        gridTemplateColumns: isDesktop
-          ? rightSidebarOpen
-            ? "1fr 400px"
-            : "1fr 0px"
-          : "1fr",
-      }}
+      style={{gridTemplateColumns}}
     >
       {/* LEFT COLUMN */}
       <div className="flex min-w-0 flex-col overflow-hidden">
@@ -81,16 +97,7 @@ export default function Page() {
 
       {/* RIGHT SIDEBAR — single instance, never unmounted */}
       <div
-        className={
-          isDesktop
-            ? `relative h-full w-[400px] overflow-hidden ${
-                rightSidebarOpen ? "" : "hidden lg:hidden"
-              } lg:block`
-            : // Mobile overlay: sits ABOVE the Backdrop using higher z
-              `fixed right-0 top-0 z-[500] h-screen w-[400px] max-w-[100%] transform bg-background shadow-lg transition-transform duration-300 ${
-                editorOpen ? "translate-x-0" : "translate-x-full"
-              }`
-        }
+        className={rightSidebar}
       >
         <div className="h-full w-full border-l">
           <EditorSidebarRight id={id} />

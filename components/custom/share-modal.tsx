@@ -20,6 +20,7 @@ import {
   Globe,
   AlertCircle,
 } from "lucide-react";
+import router from "next/router";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -40,12 +41,12 @@ export function ShareModal({
   onCopyLink,
   onShareEmail,
 }: ShareModalProps) {
-  const { remoteitems } = useCvStore();
+  const { remoteItems } = useCvStore();
 
   if (!cv) return null;
 
   // Get the most up-to-date version of the CV from the store
-  const currentCv = remoteitems.find((item) => item.id === cv.id) || cv;
+  const currentCv = remoteItems.find((item) => item.id === cv.id) || cv;
 
   const isPublished =
     currentCv.visibility === "public" || currentCv.visibility === "private";
@@ -132,7 +133,7 @@ export function ShareModal({
               </Button>
               <Button
                 onClick={() => {
-                  window.open(`/editor?cv=${cv.id}`, "_blank");
+                  router.push(`/editor/${cv.id}`);
                   onOpenChange(false);
                 }}
                 className="bg-primary hover:bg-primary/90"

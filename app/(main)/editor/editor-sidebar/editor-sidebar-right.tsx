@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Form } from "@/components/ui/form";
 import {
   Sidebar,
@@ -10,35 +12,42 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
-import { PersonalInformationTab } from "./personal-information"; // RHF version
-import { ExperienceTab } from "./experience-tab"; // RHF + useFieldArray
+import { PersonalInformationTab } from "./personal-information";
+import { ExperienceTab } from "./experience-tab";
 import { LayoutTabPanel } from "./layout-tab";
-
-import type { CvData } from "@/schemas/cv_data_schema";
-import { useEffect, useState } from "react";
 import { EducationTab } from "./education-tab";
 import { SkillsTab } from "./skill-tab";
 
-import { useCvStore } from "@/stores/cv_store";
-
+import type { CvData } from "@/schemas/cv_data_schema";
 import { cvDataSchema, defaultCvData } from "@/schemas/cv_data_schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
+
+import { useCvStore } from "@/stores/cv_store";
 import { LoadingStatus } from "@/types/loadingState";
+
+import { createClient } from "@/utils/supabase/client";
+import { IconX } from "@tabler/icons-react";
+import { useMediaQuery } from "usehooks-ts";
+import { useSheetStore } from "@/stores/sheet_store";
 
 type Props = { id: string } & React.ComponentProps<typeof Sidebar>;
 
 export function EditorSidebarRight({ id, ...props }: Props) {
-  const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
+  const supabase = React.useMemo(() => createClient(), []);
+  const [userId, setUserId] = React.useState<string>("");
+  const [loadingStatus, setLoadingStatus] = React.useState<LoadingStatus>(
     LoadingStatus.Loading
   );
+
   const getSingle = useCvStore((s) => s.getSingle);
   const saveRemote = useCvStore((s) => s.saveRemote);
   const saveLocally = useCvStore((s) => s.saveLocally);
+  const hideEditor = useSheetStore((s) => s.hideEditor);
 
-  //console.log("ID in sidebar: ", id);
-  const [value, setValue] = React.useState("layout");
+  const [tab, setTab] = React.useState("layout");
+
+  const isTablet = useMediaQuery("(max-width: 1260px)");
 
   const form = useForm<CvData>({
     defaultValues: defaultCvData,
@@ -47,106 +56,154 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     resolver: zodResolver(cvDataSchema),
   });
 
-  useEffect(() => {
+  // Load user
+  React.useEffect(() => {
+    let alive = true;
     (async () => {
-      if (id) {
+      const { data, error } = await supabase.auth.getUser();
+      if (!alive) return;
+      if (!error) setUserId(data.user?.id ?? "");
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [supabase]);
+
+  // Load CV + local autosave
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!id) return;
+      try {
         const cv = await getSingle(id);
-        console.log("CV in sidebar: ", cv);
+        if (!alive) return;
         if (cv) {
           form.reset(cv);
           setLoadingStatus(LoadingStatus.Loaded);
+        } else {
+          setLoadingStatus(LoadingStatus.Error);
         }
+      } catch {
+        if (alive) setLoadingStatus(LoadingStatus.Error);
       }
     })();
-    const subscription = form.watch((values, { name, type }) => {
+
+    const subscription = form.watch((values) => {
       if (loadingStatus === LoadingStatus.Loaded) {
         saveLocally(values as CvData);
-      } else {
-        console.log("not loaded");
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [loadingStatus]);
+    return () => {
+      subscription.unsubscribe();
+      alive = false;
+    };
+  }, [id, form, getSingle, saveLocally, loadingStatus]);
 
-  function onSubmit() {
+  async function onSubmit() {
     const data = form.getValues();
-    const result = cvDataSchema.safeParse(data);
-    if (!result.success) {
-      console.error("Invalid data:", result.error);
+    const parsed = cvDataSchema.safeParse(data);
+    if (!parsed.success) {
+      console.error("Invalid data:", parsed.error);
       return;
     }
-
-    return saveRemote(data);
+    try {
+      await saveRemote(parsed.data);
+    } catch (e) {
+      console.error("Error saving CV:", e);
+    }
   }
-
-  const CustomTabsContent: React.FC<{
-    value: string;
-    className?: string;
-    children: React.ReactNode;
-  }> = ({ value, className, children }) => (
-    <TabsContent
-      value={value}
-      className={`flex-1 flex-col gap-4 ${className ?? ""}`}
-    >
-      {children}
-    </TabsContent>
-  );
 
   return (
     <Sidebar
       collapsible="none"
-      className="top-0 hidden h-svh border-l lg:flex"
+      className="top-0 h-svh md:h-screen w-full max-w-[400px] border-l"
       {...props}
     >
       <Form {...form}>
         <form
-          className="w-full h-full flex flex-col"
+          className="h-full w-full"
           onSubmit={(e) => {
             e.preventDefault();
-            onSubmit();
+            void onSubmit();
           }}
         >
+          {/* Stable layout: header (shrink-0) / content (flex-1, scroll) / footer (shrink-0) */}
           <Tabs
-            value={value}
-            onValueChange={setValue}
-            className="w-full gap-0 h-screen flex flex-col"
+            value={tab}
+            onValueChange={setTab}
+            className="flex h-full min-h-0 flex-col"
           >
-            <SidebarHeader className="border-sidebar-border border-b h-[50px] w-full ">
-              <TabsList className="w-full h-full bg-white ">
-                <TabsTrigger value="layout">Layout</TabsTrigger>
-                <TabsTrigger value="profile">Information</TabsTrigger>
-                <TabsTrigger value="skills">Skills</TabsTrigger>
-                <TabsTrigger value="work">Experience</TabsTrigger>
-                <TabsTrigger value="education">Education</TabsTrigger>
+            {/* HEADER */}
+            <SidebarHeader className="shrink-0 border-b border-sidebar-border bg-white">
+              {isTablet && (
+                <div className="flex h-12 items-center justify-between px-3">
+                  <h2 className="text-base font-semibold">CV Editor</h2>
+                  <Button type="button" variant="ghost" onClick={hideEditor}>
+                    <IconX size={24} />
+                  </Button>
+                </div>
+              )}
+              <TabsList className="flex h-12 w-full justify-start gap-1 overflow-x-auto bg-white">
+                <TabsTrigger
+                  value="layout"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
+                  Layout
+                </TabsTrigger>
+                <TabsTrigger
+                  value="profile"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
+                  Information
+                </TabsTrigger>
+                <TabsTrigger
+                  value="skills"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
+                  Skills
+                </TabsTrigger>
+                <TabsTrigger
+                  value="work"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
+                  Experience
+                </TabsTrigger>
+                <TabsTrigger
+                  value="education"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
+                  Education
+                </TabsTrigger>
               </TabsList>
             </SidebarHeader>
 
-            <SidebarContent className="flex-none gap-4 overflow-y-auto h-[calc(100vh-140px)]">
-              <CustomTabsContent value="layout">
+            {/* CONTENT */}
+            <SidebarContent className="flex-1 min-h-0 overflow-y-auto overscroll-contain gap-4">
+              <TabsContent value="layout">
                 <LayoutTabPanel />
-              </CustomTabsContent>
+              </TabsContent>
 
-              {/* RHF tabs: no props, they read from form context */}
-              <CustomTabsContent value="profile">
-                <PersonalInformationTab />
-              </CustomTabsContent>
+              <TabsContent value="profile">
+                <PersonalInformationTab userId={userId} cvId={id} />
+              </TabsContent>
 
-              <CustomTabsContent value="skills">
+              <TabsContent value="skills">
                 <SkillsTab />
-              </CustomTabsContent>
+              </TabsContent>
 
-              <CustomTabsContent value="work">
+              <TabsContent value="work">
                 <ExperienceTab />
-              </CustomTabsContent>
+              </TabsContent>
 
-              <CustomTabsContent value="education">
+              <TabsContent value="education">
                 <EducationTab />
-              </CustomTabsContent>
+              </TabsContent>
             </SidebarContent>
 
-            <SidebarFooter className="border-sidebar-border border-t h-[70px] shrink-0">
-              <Button type="submit" className="w-full h-full">
+            {/* FOOTER */}
+            <SidebarFooter className="h-[70px] shrink-0 border-t border-sidebar-border">
+              <Button type="submit" className="h-full w-full">
                 {form.formState.isSubmitting ? "Publishing..." : "Publish"}
               </Button>
             </SidebarFooter>

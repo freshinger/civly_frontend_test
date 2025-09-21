@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Section } from "@/components/custom/cv-form/form-section";
-import { FieldLabel } from "@/components/custom/cv-form/field-label";
+import { Section } from "@/components/custom/form/form-section";
+import { FieldLabel } from "@/components/custom/form/field-label";
 import { Button } from "@/components/ui/button";
 import { DatePickerInput } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
@@ -27,11 +27,14 @@ export function EducationTab({ className }: { className?: string }) {
     name: "education",
   });
 
-  // live values (not just the static `fields`)
-  const values = useWatch({ control: form.control, name: "education" }) ?? [];
+  // ✅ Hook is now top-level
+  const values =
+    useWatch({
+      control: form.control,
+      name: "education",
+    }) ?? [];
 
   const toTs = (v: unknown) => {
-    // supports ISO string | Date | null | ""
     if (!v) return Number.NaN;
     const d = v instanceof Date ? v : new Date(v as string);
     const t = d.getTime();
@@ -39,10 +42,9 @@ export function EducationTab({ className }: { className?: string }) {
   };
 
   const sorted = useMemo(() => {
-    // pair each row's *original index* with live values + id for stable keys
     const rows = fields.map((f, idx) => ({
       id: f.id,
-      idx, // original index for RHF ops
+      idx,
       v: values[idx] ?? {},
     }));
 
@@ -51,20 +53,18 @@ export function EducationTab({ className }: { className?: string }) {
         const current = !!r.v?.currentlyStudyingHere;
         const endTs = current ? Number.POSITIVE_INFINITY : toTs(r.v?.endDate);
         const startTs = toTs(r.v?.startDate);
-        // build a tuple for deterministic ordering:
-        // 1) current first, 2) by end desc, 3) fallback start desc, 4) stable by original idx
+
         return {
           ...r,
           sortKey: [
-            current ? 1 : 0, // current first
+            current ? 1 : 0,
             Number.isNaN(endTs) ? -1 : endTs,
             Number.isNaN(startTs) ? -1 : startTs,
-            -r.idx, // keep relative stability
+            -r.idx,
           ] as const,
         };
       })
       .sort((a, b) => {
-        // compare tuples DESC except the first flag (current)
         if (a.sortKey[0] !== b.sortKey[0]) return b.sortKey[0] - a.sortKey[0];
         if (a.sortKey[1] !== b.sortKey[1]) return b.sortKey[1] - a.sortKey[1];
         if (a.sortKey[2] !== b.sortKey[2]) return b.sortKey[2] - a.sortKey[2];
@@ -84,7 +84,7 @@ export function EducationTab({ className }: { className?: string }) {
       <Button
         type="button"
         variant="outline"
-        className="border-primary text-primary dark:border-primary-foreground dark:text-primary-foreground hover:bg-primary hover:text-primary-foreground p-8  mt-8 mb-8 cursor-pointer"
+        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground p-8 mt-8 mb-8 cursor-pointer"
         onClick={() =>
           append({
             degree: "",
@@ -120,15 +120,10 @@ function EducationRow({
   onDelete: () => void;
   className?: string;
 }) {
-  const checkOrDefault = (value: string | undefined, defaultValue: string) => {
-    if ([null, undefined, ""].includes(value)) {
-      return defaultValue;
-    }
-    return value as string;
-  };
+  const checkOrDefault = (value: string | undefined, fallback: string) =>
+    [null, undefined, ""].includes(value) ? fallback : (value as string);
 
   const [isDeleting, setIsDeleting] = useState(false);
-
   const form = useFormContext<CvData>();
   const isEditing = useWatch({
     control: form.control,
@@ -162,15 +157,13 @@ function EducationRow({
   const id = (k: string) => `edu-${index}-${k}`;
 
   const handleDisplayPropsChange = (
-    field: string,
+    field: keyof EducationDisplayProps,
     value: string,
     placeholder: string
   ) => {
-    const checkedValue = checkOrDefault(value, placeholder);
-
     setDisplayProps((prev) => ({
       ...prev,
-      [field]: checkedValue,
+      [field]: checkOrDefault(value, placeholder),
     }));
   };
 
@@ -185,7 +178,7 @@ function EducationRow({
 
   return (
     <Section className={cn("gap-2 bg-card", className)}>
-      <div className="flex  w-full justify-between ">
+      <div className="flex w-full justify-between">
         <div
           className="flex w-full flex-col gap-0 cursor-pointer"
           onClick={toggleEdit}
@@ -207,7 +200,7 @@ function EducationRow({
               type="button"
               variant="ghost"
               size="icon"
-              className="top-0 right-0 text-red-500 hover:bg-red-100 cursor-pointer hover:text-red-500"
+              className="text-red-500 hover:bg-red-100"
               onClick={onDelete}
             >
               <CheckIcon className="h-4 w-2" />
@@ -216,7 +209,6 @@ function EducationRow({
               type="button"
               variant="ghost"
               size="icon"
-              className="top-0 right-0 cursor-pointer"
               onClick={() => setIsDeleting(false)}
             >
               <XIcon className="h-4 w-2" />
@@ -227,7 +219,7 @@ function EducationRow({
             type="button"
             size="icon"
             variant="ghost"
-            className="top-0 right-0 text-red-500 hover:bg-red-100 cursor-pointer hover:text-red-500"
+            className="text-red-500 hover:bg-red-100"
             onClick={() => setIsDeleting(true)}
           >
             <TrashIcon className="h-4 w-4" />
@@ -236,11 +228,11 @@ function EducationRow({
       </div>
 
       <div
-        className={`grid items-start  gap-x-4 gap-y-3 sm:grid-cols-[max-content_minmax(0,1fr)] ${
+        className={`grid items-start gap-x-4 gap-y-3 sm:grid-cols-[max-content_minmax(0,1fr)] ${
           !isEditing ? "hidden" : ""
         }`}
       >
-        {/* Role */}
+        {/* Degree */}
         <FieldLabel htmlFor={id("degree")}>Degree</FieldLabel>
         <FormField
           control={form.control}
@@ -266,7 +258,7 @@ function EducationRow({
           )}
         />
 
-        {/* Company */}
+        {/* Institution */}
         <FieldLabel htmlFor={id("institution")}>Institution</FieldLabel>
         <FormField
           control={form.control}
@@ -282,7 +274,7 @@ function EducationRow({
                     handleDisplayPropsChange(
                       "institution",
                       e.target.value,
-                      "Unknown Institution"
+                      "New Institution"
                     );
                   }}
                 />
@@ -315,7 +307,7 @@ function EducationRow({
 
         {/* Currently Studying Here */}
         <span></span>
-        <div className="h-7 flex gap-4 place-items-center">
+        <div className="h-7 flex gap-4 items-center">
           <FormField
             control={form.control}
             name={`education.${index}.currentlyStudyingHere`}
@@ -325,14 +317,10 @@ function EducationRow({
                   <input
                     id={id("currentlyStudyingHere")}
                     type="checkbox"
-                    className="h-5 w-5 accent-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                    className="h-5 w-5 accent-sky-600 focus-visible:ring-2 focus-visible:ring-sky-500"
                     checked={!!field.value}
                     onChange={(e) => {
-                      const checked = e.target.checked;
-                      field.onChange(checked);
-                      if (checked) {
-                        const now = new Date();
-                      }
+                      field.onChange(e.target.checked);
                     }}
                   />
                 </FormControl>
@@ -340,12 +328,12 @@ function EducationRow({
               </FormItem>
             )}
           />
-          <Label className="self-center" htmlFor={id("currentlyStudyingHere")}>
+          <Label htmlFor={id("currentlyStudyingHere")}>
             Currently Studying Here
           </Label>
         </div>
 
-        {/* End Date (disabled when current) */}
+        {/* End Date */}
         <FieldLabel htmlFor={id("endDate")}>End Date</FieldLabel>
         <FormField
           control={form.control}

@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect, useRef, ReactNode } from "react";
-import { formatDate } from "@/utils/date-formatting";
-import { getLinkedInUsername, getXingUsername } from "@/utils/cv-utils";
+import React, { useState, useEffect, useRef, ReactNode } from 'react'
+import { formatDate } from '@/utils/date-formatting'
+import { getLinkedInUsername, getXingUsername } from '@/utils/cv-utils'
 import {
   IconPhone,
   IconMail,
   IconGlobe,
   IconBrandLinkedin,
   IconBrandXing,
-} from "@tabler/icons-react";
-import { CvData } from "@/schemas/cv_data_schema";
+} from '@tabler/icons-react'
+import { CvData } from '@/schemas/cv_data_schema'
 
 // --- Layout Constants ---
-const A4_PAGE_HEIGHT_PX = 1123; // Fixed height of an A4 page at 96 DPI
-const PAGE_PADDING_Y_PX = 96; // p-12 top (48px) + p-12 bottom (48px)
-const USABLE_PAGE_HEIGHT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
+const A4_PAGE_HEIGHT_PX = 1123 // Fixed height of an A4 page at 96 DPI
+const PAGE_PADDING_Y_PX = 96 // p-12 top (48px) + p-12 bottom (48px)
+const USABLE_PAGE_HEIGHT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX
 
 // --- Visual Page Component ---
 // This is a simple presentational component that styles each page wrapper.
@@ -24,57 +24,57 @@ function Page({ children }: { children: ReactNode }) {
     <div
       className="bg-white shadow-lg mx-auto overflow-hidden"
       style={{
-        width: "794px",
+        width: '794px',
         height: `${A4_PAGE_HEIGHT_PX}px`,
-        padding: "48px",
-        fontFamily: "Helvetica, Arial, sans-serif",
+        padding: '48px',
+        fontFamily: 'Helvetica, Arial, sans-serif',
       }}
     >
       {children}
     </div>
-  );
+  )
 }
 
 // --- Main Template Component with Pagination Logic ---
 export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
   // State to hold the final, paginated content. Each inner array is a page.
-  const [paginatedPages, setPaginatedPages] = useState<ReactNode[][]>([[]]);
+  const [paginatedPages, setPaginatedPages] = useState<ReactNode[][]>([[]])
   // Ref for the hidden container used to measure the raw content.
-  const measurementContainerRef = useRef<HTMLDivElement>(null);
+  const measurementContainerRef = useRef<HTMLDivElement>(null)
   // State to prevent showing the final layout until calculation is complete.
-  const [isCalculating, setIsCalculating] = useState(true);
+  const [isCalculating, setIsCalculating] = useState(true)
 
   // This effect performs the measurement and distribution logic whenever the CV data changes.
   useEffect(() => {
-    setIsCalculating(true);
+    setIsCalculating(true)
 
     const measureAndPaginate = () => {
-      const container = measurementContainerRef.current;
-      if (!container) return;
+      const container = measurementContainerRef.current
+      if (!container) return
 
-      const contentBlocks = Array.from(container.children) as HTMLElement[];
-      const newPages: ReactNode[][] = [];
-      let currentPageContent: ReactNode[] = [];
-      let currentPageHeight = 0;
+      const contentBlocks = Array.from(container.children) as HTMLElement[]
+      const newPages: ReactNode[][] = []
+      let currentPageContent: ReactNode[] = []
+      let currentPageHeight = 0
 
-      const originalJsxNodes = CVContent({ cvData });
+      const originalJsxNodes = CVContent({ cvData })
 
       contentBlocks.forEach((block, index) => {
         // Correct measurement including vertical margins for accurate layout calculation.
-        const style = window.getComputedStyle(block);
-        const marginTop = parseInt(style.marginTop, 10) || 0;
-        const marginBottom = parseInt(style.marginBottom, 10) || 0;
-        const blockHeight = block.offsetHeight + marginTop + marginBottom;
+        const style = window.getComputedStyle(block)
+        const marginTop = parseInt(style.marginTop, 10) || 0
+        const marginBottom = parseInt(style.marginBottom, 10) || 0
+        const blockHeight = block.offsetHeight + marginTop + marginBottom
 
-        const blockJsx = originalJsxNodes[index];
+        const blockJsx = originalJsxNodes[index]
 
         // Widow/Orphan Control: Prevent a section title from being the last item on a page.
-        const isSectionTitle = block.tagName === "H3";
-        const nextBlock = contentBlocks[index + 1];
+        const isSectionTitle = block.tagName === 'H3'
+        const nextBlock = contentBlocks[index + 1]
         const nextBlockHeight = nextBlock
           ? nextBlock.offsetHeight +
             parseInt(window.getComputedStyle(nextBlock).marginBottom, 10)
-          : 0;
+          : 0
 
         if (
           isSectionTitle &&
@@ -82,10 +82,10 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
             USABLE_PAGE_HEIGHT &&
           currentPageContent.length > 0
         ) {
-          newPages.push(currentPageContent);
-          currentPageContent = [blockJsx];
-          currentPageHeight = blockHeight;
-          return;
+          newPages.push(currentPageContent)
+          currentPageContent = [blockJsx]
+          currentPageHeight = blockHeight
+          return
         }
 
         // Standard pagination logic: if the block doesn't fit, create a new page.
@@ -93,26 +93,26 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
           currentPageHeight + blockHeight > USABLE_PAGE_HEIGHT &&
           currentPageContent.length > 0
         ) {
-          newPages.push(currentPageContent);
-          currentPageContent = [blockJsx];
-          currentPageHeight = blockHeight;
+          newPages.push(currentPageContent)
+          currentPageContent = [blockJsx]
+          currentPageHeight = blockHeight
         } else {
-          currentPageContent.push(blockJsx);
-          currentPageHeight += blockHeight;
+          currentPageContent.push(blockJsx)
+          currentPageHeight += blockHeight
         }
-      });
+      })
 
       if (currentPageContent.length > 0) {
-        newPages.push(currentPageContent);
+        newPages.push(currentPageContent)
       }
 
-      setPaginatedPages(newPages);
-      setIsCalculating(false);
-    };
+      setPaginatedPages(newPages)
+      setIsCalculating(false)
+    }
 
-    const timer = setTimeout(measureAndPaginate, 50);
-    return () => clearTimeout(timer);
-  }, [cvData]);
+    const timer = setTimeout(measureAndPaginate, 50)
+    return () => clearTimeout(timer)
+  }, [cvData])
 
   return (
     <div>
@@ -137,29 +137,29 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // --- CV Content Component ---
 // CRUCIAL REFACTOR: This function now builds and returns a FLAT ARRAY of JSX elements.
 // Every logical block (headers, titles, paragraphs, list items) is a separate element in the array.
 function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
-  const blocks: ReactNode[] = [];
+  const blocks: ReactNode[] = []
 
   // Block 1: Header (Name & Title)
   blocks.push(
     <div key="header" className="pb-1 mb-4">
       <h1 className="text-4xl font-bold text-blue-600 mb-2 tracking-wide">
-        {cvData.personalInformation?.name?.toUpperCase()}{" "}
+        {cvData.personalInformation?.name?.toUpperCase()}{' '}
         {cvData.personalInformation?.surname?.toUpperCase()}
       </h1>
       <h2 className="text-lg font-normal text-gray-800 tracking-wide">
         {cvData.personalInformation?.professionalTitle
           ? cvData.personalInformation.professionalTitle.toUpperCase()
-          : ""}
+          : ''}
       </h2>
-    </div>
-  );
+    </div>,
+  )
 
   // Block 2: Contact Info (Single Line)
   blocks.push(
@@ -183,7 +183,7 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
         <div className="flex items-center gap-1.5">
           <IconGlobe size={14} />
           <span>
-            {cvData.personalInformation.website.replace(/https?:\/\//, "")}
+            {cvData.personalInformation.website.replace(/https?:\/\//, '')}
           </span>
         </div>
       )}
@@ -201,8 +201,8 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
           <span>{getXingUsername(cvData.personalInformation.xing)}</span>
         </div>
       )}
-    </div>
-  );
+    </div>,
+  )
 
   // Block 3: Summary
   if (cvData.personalInformation?.summary) {
@@ -211,8 +211,8 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
         <p className="text-sm text-gray-800 leading-relaxed">
           {cvData.personalInformation.summary}
         </p>
-      </div>
-    );
+      </div>,
+    )
   }
 
   // Experience Blocks
@@ -223,8 +223,8 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
         className="text-sm font-bold text-blue-600 tracking-wide border-b border-blue-200 pb-1 mb-4"
       >
         EXPERIENCE
-      </h3>
-    );
+      </h3>,
+    )
     cvData.experience.forEach((exp) => {
       blocks.push(
         <div
@@ -237,14 +237,14 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
           </div>
           <div className="text-sm text-gray-600 font-medium ml-4 text-right">
             {exp.startDate
-              ? formatDate(new Date(exp.startDate), "MMM yyyy")
-              : "N/A"}{" "}
-            -{" "}
+              ? formatDate(new Date(exp.startDate), 'MMM yyyy')
+              : 'N/A'}{' '}
+            -{' '}
             {exp.currentlyWorkingHere
-              ? "Present"
+              ? 'Present'
               : exp.endDate
-                ? formatDate(new Date(exp.endDate), "MMM yyyy")
-                : "Present"}
+              ? formatDate(new Date(exp.endDate), 'MMM yyyy')
+              : 'Present'}
             {exp.location && (
               <>
                 <br />
@@ -252,12 +252,12 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
               </>
             )}
           </div>
-        </div>
-      );
+        </div>,
+      )
       if (exp.description) {
         exp.description
-          .split("\n")
-          .filter((p) => p.trim() !== "")
+          .split('\n')
+          .filter((p) => p.trim() !== '')
           .forEach((paragraph, pIndex) => {
             blocks.push(
               <p
@@ -265,11 +265,11 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
                 className="text-sm text-gray-700 leading-relaxed mb-4"
               >
                 {paragraph}
-              </p>
-            );
-          });
+              </p>,
+            )
+          })
       }
-    });
+    })
   }
 
   // Education Blocks
@@ -280,8 +280,8 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
         className="text-base font-bold text-blue-600 tracking-wide border-b border-blue-200 pb-1 mb-4"
       >
         EDUCATION
-      </h3>
-    );
+      </h3>,
+    )
     cvData.education.forEach((edu) => {
       blocks.push(
         <div key={edu.degree} className="mb-3">
@@ -293,12 +293,12 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
               <div className="text-sm text-gray-700">{edu.institution}</div>
             </div>
             <div className="text-sm text-gray-600 font-medium ml-4 text-right">
-              {edu.startDate ? formatDate(new Date(edu.startDate)) : "N/A"} -{" "}
+              {edu.startDate ? formatDate(new Date(edu.startDate)) : 'N/A'} -{' '}
               {edu.currentlyStudyingHere
-                ? "Present"
+                ? 'Present'
                 : edu.endDate
-                  ? formatDate(new Date(edu.endDate))
-                  : "Present"}
+                ? formatDate(new Date(edu.endDate))
+                : 'Present'}
               {edu.location && (
                 <>
                   <br />
@@ -307,9 +307,9 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
               )}
             </div>
           </div>
-        </div>
-      );
-    });
+        </div>,
+      )
+    })
   }
 
   // Skills Blocks
@@ -320,26 +320,26 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
         className="text-base font-bold text-blue-600 tracking-wide border-b border-blue-200 pb-1 mb-4"
       >
         SKILLS
-      </h3>
-    );
+      </h3>,
+    )
     cvData.skillGroups.forEach((skillGroup) => {
       blocks.push(
         <div key={skillGroup.name} className="mb-3">
           <h4 className="text-sm font-bold text-blue-600 mb-1 tracking-wide">
-            {(skillGroup.name ?? "").toUpperCase()}
+            {(skillGroup.name ?? '').toUpperCase()}
           </h4>
           <div className="text-sm text-gray-700">
             {skillGroup.skills?.map((skill, skillIndex) => (
               <span key={skill.name}>
                 {skill.name}
-                {skillIndex < (skillGroup.skills?.length || 0) - 1 ? ", " : ""}
+                {skillIndex < (skillGroup.skills?.length || 0) - 1 ? ', ' : ''}
               </span>
             ))}
           </div>
-        </div>
-      );
-    });
+        </div>,
+      )
+    })
   }
 
-  return blocks;
+  return blocks
 }

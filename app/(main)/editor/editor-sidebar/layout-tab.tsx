@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import type { CvData } from "@/schemas/cv_data_schema";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -63,7 +62,7 @@ export function LayoutTabPanel() {
                 {Object.values(TemplateRecord).map((template) => (
                   <div
                     key={template.id}
-                    className={`relative h-20 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50 ${
+                    className={`relative h-18 rounded-lg border-2 cursor-pointer transition-all hover:border-primary/50 ${
                       Number(field.value) === template.id ||
                       (!field.value && template.id === defaultValue)
                         ? "border-primary ring-2 ring-primary/20"
@@ -71,13 +70,13 @@ export function LayoutTabPanel() {
                     }`}
                     onClick={() => field.onChange(template.id)}
                   >
-                    <div className="flex items-center h-full">
+                    <div className="flex items-center h-full p-1">
                       <div className="w-24 h-full p-1">
                         <TemplatePreview templateId={template.id} />
                       </div>
-                      <div className="flex-1 p-3">
+                      <div className="flex-1 p-3 ">
                         <h4 className="font-medium text-sm">{template.name}</h4>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500">
                           {template.description}
                         </p>
                       </div>
@@ -102,13 +101,13 @@ export function LayoutTabPanel() {
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <div className="grid grid-cols-6 gap-x-3 gap-y-4">
+              <div className="flex flex-wrap gap-x-3 gap-y-3">
                 <TooltipProvider>
                   {Object.values(ColorRecord).map((color) => (
                     <Tooltip key={color.name}>
                       <TooltipTrigger asChild>
                         <div
-                          className={`relative w-10 h-10 rounded-full cursor-pointer transition-all hover:scale-110 ${
+                          className={`relative w-6 h-6 rounded-full cursor-pointer transition-all hover:scale-110 ${
                             Number(field.value) === color.id ||
                             (!field.value && color.id === 0)
                               ? "ring-2 ring-primary ring-offset-2 shadow-lg scale-110"
@@ -222,10 +221,10 @@ export function LayoutTabPanel() {
                       min={10}
                       max={12}
                       step={1}
-                      className="w-full"
+                      className="w-[200px]"
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-muted-foreground px-2">
+                  <div className="flex justify-between text-xs text-muted-foreground px-2 w-[220px]">
                     <div className="flex flex-col items-center gap-1">
                       <span className="font-medium">Small</span>
                     </div>
@@ -263,8 +262,6 @@ export function LayoutTabPanel() {
             <TemplateField />
           </div>
 
-          <Separator />
-
           {/* Accent Color */}
           <div className="space-y-3">
             <Label className="text-sm font-medium text-foreground">
@@ -283,7 +280,7 @@ export function LayoutTabPanel() {
 
           {/* Font Size */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium text-foreground">
+            <Label className="text-sm font-medium text-foreground pb-2">
               Font Size
             </Label>
             <FontSizeField />

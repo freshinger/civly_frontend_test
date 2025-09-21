@@ -6,7 +6,7 @@ import { useFormContext, useFieldArray } from "react-hook-form";
 import type { CvData } from "@/schemas/cv_data_schema";
 
 import { cn } from "@/lib/utils";
-import { Section } from "@/components/custom/cv-form/form-section";
+import { Section } from "@/components/custom/form/form-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";

@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -185,4 +185,8 @@
     opacity: 0;
     transform: translateY(-4px) scale(0.98);
   }
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 99999 !important;
 }

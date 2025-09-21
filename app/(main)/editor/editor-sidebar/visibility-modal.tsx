@@ -49,13 +49,25 @@ export function VisibilityModal({
   }, [password, visibility])
 
   const handleSaveChanges = () => {
+    console.log('VisibilityModal - handleSaveChanges called:', {
+      localVisibility,
+      passwordInput,
+    })
+
     if (localVisibility === 'Private') {
       if (!passwordInput.trim()) {
         toast.error('Password is required for private resumes.')
         return
       }
+      console.log(
+        'VisibilityModal - calling onVisibilityChange with Private + password',
+      )
       onVisibilityChange('Private', passwordInput)
     } else {
+      console.log(
+        'VisibilityModal - calling onVisibilityChange with:',
+        localVisibility,
+      )
       onVisibilityChange(localVisibility)
     }
     onOpenChange(false)
@@ -161,7 +173,16 @@ export function VisibilityModal({
         </div>
 
         <DialogFooter>
-          <Button onClick={handleSaveChanges}>Save and Close</Button>
+          <Button
+            onClick={() => {
+              console.log(
+                'SAVE BUTTON CLICKED - about to call handleSaveChanges',
+              )
+              handleSaveChanges()
+            }}
+          >
+            Save and Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

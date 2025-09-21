@@ -3,15 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  IconDashboard,
-  IconFileDescription,
-  IconHelp,
-  IconSettings,
-} from "@tabler/icons-react";
+import { IconDashboard, IconFileDescription } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
@@ -77,13 +71,8 @@ export function AppSidebar({
     icon: IconFileDescription,
   };
 
-  const navSecondary = [
-    { title: "Help", url: "/help", icon: IconHelp },
-    { title: "Settings", url: "/settings", icon: IconSettings },
-  ];
-
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="offcanvas" {...props} className="w-[260px]">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -101,7 +90,11 @@ export function AppSidebar({
 
       <SidebarContent>
         <NavMain items={navMain} resumes={resumesMeta} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        {/*
+          These are global links that are always visible.
+          For now, we only have one, but we might want to add more in the future.
+        */}
+        {/* <NavSecondary items={navSecondary} className="mt-auto" /> */}
       </SidebarContent>
 
       <SidebarFooter>

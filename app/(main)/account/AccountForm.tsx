@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { type User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import ProfilePicturePicker from "../../../components/custom/form/ImagePicker";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

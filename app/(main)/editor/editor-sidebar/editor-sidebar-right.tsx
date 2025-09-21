@@ -27,13 +27,15 @@ import { useCvStore } from "@/stores/cv_store";
 import { LoadingStatus } from "@/types/loadingState";
 
 import { createClient } from "@/utils/supabase/client";
+import { IconX } from "@tabler/icons-react";
+import { useMediaQuery } from "usehooks-ts";
+import { useSheetStore } from "@/stores/sheet_store";
 
 type Props = { id: string } & React.ComponentProps<typeof Sidebar>;
 
 export function EditorSidebarRight({ id, ...props }: Props) {
   const supabase = React.useMemo(() => createClient(), []);
   const [userId, setUserId] = React.useState<string>("");
-
   const [loadingStatus, setLoadingStatus] = React.useState<LoadingStatus>(
     LoadingStatus.Loading
   );
@@ -41,8 +43,11 @@ export function EditorSidebarRight({ id, ...props }: Props) {
   const getSingle = useCvStore((s) => s.getSingle);
   const saveRemote = useCvStore((s) => s.saveRemote);
   const saveLocally = useCvStore((s) => s.saveLocally);
+  const hideEditor = useSheetStore((s) => s.hideEditor);
 
   const [tab, setTab] = React.useState("layout");
+
+  const isTablet = useMediaQuery("(max-width: 1260px)");
 
   const form = useForm<CvData>({
     defaultValues: defaultCvData,
@@ -51,7 +56,7 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     resolver: zodResolver(cvDataSchema),
   });
 
-  // Load user (client-safe, no top-level await)
+  // Load user
   React.useEffect(() => {
     let alive = true;
     (async () => {
@@ -67,7 +72,6 @@ export function EditorSidebarRight({ id, ...props }: Props) {
   // Load CV + local autosave
   React.useEffect(() => {
     let alive = true;
-
     (async () => {
       if (!id) return;
       try {
@@ -110,81 +114,96 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     }
   }
 
-  const CustomTabsContent: React.FC<
-    React.PropsWithChildren<{ value: string; className?: string }>
-  > = ({ value, className, children }) => (
-    <TabsContent value={value} className={`flex-1 flex-col ${className ?? ""}`}>
-      {children}
-    </TabsContent>
-  );
-
   return (
     <Sidebar
       collapsible="none"
-      className="top-0 h-svh border-l w-full"
+      className="top-0 h-svh md:h-screen w-full max-w-[400px] border-l"
       {...props}
     >
       <Form {...form}>
         <form
-          className="w-full h-full flex flex-col"
+          className="h-full w-full"
           onSubmit={(e) => {
             e.preventDefault();
             void onSubmit();
           }}
         >
+          {/* Stable layout: header (shrink-0) / content (flex-1, scroll) / footer (shrink-0) */}
           <Tabs
             value={tab}
             onValueChange={setTab}
-            className="w-full h-full flex flex-col"
+            className="flex h-full min-h-0 flex-col"
           >
-            <SidebarHeader className="border-sidebar-border border-b h-[50px] w-full">
-              <TabsList className="w-full h-full bg-white flex justify-start gap-1">
-                <TabsTrigger value="layout" className="text-xs flex-shrink-0">
+            {/* HEADER */}
+            <SidebarHeader className="shrink-0 border-b border-sidebar-border bg-white">
+              {isTablet && (
+                <div className="flex h-12 items-center justify-between px-3">
+                  <h2 className="text-base font-semibold">CV Editor</h2>
+                  <Button type="button" variant="ghost" onClick={hideEditor}>
+                    <IconX size={24} />
+                  </Button>
+                </div>
+              )}
+              <TabsList className="flex h-12 w-full justify-start gap-1 overflow-x-auto bg-white">
+                <TabsTrigger
+                  value="layout"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
                   Layout
                 </TabsTrigger>
-                <TabsTrigger value="profile" className="text-xs flex-shrink-0">
+                <TabsTrigger
+                  value="profile"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
                   Information
                 </TabsTrigger>
-                <TabsTrigger value="skills" className="text-xs flex-shrink-0">
+                <TabsTrigger
+                  value="skills"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
                   Skills
                 </TabsTrigger>
-                <TabsTrigger value="work" className="text-xs flex-shrink-0">
+                <TabsTrigger
+                  value="work"
+                  className="flex-shrink-0 px-2 text-xs"
+                >
                   Experience
                 </TabsTrigger>
                 <TabsTrigger
                   value="education"
-                  className="text-xs flex-shrink-0"
+                  className="flex-shrink-0 px-2 text-xs"
                 >
                   Education
                 </TabsTrigger>
               </TabsList>
             </SidebarHeader>
 
-            {/* Make the middle stretch & scroll */}
-            <SidebarContent className="flex-1 min-h-0 gap-4 overflow-y-auto">
-              <CustomTabsContent value="layout">
+            {/* CONTENT */}
+            <SidebarContent className="flex-1 min-h-0 overflow-y-auto overscroll-contain gap-4">
+              <TabsContent value="layout">
                 <LayoutTabPanel />
-              </CustomTabsContent>
+              </TabsContent>
 
-              <CustomTabsContent value="profile">
+              <TabsContent value="profile">
                 <PersonalInformationTab userId={userId} cvId={id} />
-              </CustomTabsContent>
+              </TabsContent>
 
-              <CustomTabsContent value="skills">
+              <TabsContent value="skills">
                 <SkillsTab />
-              </CustomTabsContent>
+              </TabsContent>
 
-              <CustomTabsContent value="work">
+              <TabsContent value="work">
                 <ExperienceTab />
-              </CustomTabsContent>
+              </TabsContent>
 
-              <CustomTabsContent value="education">
+              <TabsContent value="education">
                 <EducationTab />
-              </CustomTabsContent>
+              </TabsContent>
             </SidebarContent>
 
-            <SidebarFooter className="border-sidebar-border border-t h-[70px] shrink-0">
-              <Button type="submit" className="w-full h-full">
+            {/* FOOTER */}
+            <SidebarFooter className="h-[70px] shrink-0 border-t border-sidebar-border">
+              <Button type="submit" className="h-full w-full">
                 {form.formState.isSubmitting ? "Publishing..." : "Publish"}
               </Button>
             </SidebarFooter>

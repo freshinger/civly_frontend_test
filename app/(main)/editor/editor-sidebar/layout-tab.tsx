@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import type { CvData } from "@/schemas/cv_data_schema";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,

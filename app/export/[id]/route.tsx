@@ -1,4 +1,4 @@
-'use server'
+"use server";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest } from "next/server";
 
@@ -8,7 +8,8 @@ async function generatePDF(url: string) {
   if (error) throw error;
 
   const session = data?.session;
-  if (!session) throw new Error('No supabase session available for PDF export.');
+  if (!session)
+    throw new Error("No supabase session available for PDF export.");
 
   const accessToken = session.access_token;
   const refreshToken = session.refresh_token;
@@ -17,7 +18,12 @@ async function generatePDF(url: string) {
   let browser;
   try {
     const isVercel = !!process.env.VERCEL_ENV;
-    let puppeteer: typeof import('puppeteer') | typeof import('puppeteer-core'), launchOptions: {headless: boolean,args?:string[],executablePath?:string};
+    let puppeteer: typeof import("puppeteer") | typeof import("puppeteer-core"),
+      launchOptions: {
+        headless: boolean;
+        args?: string[];
+        executablePath?: string;
+      };
     launchOptions = { headless: true };
 
     if (isVercel) {
@@ -39,21 +45,19 @@ async function generatePDF(url: string) {
     // determine cookie domain & secure flag
     const urlObj = new URL(url);
     const cookieDomain = urlObj.hostname; // hostname strips port (good)
-    const isHttps = urlObj.protocol === 'https:';
+    const isHttps = urlObj.protocol === "https:";
 
     // set Supabase session cookies on the BrowserContext BEFORE navigation
     // cookie names used by SSR: sb-access-token and sb-refresh-token
-    await page.browserContext().setCookie(
-      {
-        name: `sb-${process.env.SUPABASE_PROJECT_ID}-auth-token`,
-        value: JSON.stringify(session), // @supabase/ssr stores the whole session here
-        domain: new URL(url).hostname,
-        path: "/",
-        httpOnly: true,
-        secure: true,
-        sameSite: "Lax",
-      }
-    );
+    await page.browserContext().setCookie({
+      name: `sb-${process.env.SUPABASE_PROJECT_ID}-auth-token`,
+      value: JSON.stringify(session), // @supabase/ssr stores the whole session here
+      domain: new URL(url).hostname,
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "Lax",
+    });
 
     // Optional debug (uncomment if you need to inspect cookies)
     // const cookies = await page.browserContext().cookies();
@@ -65,7 +69,7 @@ async function generatePDF(url: string) {
     const pdfBuffer = await page.pdf({ format: "A4" });
     return pdfBuffer;
   } catch (err) {
-    console.error('generatePDF error', err);
+    console.error("generatePDF error", err);
     throw err;
   } finally {
     if (browser) await browser.close();
@@ -73,28 +77,36 @@ async function generatePDF(url: string) {
 }
 
 function typedArrayToBuffer(array: Uint8Array): ArrayBuffer {
-  return array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset) as ArrayBuffer;
+  return array.buffer.slice(
+    array.byteOffset,
+    array.byteLength + array.byteOffset
+  ) as ArrayBuffer;
 }
 
-export async function GET(_req: NextRequest, ctx: RouteContext<'/export/[id]'>) {
+export async function GET(
+  _req: NextRequest,
+  ctx: RouteContext<"/export/[id]">
+) {
   const { id } = await ctx.params;
 
-  let host = _req.headers.get('host');
-  if (host?.startsWith('localhost')) {
-    host = 'http://' + host;
+  let host = _req.headers.get("host");
+  if (host?.startsWith("localhost")) {
+    host = "http://" + host;
   } else {
-    host = 'https://' + host;
+    host = "https://" + host;
   }
 
   try {
-    const pdfBuffer = await generatePDF(host + '/cv-preview/' + id);
+    const pdfBuffer = await generatePDF(host + "/cv-preview/" + id);
 
     const newHeaders = new Headers();
-    newHeaders.set('Content-Type', 'application/pdf');
-    newHeaders.set('Content-Disposition', `attachment; filename=cv-${id}.pdf`);
+    newHeaders.set("Content-Type", "application/pdf");
+    newHeaders.set("Content-Disposition", `attachment; filename=cv-${id}.pdf`);
     return new Response(typedArrayToBuffer(pdfBuffer), { headers: newHeaders });
   } catch (error) {
-    console.error('export error', error);
-    return new Response("An error occurred while generating the pdf.", { status: 500 });
+    console.error("export error", error);
+    return new Response("An error occurred while generating the pdf.", {
+      status: 500,
+    });
   }
 }

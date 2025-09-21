@@ -14,17 +14,20 @@ enum LoadingStatus {
 export const TemplatePreview = ({ id }: { id: string }) => {
   const getSingle = useCvStore((s) => s.getSingle);
   const [cvData, setCvData] = useState<CvData | null>(null);
-  const subscribe = useCvStore.subscribe;
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
     LoadingStatus.Loading
   );
 
   useEffect(() => {
     let alive = true;
-    subscribe((state) => {
-      console.log("state change", state);
-      setCvData(state.localItems?.find((x) => x?.id === id) as CvData);
+
+    // subscribe to store changes
+    const unsubscribe = useCvStore.subscribe((state) => {
+      const local = state.localItems?.find((x) => x?.id === id) as CvData;
+      if (local) setCvData(local);
     });
+
+    // initial fetch
     (async () => {
       try {
         setLoadingStatus(LoadingStatus.Loading);
@@ -38,34 +41,38 @@ export const TemplatePreview = ({ id }: { id: string }) => {
           setLoadingStatus(LoadingStatus.Error);
         }
       } catch {
-        if (!alive) return;
-        setCvData(null);
-        setLoadingStatus(LoadingStatus.Error);
+        if (alive) {
+          setCvData(null);
+          setLoadingStatus(LoadingStatus.Error);
+        }
       }
     })();
 
     return () => {
       alive = false;
+      unsubscribe(); // important!
     };
   }, [id, getSingle]);
 
-  // Optional memo to avoid unnecessary rerenders of heavy preview
   const content = useMemo(() => {
-    if (loadingStatus === LoadingStatus.Loading)
-      return (
-        <div className="flex items-center justify-center h-full">
-          <h1 className="text-2xl font-bold">Loading...</h1>
-        </div>
-      );
-
-    if (loadingStatus === LoadingStatus.Error || !cvData)
-      return (
-        <div className="flex items-center justify-center h-full">
-          <h1 className="text-2xl font-bold">Error</h1>
-        </div>
-      );
-
-    return <ShowCVByTemplate cvData={cvData} />;
+    switch (loadingStatus) {
+      case LoadingStatus.Loading:
+        return (
+          <div className="flex h-full items-center justify-center">
+            <h1 className="text-2xl font-bold">Loading...</h1>
+          </div>
+        );
+      case LoadingStatus.Error:
+        return (
+          <div className="flex h-full items-center justify-center">
+            <h1 className="text-2xl font-bold">Error</h1>
+          </div>
+        );
+      case LoadingStatus.Loaded:
+        return cvData ? <ShowCVByTemplate cvData={cvData} /> : null;
+      default:
+        return null;
+    }
   }, [loadingStatus, cvData]);
 
   return <>{content}</>;

@@ -55,7 +55,11 @@ export async function updateCVName(id: string, value: string) {
   });
 }
 
-export async function updateVisibility(cv: CvData, value: string) {
+export async function updateVisibility(
+  cv: CvData,
+  value: string,
+  newPassword: string | undefined
+) {
   const { data, error } = await sb.functions.invoke(path + cv.id, {
     method: "PATCH",
     body: { visibility: value, name: cv.name },

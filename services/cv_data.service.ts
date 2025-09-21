@@ -1,13 +1,16 @@
 import { CvData } from "@/schemas/cv_data_schema";
 import { createClient } from "@/utils/supabase/client";
+import { FunctionRegion } from "@supabase/supabase-js";
 
 const sb = createClient();
 
 const path = "cv-data/";
+const region = FunctionRegion.EuWest2;
 
 export async function fetchAll(): Promise<CvData[]> {
   const { data, error } = await sb.functions.invoke(path, {
     method: "GET",
+    region,
   });
   if (error) throw error;
   return data.data;
@@ -17,6 +20,7 @@ export async function fetchAll(): Promise<CvData[]> {
 export async function fetchCv(id: string): Promise<CvData> {
   const { data, error } = await sb.functions.invoke(path + id, {
     method: "GET",
+    region,
   });
   if (error) throw error;
   return data;
@@ -26,6 +30,7 @@ export async function createEmptyCv(): Promise<{ id: string }> {
   const { data, error } = await sb.functions.invoke(path, {
     method: "POST",
     body: {},
+    region,
   });
   if (error) throw error;
   return data as { id: string };
@@ -36,6 +41,7 @@ export async function duplicateCv(id: string | null): Promise<string> {
   const { data, error } = await sb.functions.invoke(path + id, {
     method: "POST",
     body: {},
+    region,
   });
   if (error) throw error;
   return data.data.id as string;
@@ -45,6 +51,7 @@ export async function updateCVName(id: string, value: string) {
   const { data, error } = await sb.functions.invoke(path + id, {
     method: "PATCH",
     body: { name: value },
+    region,
   });
 }
 
@@ -52,6 +59,7 @@ export async function updateVisibility(cv: CvData, value: string) {
   const { data, error } = await sb.functions.invoke(path + cv.id, {
     method: "PATCH",
     body: { visibility: value, name: cv.name },
+    region,
   });
 
   if (error) throw error;
@@ -62,6 +70,7 @@ export async function updateCv(item: CvData): Promise<void> {
   const { error } = await sb.functions.invoke(path + item.id, {
     method: "PUT",
     body: item,
+    region,
   });
   if (error) throw error;
 }
@@ -69,6 +78,7 @@ export async function updateCv(item: CvData): Promise<void> {
 export async function deleteCv(id: string): Promise<void> {
   const { error } = await sb.functions.invoke(path + id, {
     method: "DELETE",
+    region,
   });
   if (error) throw error;
 }

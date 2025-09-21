@@ -71,10 +71,14 @@ export function EditorSidebarRight({ id, ...props }: Props) {
 
   function onSubmit() {
     const data = form.getValues();
-    const result = cvDataSchema.safeParse(data);
-    if (!result.success) {
-      console.error("Invalid data:", result.error);
-      return;
+    try {
+      const result = cvDataSchema.safeParse(data);
+      if (!result.success) {
+        console.error("Invalid data:", result.error);
+        return;
+      }
+    } catch (error) {
+      console.error("Error saving CV:", error);
     }
 
     return saveRemote(data);
@@ -114,11 +118,24 @@ export function EditorSidebarRight({ id, ...props }: Props) {
           >
             <SidebarHeader className="border-sidebar-border border-b h-[50px] w-full ">
               <TabsList className="w-full h-full bg-white flex justify-start gap-1">
-                <TabsTrigger value="layout" className="text-xs flex-shrink-0">Layout</TabsTrigger>
-                <TabsTrigger value="profile" className="text-xs flex-shrink-0">Information</TabsTrigger>
-                <TabsTrigger value="skills" className="text-xs flex-shrink-0">Skills</TabsTrigger>
-                <TabsTrigger value="work" className="text-xs flex-shrink-0">Experience</TabsTrigger>
-                <TabsTrigger value="education" className="text-xs flex-shrink-0">Education</TabsTrigger>
+                <TabsTrigger value="layout" className="text-xs flex-shrink-0">
+                  Layout
+                </TabsTrigger>
+                <TabsTrigger value="profile" className="text-xs flex-shrink-0">
+                  Information
+                </TabsTrigger>
+                <TabsTrigger value="skills" className="text-xs flex-shrink-0">
+                  Skills
+                </TabsTrigger>
+                <TabsTrigger value="work" className="text-xs flex-shrink-0">
+                  Experience
+                </TabsTrigger>
+                <TabsTrigger
+                  value="education"
+                  className="text-xs flex-shrink-0"
+                >
+                  Education
+                </TabsTrigger>
               </TabsList>
             </SidebarHeader>
 

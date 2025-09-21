@@ -74,26 +74,6 @@ export function PersonalInformationTab({
       <br />
 
       <div className="grid items-start gap-x-4 gap-y-4 sm:grid-cols-[max-content_minmax(0,1fr)]">
-        {/* Picture / Profile URL */}
-        <FieldLabel htmlFor="profileUrl">Picture</FieldLabel>
-        <FormField
-          control={form.control}
-          name="personalInformation.profileUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <Input
-                  id="profileUrl"
-                  type="url"
-                  placeholder="https://…"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         {/* Title */}
         <FieldLabel htmlFor="professionalTitle">Title</FieldLabel>
         <FormField

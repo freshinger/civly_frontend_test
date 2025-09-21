@@ -23,6 +23,7 @@ import {
   IconLoader2,
   IconAlertTriangle,
   IconClockHour4,
+  IconDeviceFloppy,
 } from "@tabler/icons-react";
 import { useMediaQuery } from "usehooks-ts";
 import { useSheetStore } from "@/stores/sheet_store";
@@ -41,7 +42,7 @@ type IconType = React.ComponentType<{ size?: number; className?: string }>;
 
 function StatusIcon({ status }: { status: SaveStatus }) {
   const map: Record<SaveStatus, { Icon: IconType; cls: string }> = {
-    Saved: { Icon: IconCircleCheck, cls: "text-green-600" },
+    Saved: { Icon: IconDeviceFloppy, cls: "text-green-600" },
     "Saving...": { Icon: IconLoader2, cls: "text-blue-600 animate-spin" },
     "Unsaved Changes": { Icon: IconClockHour4, cls: "text-amber-600" },
     Error: { Icon: IconAlertTriangle, cls: "text-red-600" },
@@ -160,17 +161,6 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
         <div className="hidden md:flex">
           <StatusIcon status={isLoading ? "Saving..." : saveStatus} />
         </div>
-        {isTablet && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="md:hidden h-8 w-8"
-            onClick={hideEditor}
-            aria-label="Close editor"
-          >
-            <IconX size={18} />
-          </Button>
-        )}
       </div>
 
       <div className="flex min-w-0 flex-1 items-center justify-center gap-2 md:justify-start">

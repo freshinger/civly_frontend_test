@@ -1,49 +1,49 @@
 // This component MUST be a client component to perform DOM measurements.
-'use client'
+"use client";
 
-import React from 'react'
-import type { ReactNode } from 'react'
-import { useState, useEffect, useRef } from 'react'
-import Image from 'next/image'
-import type { CvData } from '@/schemas/cv_data_schema'
-import type { SkillGroup, SkillGroupItem } from '@/schemas/skills_schema'
-import type { EducationItem } from '@/schemas/education_schema'
-import type { ExperienceItem } from '@/schemas/experience_schema'
+import React from "react";
+import type { ReactNode } from "react";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import type { CvData } from "@/schemas/cv_data_schema";
+import type { SkillGroup, SkillGroupItem } from "@/schemas/skills_schema";
+import type { EducationItem } from "@/schemas/education_schema";
+import type { ExperienceItem } from "@/schemas/experience_schema";
 // import { formatDate } from "@/utils/date-formatting";
 import {
   isValidUrl,
   getLinkedInUsername,
   getXingUsername,
-} from '@/utils/cv-utils'
+} from "@/utils/cv-utils";
 import {
   getElementClasses,
   getFontStyles,
   type FontSizeId,
-} from '@/lib/style-utils'
-import { ColorRecord } from '@/types/colorType'
+} from "@/lib/style-utils";
+import { ColorRecord } from "@/types/colorType";
 import {
   IconGlobe,
   IconMail,
   IconPhone,
   IconBrandLinkedin,
   IconBrandXing,
-} from '@tabler/icons-react'
+} from "@tabler/icons-react";
 
 // --- Types ---
 
 interface CVCleanTemplateProps {
-  cvData: CvData
-  accentColor?: string
-  colorId?: number
-  fontId?: number
-  fontSizeId?: 10 | 11 | 12
+  cvData: CvData;
+  accentColor?: string;
+  colorId?: number;
+  fontId?: number;
+  fontSizeId?: 10 | 11 | 12;
 }
 
 // --- Layout Constants ---
-const A4_PAGE_HEIGHT_PX = 1123
-const PAGE_PADDING_PX = 40
-const PAGE_PADDING_Y_PX = PAGE_PADDING_PX * 2
-const USABLE_PAGE_HEIGHT_SUBSEQUENT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX
+const A4_PAGE_HEIGHT_PX = 1123;
+const PAGE_PADDING_PX = 40;
+const PAGE_PADDING_Y_PX = PAGE_PADDING_PX * 2;
+const USABLE_PAGE_HEIGHT_SUBSEQUENT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
 
 // --- Visual Page Component ---
 function Page({ children }: { children: ReactNode }) {
@@ -51,97 +51,97 @@ function Page({ children }: { children: ReactNode }) {
     <div
       className="bg-white shadow-lg overflow-auto relative max-w-full"
       style={{
-        maxWidth: '794px',
+        width: "794px",
         height: `${A4_PAGE_HEIGHT_PX}px`,
         padding: `${PAGE_PADDING_PX}px`,
-        fontSize: '11px',
-        lineHeight: '1.3',
-        margin: '0 auto',
+        fontSize: "11px",
+        lineHeight: "1.3",
+        margin: "0 auto",
       }}
     >
       {children}
     </div>
-  )
+  );
 }
 
 // --- Main Template Component with Pagination Logic ---
 export function CVCleanTemplate({
   cvData,
-  accentColor = 'text-blue-600',
+  accentColor = "text-blue-600",
   colorId = 0,
   fontId = 0,
   fontSizeId = 11,
 }: CVCleanTemplateProps) {
-  const [paginatedPages, setPaginatedPages] = useState<ReactNode[]>([])
-  const [isCalculating, setIsCalculating] = useState(true)
+  const [paginatedPages, setPaginatedPages] = useState<ReactNode[]>([]);
+  const [isCalculating, setIsCalculating] = useState(true);
 
   // State to hold the final, balanced layout
   const [balancedLayout, setBalancedLayout] = useState<{
-    left: ReactNode[]
-    right: ReactNode[]
-  } | null>(null)
+    left: ReactNode[];
+    right: ReactNode[];
+  } | null>(null);
 
   // Refs for measurement containers
-  const headerRef = useRef<HTMLDivElement>(null)
-  const leftColRef = useRef<HTMLDivElement>(null)
-  const rightColRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null);
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const rightColRef = useRef<HTMLDivElement>(null);
 
   // STEP 1: Balance the columns based on initial measurements.
   useEffect(() => {
     // This effect runs once to decide if Education should be moved.
     const timer = setTimeout(() => {
-      const headerEl = headerRef.current
-      const leftEl = leftColRef.current
-      const rightEl = rightColRef.current
+      const headerEl = headerRef.current;
+      const leftEl = leftColRef.current;
+      const rightEl = rightColRef.current;
 
       if (!headerEl || !leftEl || !rightEl) {
-        setIsCalculating(false)
-        return
+        setIsCalculating(false);
+        return;
       }
 
       const getBlockHeight = (block: HTMLElement) => {
-        const style = window.getComputedStyle(block)
+        const style = window.getComputedStyle(block);
         return (
           block.offsetHeight +
           parseInt(style.marginTop, 10) +
           parseInt(style.marginBottom, 10)
-        )
-      }
+        );
+      };
 
-      const headerHeight = getBlockHeight(headerEl)
+      const headerHeight = getBlockHeight(headerEl);
       const usableHeightPage1 =
-        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX
+        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX;
 
-      const leftBlocks = Array.from(leftEl.children) as HTMLElement[]
-      const rightBlocks = Array.from(rightEl.children) as HTMLElement[]
+      const leftBlocks = Array.from(leftEl.children) as HTMLElement[];
+      const rightBlocks = Array.from(rightEl.children) as HTMLElement[];
 
       const educationBlock = leftBlocks.find(
-        (el) => el.getAttribute('data-section') === 'education',
-      )
+        (el) => el.getAttribute("data-section") === "education"
+      );
       const leftFixedHeight = leftBlocks
-        .filter((el) => el.getAttribute('data-section') !== 'education')
-        .reduce((sum, block) => sum + getBlockHeight(block), 0)
+        .filter((el) => el.getAttribute("data-section") !== "education")
+        .reduce((sum, block) => sum + getBlockHeight(block), 0);
       const educationHeight = educationBlock
         ? getBlockHeight(educationBlock)
-        : 0
+        : 0;
       const rightHeight = rightBlocks.reduce(
         (sum, block) => sum + getBlockHeight(block),
-        0,
-      )
+        0
+      );
 
-      let finalLeftJsx: ReactNode[] = []
+      let finalLeftJsx: ReactNode[] = [];
       const finalRightJsx: ReactNode[] = CVColumnRight({
         cvData,
         accentColor,
         colorId,
         fontId,
         fontSizeId,
-      })
+      });
 
       const shouldMoveEducation =
         educationHeight > 0 &&
         leftFixedHeight + educationHeight > usableHeightPage1 &&
-        rightHeight + educationHeight <= usableHeightPage1
+        rightHeight + educationHeight <= usableHeightPage1;
 
       if (shouldMoveEducation) {
         finalLeftJsx = CVColumnLeftFixed({
@@ -150,7 +150,7 @@ export function CVCleanTemplate({
           colorId,
           fontId,
           fontSizeId,
-        })
+        });
         finalRightJsx.push(
           ...CVColumnEducation({
             cvData,
@@ -158,8 +158,8 @@ export function CVCleanTemplate({
             colorId,
             fontId,
             fontSizeId,
-          }),
-        )
+          })
+        );
       } else {
         finalLeftJsx = CVColumnLeft({
           cvData,
@@ -167,81 +167,81 @@ export function CVCleanTemplate({
           colorId,
           fontId,
           fontSizeId,
-        })
+        });
       }
 
-      setBalancedLayout({ left: finalLeftJsx, right: finalRightJsx })
-    }, 50) // A small delay to ensure DOM is ready for measurement.
+      setBalancedLayout({ left: finalLeftJsx, right: finalRightJsx });
+    }, 50); // A small delay to ensure DOM is ready for measurement.
 
-    return () => clearTimeout(timer)
-  }, [cvData, accentColor, colorId, fontId, fontSizeId])
+    return () => clearTimeout(timer);
+  }, [cvData, accentColor, colorId, fontId, fontSizeId]);
 
   // STEP 2: Paginate the final, balanced layout.
   useEffect(() => {
-    if (!balancedLayout) return
+    if (!balancedLayout) return;
 
     // This effect runs after the balanced layout is determined.
     const timer = setTimeout(() => {
-      const headerEl = headerRef.current
-      const leftEl = leftColRef.current
-      const rightEl = rightColRef.current
+      const headerEl = headerRef.current;
+      const leftEl = leftColRef.current;
+      const rightEl = rightColRef.current;
       if (!headerEl || !leftEl || !rightEl) {
-        setIsCalculating(false)
-        return
+        setIsCalculating(false);
+        return;
       }
 
       const getBlockHeight = (block: HTMLElement) => {
-        const style = window.getComputedStyle(block)
+        const style = window.getComputedStyle(block);
         return (
           block.offsetHeight +
           parseInt(style.marginTop, 10) +
           parseInt(style.marginBottom, 10)
-        )
-      }
+        );
+      };
 
-      const headerHeight = getBlockHeight(headerEl)
+      const headerHeight = getBlockHeight(headerEl);
       const usableHeightPage1 =
-        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX
+        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX;
 
       const paginateColumn = (
         container: HTMLElement,
-        originalJsx: ReactNode[],
+        originalJsx: ReactNode[]
       ) => {
-        const pages: ReactNode[][] = []
-        if (!container || originalJsx.length === 0) return pages
+        const pages: ReactNode[][] = [];
+        if (!container || originalJsx.length === 0) return pages;
 
-        const blocks = Array.from(container.children) as HTMLElement[]
-        let currentPage: ReactNode[] = []
-        let currentPageHeight = 0
-        let isFirstPage = true
+        const blocks = Array.from(container.children) as HTMLElement[];
+        let currentPage: ReactNode[] = [];
+        let currentPageHeight = 0;
+        let isFirstPage = true;
 
         blocks.forEach((block, index) => {
-          const blockHeight = getBlockHeight(block)
+          const blockHeight = getBlockHeight(block);
           const usableHeight = isFirstPage
             ? usableHeightPage1
-            : USABLE_PAGE_HEIGHT_SUBSEQUENT
+            : USABLE_PAGE_HEIGHT_SUBSEQUENT;
           if (
             currentPageHeight + blockHeight > usableHeight &&
             currentPage.length > 0
           ) {
-            pages.push(currentPage)
-            currentPage = [originalJsx[index]]
-            currentPageHeight = blockHeight
-            isFirstPage = false
+            pages.push(currentPage);
+            currentPage = [originalJsx[index]];
+            currentPageHeight = blockHeight;
+            isFirstPage = false;
           } else {
-            currentPage.push(originalJsx[index])
-            currentPageHeight += blockHeight
+            currentPage.push(originalJsx[index]);
+            currentPageHeight += blockHeight;
           }
-        })
-        if (currentPage.length > 0) pages.push(currentPage)
-        return pages
-      }
+        });
+        if (currentPage.length > 0) pages.push(currentPage);
+        return pages;
+      };
 
-      const paginatedLeft = paginateColumn(leftEl, balancedLayout.left)
-      const paginatedRight = paginateColumn(rightEl, balancedLayout.right)
+      const paginatedLeft = paginateColumn(leftEl, balancedLayout.left);
+      const paginatedRight = paginateColumn(rightEl, balancedLayout.right);
 
-      const numPages = Math.max(paginatedLeft.length, paginatedRight.length)
-      const finalPages = []
+      const numPages = Math.max(paginatedLeft.length, paginatedRight.length);
+      const finalPages = [];
 
       for (let i = 0; i < numPages; i++) {
         finalPages.push(
@@ -258,15 +258,15 @@ export function CVCleanTemplate({
               <div>{paginatedLeft[i] || []}</div>
               <div>{paginatedRight[i] || []}</div>
             </div>
-          </Page>,
-        )
+          </Page>
+        );
       }
-      setPaginatedPages(finalPages)
-      setIsCalculating(false)
-    }, 100)
+      setPaginatedPages(finalPages);
+      setIsCalculating(false);
+    }, 100);
 
-    return () => clearTimeout(timer)
-  }, [balancedLayout, cvData, colorId, fontId, fontSizeId])
+    return () => clearTimeout(timer);
+  }, [balancedLayout, cvData, colorId, fontId, fontSizeId]);
 
   return (
     <div>
@@ -319,7 +319,7 @@ export function CVCleanTemplate({
         paginatedPages
       )}
     </div>
-  )
+  );
 }
 
 // --- Sub-Components for Content ---
@@ -329,38 +329,38 @@ function CVHeader({
   fontId = 0,
   fontSizeId = 11,
 }: CVCleanTemplateProps & { isMeasurement?: boolean }) {
-  const paddingClass = isMeasurement ? `pt-8 pb-4` : ``
+  const paddingClass = isMeasurement ? `pt-8 pb-4` : ``;
   const hasImage =
     cvData?.personalInformation?.profileUrl &&
-    isValidUrl(cvData?.personalInformation?.profileUrl)
+    isValidUrl(cvData?.personalInformation?.profileUrl);
 
   // Get dynamic classes for different elements
   const nameClasses = getElementClasses(
-    'h1',
+    "h1",
     fontSizeId as FontSizeId,
     fontId,
-    'font-bold text-black mb-1 leading-tight',
-  )
+    "font-bold text-black mb-1 leading-tight"
+  );
   const titleClasses = getElementClasses(
-    'h2',
+    "h2",
     fontSizeId as FontSizeId,
     fontId,
-    'text-gray-700 font-normal mb-4 leading-tight',
-  )
+    "text-gray-700 font-normal mb-4 leading-tight"
+  );
   const summaryClasses = getElementClasses(
-    'body',
+    "body",
     fontSizeId as FontSizeId,
     fontId,
-    'text-gray-800 mb-6',
-  )
+    "text-gray-800 mb-6"
+  );
 
   // Import the font styles utility
-  const nameFontStyles = getFontStyles('h1', fontId)
-  const titleFontStyles = getFontStyles('h2', fontId)
-  const summaryFontStyles = getFontStyles('body', fontId)
+  const nameFontStyles = getFontStyles("h1", fontId);
+  const titleFontStyles = getFontStyles("h2", fontId);
+  const summaryFontStyles = getFontStyles("body", fontId);
 
   // For debugging - log the font size being used
-  console.log('CVHeader styles:', {
+  console.log("CVHeader styles:", {
     nameClasses,
     titleClasses,
     summaryClasses,
@@ -369,13 +369,13 @@ function CVHeader({
     summaryFontStyles,
     fontId,
     fontSizeId,
-  })
+  });
 
   return (
     <div className={`flex items-start justify-between ${paddingClass}`}>
       <div className="flex-1 pr-8">
         <h1 className={nameClasses} style={nameFontStyles}>
-          {cvData?.personalInformation?.name}{' '}
+          {cvData?.personalInformation?.name}{" "}
           {cvData?.personalInformation?.surname}
         </h1>
         <h2 className={titleClasses} style={titleFontStyles}>
@@ -384,9 +384,9 @@ function CVHeader({
         {cvData?.personalInformation?.summary && (
           <p
             className={`${summaryClasses} ${
-              hasImage ? 'max-w-md' : 'max-w-full'
+              hasImage ? "max-w-md" : "max-w-full"
             }`}
-            style={{ ...summaryFontStyles, lineHeight: '1.5' }}
+            style={{ ...summaryFontStyles, lineHeight: "1.5" }}
           >
             {cvData?.personalInformation?.summary}
           </p>
@@ -404,7 +404,7 @@ function CVHeader({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function CVColumnLeftFixed({
@@ -417,37 +417,37 @@ function CVColumnLeftFixed({
 }: CVCleanTemplateProps): ReactNode[] {
   // Get dynamic classes for different elements
   const contactTextClasses = getElementClasses(
-    'small',
+    "small",
     fontSizeId as FontSizeId,
     fontId,
-    'text-gray-800',
-  )
+    "text-gray-800"
+  );
   const sectionHeadingClasses = getElementClasses(
-    'h4',
+    "h4",
     fontSizeId as FontSizeId,
     fontId,
-    'font-bold tracking-wide mb-1.5',
-  )
+    "font-bold tracking-wide mb-1.5"
+  );
   const skillItemClasses = getElementClasses(
-    'small',
+    "small",
     fontSizeId as FontSizeId,
     fontId,
-    'text-gray-800',
-  )
+    "text-gray-800"
+  );
 
   // Get dynamic accent color using inline style instead of arbitrary Tailwind class
-  const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+  const accentColorHex = ColorRecord[colorId]?.hex || "#3B82F6";
 
-  console.log('CVColumnLeftFixed styles:', {
+  console.log("CVColumnLeftFixed styles:", {
     fontSizeId,
     fontId,
     colorId,
     contactTextClasses,
     sectionHeadingClasses,
     accentColorHex,
-  })
+  });
 
-  const sections: ReactNode[] = []
+  const sections: ReactNode[] = [];
   sections.push(
     <div key="contact" className="mb-6" data-section="contact">
       <div className="space-y-2">
@@ -482,7 +482,7 @@ function CVColumnLeftFixed({
           >
             <IconGlobe size={14} className="text-gray-500" />
             <span className={contactTextClasses}>
-              {cvData.personalInformation.website.replace('https://', '')}
+              {cvData.personalInformation.website.replace("https://", "")}
             </span>
           </a>
         )}
@@ -513,8 +513,8 @@ function CVColumnLeftFixed({
           </a>
         )}
       </div>
-    </div>,
-  )
+    </div>
+  );
   cvData?.skillGroups?.forEach((skillGroup: SkillGroup, groupIndex: number) => {
     sections.push(
       <div
@@ -529,13 +529,13 @@ function CVColumnLeftFixed({
           {skillGroup.skills?.map(
             (skill: SkillGroupItem, skillIndex: number) => (
               <p key={skillIndex}>{skill.name}</p>
-            ),
+            )
           )}
         </div>
-      </div>,
-    )
-  })
-  return sections
+      </div>
+    );
+  });
+  return sections;
 }
 
 function CVColumnEducation({
@@ -546,31 +546,31 @@ function CVColumnEducation({
   fontId = 0,
   fontSizeId = 11,
 }: CVCleanTemplateProps): ReactNode[] {
-  if (!cvData?.education || cvData?.education?.length === 0) return []
+  if (!cvData?.education || cvData?.education?.length === 0) return [];
 
   // Get dynamic classes
   const sectionHeadingClasses = getElementClasses(
-    'h4',
+    "h4",
     fontSizeId as FontSizeId,
     fontId,
-    'font-bold tracking-wide mb-1.5',
-  )
+    "font-bold tracking-wide mb-1.5"
+  );
   const educationItemClasses = getElementClasses(
-    'small',
+    "small",
     fontSizeId as FontSizeId,
     fontId,
-    '',
-  )
-  const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+    ""
+  );
+  const accentColorHex = ColorRecord[colorId]?.hex || "#3B82F6";
 
-  console.log('CVColumnEducation styles:', {
+  console.log("CVColumnEducation styles:", {
     fontSizeId,
     fontId,
     colorId,
     sectionHeadingClasses,
     educationItemClasses,
     accentColorHex,
-  })
+  });
 
   return [
     <div key="education" className="mb-6" data-section="education">
@@ -584,19 +584,19 @@ function CVColumnEducation({
             <p className="text-gray-800">{edu.institution}</p>
             <p className="text-gray-500 mt-1">
               {edu?.startDate &&
-                new Date(edu?.startDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                })}{' '}
-              -{' '}
+                new Date(edu?.startDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                })}{" "}
+              -{" "}
               {edu.currentlyStudyingHere
-                ? 'Present'
+                ? "Present"
                 : edu.endDate
-                ? new Date(edu.endDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                  })
-                : 'Present'}{' '}
+                  ? new Date(edu.endDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                    })
+                  : "Present"}{" "}
               • {edu.location}
             </p>
             {edu.description && (
@@ -606,7 +606,7 @@ function CVColumnEducation({
         ))}
       </div>
     </div>,
-  ]
+  ];
 }
 
 // Helper to get all left column content combined
@@ -620,7 +620,7 @@ function CVColumnLeft({
   return [
     ...CVColumnLeftFixed({ cvData, accentColor, colorId, fontId, fontSizeId }),
     ...CVColumnEducation({ cvData, accentColor, colorId, fontId, fontSizeId }),
-  ]
+  ];
 }
 
 function CVColumnRight({
@@ -633,29 +633,29 @@ function CVColumnRight({
 }: CVCleanTemplateProps): ReactNode[] {
   // Get dynamic classes
   const sectionHeadingClasses = getElementClasses(
-    'h4',
+    "h4",
     fontSizeId as FontSizeId,
     fontId,
-    'font-bold tracking-wide mb-1.5',
-  )
+    "font-bold tracking-wide mb-1.5"
+  );
   const experienceItemClasses = getElementClasses(
-    'small',
+    "small",
     fontSizeId as FontSizeId,
     fontId,
-    '',
-  )
-  const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+    ""
+  );
+  const accentColorHex = ColorRecord[colorId]?.hex || "#3B82F6";
 
-  console.log('CVColumnRight styles:', {
+  console.log("CVColumnRight styles:", {
     fontSizeId,
     fontId,
     colorId,
     sectionHeadingClasses,
     experienceItemClasses,
     accentColorHex,
-  })
+  });
 
-  const sections: ReactNode[] = []
+  const sections: ReactNode[] = [];
   if (cvData?.experience && cvData?.experience?.length > 0) {
     sections.push(
       <div key="experience" className="mb-6" data-section="experience">
@@ -669,32 +669,32 @@ function CVColumnRight({
               <p className="text-gray-800 mb-1">{work.company}</p>
               <p className="text-gray-500 mb-2">
                 {work.startDate &&
-                  new Date(work.startDate).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                  })}{' '}
-                -{' '}
+                  new Date(work.startDate).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                  })}{" "}
+                -{" "}
                 {work.currentlyWorkingHere
-                  ? 'Present'
+                  ? "Present"
                   : work.endDate
-                  ? new Date(work.endDate).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                    })
-                  : 'Present'}{' '}
+                    ? new Date(work.endDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                      })
+                    : "Present"}{" "}
                 • {work.location}
               </p>
               <div
                 className={`${experienceItemClasses} text-gray-800`}
-                style={{ lineHeight: '1.5' }}
+                style={{ lineHeight: "1.5" }}
               >
                 {work.description}
               </div>
             </div>
           ))}
         </div>
-      </div>,
-    )
+      </div>
+    );
   }
-  return sections
+  return sections;
 }

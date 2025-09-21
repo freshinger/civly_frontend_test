@@ -6,12 +6,21 @@ import type { ReactNode } from 'react'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import type { CvData } from '@/schemas/cv_data_schema'
+import type { SkillGroup, SkillGroupItem } from '@/schemas/skills_schema'
+import type { EducationItem } from '@/schemas/education_schema'
+import type { ExperienceItem } from '@/schemas/experience_schema'
 // import { formatDate } from "@/utils/date-formatting";
 import {
   isValidUrl,
   getLinkedInUsername,
   getXingUsername,
 } from '@/utils/cv-utils'
+import {
+  getElementClasses,
+  getFontStyles,
+  type FontSizeId,
+} from '@/lib/style-utils'
+import { ColorRecord } from '@/types/colorType'
 import {
   IconGlobe,
   IconMail,
@@ -25,6 +34,9 @@ import {
 interface CVCleanTemplateProps {
   cvData: CvData
   accentColor?: string
+  colorId?: number
+  fontId?: number
+  fontSizeId?: 10 | 11 | 12
 }
 
 // --- Layout Constants ---
@@ -56,6 +68,9 @@ function Page({ children }: { children: ReactNode }) {
 export function CVCleanTemplate({
   cvData,
   accentColor = 'text-blue-600',
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
 }: CVCleanTemplateProps) {
   const [paginatedPages, setPaginatedPages] = useState<ReactNode[]>([])
   const [isCalculating, setIsCalculating] = useState(true)
@@ -115,7 +130,13 @@ export function CVCleanTemplate({
       )
 
       let finalLeftJsx: ReactNode[] = []
-      const finalRightJsx: ReactNode[] = CVColumnRight({ cvData, accentColor })
+      const finalRightJsx: ReactNode[] = CVColumnRight({
+        cvData,
+        accentColor,
+        colorId,
+        fontId,
+        fontSizeId,
+      })
 
       const shouldMoveEducation =
         educationHeight > 0 &&
@@ -123,17 +144,37 @@ export function CVCleanTemplate({
         rightHeight + educationHeight <= usableHeightPage1
 
       if (shouldMoveEducation) {
-        finalLeftJsx = CVColumnLeftFixed({ cvData, accentColor })
-        finalRightJsx.push(...CVColumnEducation({ cvData, accentColor }))
+        finalLeftJsx = CVColumnLeftFixed({
+          cvData,
+          accentColor,
+          colorId,
+          fontId,
+          fontSizeId,
+        })
+        finalRightJsx.push(
+          ...CVColumnEducation({
+            cvData,
+            accentColor,
+            colorId,
+            fontId,
+            fontSizeId,
+          }),
+        )
       } else {
-        finalLeftJsx = CVColumnLeft({ cvData, accentColor })
+        finalLeftJsx = CVColumnLeft({
+          cvData,
+          accentColor,
+          colorId,
+          fontId,
+          fontSizeId,
+        })
       }
 
       setBalancedLayout({ left: finalLeftJsx, right: finalRightJsx })
     }, 50) // A small delay to ensure DOM is ready for measurement.
 
     return () => clearTimeout(timer)
-  }, [cvData, accentColor])
+  }, [cvData, accentColor, colorId, fontId, fontSizeId])
 
   // STEP 2: Paginate the final, balanced layout.
   useEffect(() => {
@@ -205,7 +246,14 @@ export function CVCleanTemplate({
       for (let i = 0; i < numPages; i++) {
         finalPages.push(
           <Page key={i}>
-            {i === 0 && <CVHeader cvData={cvData} />}
+            {i === 0 && (
+              <CVHeader
+                cvData={cvData}
+                colorId={colorId}
+                fontId={fontId}
+                fontSizeId={fontSizeId}
+              />
+            )}
             <div className="grid grid-cols-[250px_1fr] gap-x-12">
               <div>{paginatedLeft[i] || []}</div>
               <div>{paginatedRight[i] || []}</div>
@@ -218,7 +266,7 @@ export function CVCleanTemplate({
     }, 100)
 
     return () => clearTimeout(timer)
-  }, [balancedLayout, cvData])
+  }, [balancedLayout, cvData, colorId, fontId, fontSizeId])
 
   return (
     <div>
@@ -228,18 +276,36 @@ export function CVCleanTemplate({
         style={{ padding: `0 ${PAGE_PADDING_PX}px` }}
       >
         <div ref={headerRef}>
-          <CVHeader cvData={cvData} isMeasurement />
+          <CVHeader
+            cvData={cvData}
+            isMeasurement
+            colorId={colorId}
+            fontId={fontId}
+            fontSizeId={fontSizeId}
+          />
         </div>
         <div className="grid grid-cols-[250px_1fr] gap-x-12">
           <div ref={leftColRef}>
             {balancedLayout
               ? balancedLayout.left
-              : CVColumnLeft({ cvData, accentColor })}
+              : CVColumnLeft({
+                  cvData,
+                  accentColor,
+                  colorId,
+                  fontId,
+                  fontSizeId,
+                })}
           </div>
           <div ref={rightColRef}>
             {balancedLayout
               ? balancedLayout.right
-              : CVColumnRight({ cvData, accentColor })}
+              : CVColumnRight({
+                  cvData,
+                  accentColor,
+                  colorId,
+                  fontId,
+                  fontSizeId,
+                })}
           </div>
         </div>
       </div>
@@ -260,27 +326,67 @@ export function CVCleanTemplate({
 function CVHeader({
   cvData,
   isMeasurement = false,
+  fontId = 0,
+  fontSizeId = 11,
 }: CVCleanTemplateProps & { isMeasurement?: boolean }) {
   const paddingClass = isMeasurement ? `pt-8 pb-4` : ``
   const hasImage =
     cvData?.personalInformation?.profileUrl &&
     isValidUrl(cvData?.personalInformation?.profileUrl)
+
+  // Get dynamic classes for different elements
+  const nameClasses = getElementClasses(
+    'h1',
+    fontSizeId as FontSizeId,
+    fontId,
+    'font-bold text-black mb-1 leading-tight',
+  )
+  const titleClasses = getElementClasses(
+    'h2',
+    fontSizeId as FontSizeId,
+    fontId,
+    'text-gray-700 font-normal mb-4 leading-tight',
+  )
+  const summaryClasses = getElementClasses(
+    'body',
+    fontSizeId as FontSizeId,
+    fontId,
+    'text-gray-800 mb-6',
+  )
+
+  // Import the font styles utility
+  const nameFontStyles = getFontStyles('h1', fontId)
+  const titleFontStyles = getFontStyles('h2', fontId)
+  const summaryFontStyles = getFontStyles('body', fontId)
+
+  // For debugging - log the font size being used
+  console.log('CVHeader styles:', {
+    nameClasses,
+    titleClasses,
+    summaryClasses,
+    nameFontStyles,
+    titleFontStyles,
+    summaryFontStyles,
+    fontId,
+    fontSizeId,
+  })
+
   return (
     <div className={`flex items-start justify-between ${paddingClass}`}>
       <div className="flex-1 pr-8">
-        <h1 className="text-3xl font-bold text-black mb-1 leading-tight">
+        <h1 className={nameClasses} style={nameFontStyles}>
           {cvData?.personalInformation?.name}{' '}
           {cvData?.personalInformation?.surname}
         </h1>
-        <h2 className="text-lg text-gray-700 font-normal mb-4 leading-tight">
+        <h2 className={titleClasses} style={titleFontStyles}>
           {cvData?.personalInformation?.professionalTitle}
         </h2>
         {cvData?.personalInformation?.summary && (
           <p
-            className={`text-sm text-gray-800 mb-6 ${
+            className={`${summaryClasses} ${
               hasImage ? 'max-w-md' : 'max-w-full'
             }`}
-            style={{ lineHeight: '1.5' }}
+            style={{ ...summaryFontStyles, lineHeight: '1.5' }}
           >
             {cvData?.personalInformation?.summary}
           </p>
@@ -303,19 +409,57 @@ function CVHeader({
 
 function CVColumnLeftFixed({
   cvData,
-  accentColor,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  accentColor: _accentColor,
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
 }: CVCleanTemplateProps): ReactNode[] {
+  // Get dynamic classes for different elements
+  const contactTextClasses = getElementClasses(
+    'small',
+    fontSizeId as FontSizeId,
+    fontId,
+    'text-gray-800',
+  )
+  const sectionHeadingClasses = getElementClasses(
+    'h4',
+    fontSizeId as FontSizeId,
+    fontId,
+    'font-bold tracking-wide mb-1.5',
+  )
+  const skillItemClasses = getElementClasses(
+    'small',
+    fontSizeId as FontSizeId,
+    fontId,
+    'text-gray-800',
+  )
+
+  // Get dynamic accent color using inline style instead of arbitrary Tailwind class
+  const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+
+  console.log('CVColumnLeftFixed styles:', {
+    fontSizeId,
+    fontId,
+    colorId,
+    contactTextClasses,
+    sectionHeadingClasses,
+    accentColorHex,
+  })
+
   const sections: ReactNode[] = []
   sections.push(
     <div key="contact" className="mb-6" data-section="contact">
-      <div className="space-y-2 text-xs">
+      <div className="space-y-2">
         {cvData?.personalInformation?.email && (
           <a
             href={`mailto:${cvData.personalInformation.email}`}
             className="flex items-center gap-2"
           >
             <IconMail size={14} className="text-gray-500" />
-            <span>{cvData.personalInformation.email}</span>
+            <span className={contactTextClasses}>
+              {cvData.personalInformation.email}
+            </span>
           </a>
         )}
         {cvData?.personalInformation?.phone && (
@@ -324,7 +468,9 @@ function CVColumnLeftFixed({
             className="flex items-center gap-2"
           >
             <IconPhone size={14} className="text-gray-500" />
-            <span>{cvData.personalInformation.phone}</span>
+            <span className={contactTextClasses}>
+              {cvData.personalInformation.phone}
+            </span>
           </a>
         )}
         {cvData?.personalInformation?.website && (
@@ -335,7 +481,7 @@ function CVColumnLeftFixed({
             className="flex items-center gap-2"
           >
             <IconGlobe size={14} className="text-gray-500" />
-            <span>
+            <span className={contactTextClasses}>
               {cvData.personalInformation.website.replace('https://', '')}
             </span>
           </a>
@@ -348,7 +494,7 @@ function CVColumnLeftFixed({
             className="flex items-center gap-2"
           >
             <IconBrandLinkedin size={14} className="text-gray-500" />
-            <span>
+            <span className={contactTextClasses}>
               {getLinkedInUsername(cvData.personalInformation.linkedin)}
             </span>
           </a>
@@ -361,26 +507,30 @@ function CVColumnLeftFixed({
             className="flex items-center gap-2"
           >
             <IconBrandXing size={14} className="text-gray-500" />
-            <span>{getXingUsername(cvData.personalInformation.xing)}</span>
+            <span className={contactTextClasses}>
+              {getXingUsername(cvData.personalInformation.xing)}
+            </span>
           </a>
         )}
       </div>
     </div>,
   )
-  cvData?.skillGroups?.forEach((skillGroup, groupIndex) => {
+  cvData?.skillGroups?.forEach((skillGroup: SkillGroup, groupIndex: number) => {
     sections.push(
       <div
         key={`skill-group-${groupIndex}`}
         className="mb-6"
         data-section="skill"
       >
-        <h3 className={`text-sm font-bold ${accentColor} tracking-wide mb-1.5`}>
+        <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
           {skillGroup.name}
         </h3>
-        <div className="text-xs text-gray-800 space-y-1">
-          {skillGroup.skills?.map((skill, skillIndex) => (
-            <p key={skillIndex}>{skill.name}</p>
-          ))}
+        <div className={`${skillItemClasses} space-y-1`}>
+          {skillGroup.skills?.map(
+            (skill: SkillGroupItem, skillIndex: number) => (
+              <p key={skillIndex}>{skill.name}</p>
+            ),
+          )}
         </div>
       </div>,
     )
@@ -390,17 +540,46 @@ function CVColumnLeftFixed({
 
 function CVColumnEducation({
   cvData,
-  accentColor,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  accentColor: _accentColor,
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
 }: CVCleanTemplateProps): ReactNode[] {
   if (!cvData?.education || cvData?.education?.length === 0) return []
+
+  // Get dynamic classes
+  const sectionHeadingClasses = getElementClasses(
+    'h4',
+    fontSizeId as FontSizeId,
+    fontId,
+    'font-bold tracking-wide mb-1.5',
+  )
+  const educationItemClasses = getElementClasses(
+    'small',
+    fontSizeId as FontSizeId,
+    fontId,
+    '',
+  )
+  const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+
+  console.log('CVColumnEducation styles:', {
+    fontSizeId,
+    fontId,
+    colorId,
+    sectionHeadingClasses,
+    educationItemClasses,
+    accentColorHex,
+  })
+
   return [
     <div key="education" className="mb-6" data-section="education">
-      <h3 className={`text-sm font-bold ${accentColor} tracking-wide mb-1.5`}>
+      <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
         Education
       </h3>
       <div className="space-y-4">
-        {cvData?.education?.map((edu, index) => (
-          <div key={index} className="text-xs">
+        {cvData?.education?.map((edu: EducationItem, index: number) => (
+          <div key={index} className={educationItemClasses}>
             <p className="font-semibold text-black mb-1">{edu.degree}</p>
             <p className="text-gray-800">{edu.institution}</p>
             <p className="text-gray-500 mt-1">
@@ -434,30 +613,61 @@ function CVColumnEducation({
 function CVColumnLeft({
   cvData,
   accentColor,
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
 }: CVCleanTemplateProps): ReactNode[] {
   return [
-    ...CVColumnLeftFixed({ cvData, accentColor }),
-    ...CVColumnEducation({ cvData, accentColor }),
+    ...CVColumnLeftFixed({ cvData, accentColor, colorId, fontId, fontSizeId }),
+    ...CVColumnEducation({ cvData, accentColor, colorId, fontId, fontSizeId }),
   ]
 }
 
 function CVColumnRight({
   cvData,
-  accentColor,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  accentColor: _accentColor,
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
 }: CVCleanTemplateProps): ReactNode[] {
+  // Get dynamic classes
+  const sectionHeadingClasses = getElementClasses(
+    'h4',
+    fontSizeId as FontSizeId,
+    fontId,
+    'font-bold tracking-wide mb-1.5',
+  )
+  const experienceItemClasses = getElementClasses(
+    'small',
+    fontSizeId as FontSizeId,
+    fontId,
+    '',
+  )
+  const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+
+  console.log('CVColumnRight styles:', {
+    fontSizeId,
+    fontId,
+    colorId,
+    sectionHeadingClasses,
+    experienceItemClasses,
+    accentColorHex,
+  })
+
   const sections: ReactNode[] = []
   if (cvData?.experience && cvData?.experience?.length > 0) {
     sections.push(
       <div key="experience" className="mb-6" data-section="experience">
-        <h3 className={`text-sm font-bold ${accentColor} tracking-wide mb-1.5`}>
+        <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
           Experience
         </h3>
-        <div className="space-y-5 text-xs">
-          {cvData?.experience?.map((work, index) => (
-            <div key={index}>
+        <div className="space-y-5">
+          {cvData?.experience?.map((work: ExperienceItem, index: number) => (
+            <div key={index} className={experienceItemClasses}>
               <p className="font-semibold text-black mb-1">{work.role}</p>
-              <p className=" text-gray-800 mb-1">{work.company}</p>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-gray-800 mb-1">{work.company}</p>
+              <p className="text-gray-500 mb-2">
                 {work.startDate &&
                   new Date(work.startDate).toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -475,7 +685,7 @@ function CVColumnRight({
                 • {work.location}
               </p>
               <div
-                className="text-xs text-gray-800"
+                className={`${experienceItemClasses} text-gray-800`}
                 style={{ lineHeight: '1.5' }}
               >
                 {work.description}

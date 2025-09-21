@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { Upload, User, X } from "lucide-react";
+import { useImageStore } from "@/stores/image_store";
 
 export default function ImagePicker({
   uid,
@@ -23,6 +24,7 @@ export default function ImagePicker({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const objectUrlRef = useRef<string | null>(null);
+  const imageStore = useImageStore((state) => state);
 
   async function downloadImage(path: string) {
     try {
@@ -36,6 +38,7 @@ export default function ImagePicker({
       const objUrl = URL.createObjectURL(data);
       objectUrlRef.current = objUrl;
       setAvatarUrl(objUrl);
+      imageStore.setImage(path, objUrl);
     } catch (err) {
       console.log("Error downloading image:", err);
       setAvatarUrl(null);
@@ -96,6 +99,7 @@ export default function ImagePicker({
       }
       setAvatarUrl(null);
       onUpload(""); // tell parent it's cleared
+      imageStore.removeImage(url)
     } catch (err) {
       console.log("Error removing avatar:", err);
     } finally {

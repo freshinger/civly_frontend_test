@@ -1,7 +1,7 @@
 // This component MUST be a client component to perform DOM measurements.
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import type { ReactNode } from "react";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
@@ -28,6 +28,8 @@ import {
   IconBrandLinkedin,
   IconBrandXing,
 } from "@tabler/icons-react";
+import { useImageStore } from "@/stores/image_store";
+import { createClient } from "@/utils/supabase/client";
 
 // --- Types ---
 
@@ -37,6 +39,7 @@ interface CVCleanTemplateProps {
   colorId?: number;
   fontId?: number;
   fontSizeId?: 10 | 11 | 12;
+  image?: string
 }
 
 // --- Layout Constants ---
@@ -327,13 +330,58 @@ function CVHeader({
   cvData,
   isMeasurement = false,
   fontId = 0,
-  fontSizeId = 11,
+  fontSizeId = 11
 }: CVCleanTemplateProps & { isMeasurement?: boolean }) {
-  const paddingClass = isMeasurement ? `pt-8 pb-4` : ``;
-  const hasImage =
-    cvData?.personalInformation?.profileUrl &&
-    isValidUrl(cvData?.personalInformation?.profileUrl);
+  const supabase = useMemo(() => createClient(), []);
+  const profileUrl = cvData?.personalInformation?.profileUrl;
+  const setImage = useImageStore((s) => s.setImage);
+  const removeImage = useImageStore((s) => s.removeImage);
+  const objectUrlRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    if (!profileUrl) return;
+
+    let cancelled = false;
+
+    async function fetchImage() {
+      try {
+        const { data, error } = await supabase.storage
+          .from("cv_picture")
+          .download(profileUrl!);
+
+        if (error) throw error;
+        if (!data) return;
+
+        if (cancelled) return;
+
+        // cleanup old URL
+        if (objectUrlRef.current) {
+          URL.revokeObjectURL(objectUrlRef.current);
+        }
+
+        const objUrl = URL.createObjectURL(data);
+        objectUrlRef.current = objUrl;
+
+        setImage(profileUrl!, objUrl);
+      } catch (err) {
+        console.error("Error downloading image:", err);
+        removeImage(profileUrl!);
+      }
+    }
+
+    fetchImage();
+
+    return () => {
+      cancelled = true;
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, [profileUrl, setImage, removeImage]);
+  const image = useImageStore((state) =>
+    profileUrl ? state.images[profileUrl] : ""
+  );
+  const paddingClass = isMeasurement ? `pt-8 pb-4` : ``;
   // Get dynamic classes for different elements
   const nameClasses = getElementClasses(
     "h1",
@@ -361,6 +409,8 @@ function CVHeader({
 
   // For debugging - log the font size being used
   console.log("CVHeader styles:", {
+    cvData,
+    image,
     nameClasses,
     titleClasses,
     summaryClasses,
@@ -384,7 +434,7 @@ function CVHeader({
         {cvData?.personalInformation?.summary && (
           <p
             className={`${summaryClasses} ${
-              hasImage ? "max-w-md" : "max-w-full"
+              image ? "max-w-md" : "max-w-full"
             }`}
             style={{ ...summaryFontStyles, lineHeight: "1.5" }}
           >
@@ -393,9 +443,9 @@ function CVHeader({
         )}
       </div>
       <div className="flex-shrink-0">
-        {hasImage && cvData?.personalInformation?.profileUrl && (
+        {image && (
           <Image
-            src={cvData.personalInformation.profileUrl}
+            src={image}
             alt={`${cvData?.personalInformation?.name} ${cvData?.personalInformation?.surname}`}
             width={130}
             height={130}

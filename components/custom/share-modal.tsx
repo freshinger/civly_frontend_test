@@ -20,7 +20,7 @@ import {
   Globe,
   AlertCircle,
 } from "lucide-react";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -42,7 +42,8 @@ export function ShareModal({
   onShareEmail,
 }: ShareModalProps) {
   const { remoteItems } = useCvStore();
-
+  const router = useRouter();
+  
   if (!cv) return null;
 
   console.log('Vis: ',cv.visibility);

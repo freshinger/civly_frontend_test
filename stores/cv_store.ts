@@ -8,6 +8,7 @@ import {
   fetchAll,
   duplicateCv,
   updateCVName,
+  updateVisibility,
 } from "@/services/cv_data.service";
 
 const ts = (s?: string) => (s ? Date.parse(s) : 0) || 0;
@@ -23,6 +24,7 @@ type CvStore = {
   duplicateOne: (id: string) => Promise<string>;
   deleteOne: (id: string) => Promise<void>;
   saveName: (cv: CvData) => Promise<void>;
+  updateVisibility: (cv: CvData, visibility: "public" | "draft" | "private", password?: string) => Promise<void>;
 };
 
 export const useCvStore = create<CvStore>()(
@@ -101,13 +103,21 @@ export const useCvStore = create<CvStore>()(
         // Update on server
         await updateCVName(cv.id!, cv.name.trim());
 
-        set(() => {
-          const newItems = get().remoteItems;
-          const idx = newItems.findIndex((x) => x?.id === cv.id);
-          newItems[idx].name = cv.name;
-          console.log("new items", newItems);
-          return { remoteItems: newItems };
-        });
+        set((state) => ({
+          remoteItems: state.remoteItems.map((item) =>
+            item?.id === cv.id ? { ...item, name: cv.name } : item
+          ),
+        }));
+      },
+      updateVisibility: async (cv: CvData, visibility: "public"|"draft"|"private", password) => {
+        // Update on server
+        await updateVisibility(cv, visibility, password);
+
+        set((state) => ({
+          remoteItems: state.remoteItems.map((item) =>
+            item?.id === cv.id ? { ...item, visibility } : item
+          ),
+        }));
       },
     }),
 

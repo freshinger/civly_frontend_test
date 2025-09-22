@@ -34,6 +34,13 @@ import {
   handleExportPdf,
 } from "@/services/cv_data.service";
 import type { CvData } from "@/schemas/cv_data_schema";
+import { VisibilityModal } from "./visibility-modal";
+import { ShareModal } from "@/components/custom/share-modal";
+import { DeleteCvModal } from "@/components/custom/delete-cv-modal";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { useCvStore } from "@/stores/cv_store";
 
 type SaveStatus = "Saved" | "Saving..." | "Unsaved Changes" | "Error";
 export type Visibility = "Public" | "Private" | "Draft";
@@ -61,14 +68,34 @@ function StatusIcon({ status }: { status: SaveStatus }) {
 }
 
 export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
-  const [currentCv, setCurrentCv] = React.useState<CvData | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isEditingName, setIsEditingName] = React.useState(false);
-  const [cvName, setCvName] = React.useState("Resume");
-  const [saveStatus, setSaveStatus] = React.useState<SaveStatus>("Saved");
+  const [currentCv, setCurrentCv] = useState<CvData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [cvName, setCvName] = useState("Resume");
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("Saved");
+
+  //Visibility
+  const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+
+  //Share
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [cvToShare, setCvToShare] = useState<CvData | null>(null);
+  const [shareUrl, setShareUrl] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  //Delete
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const remove = useCvStore((s) => s.deleteOne);
+
+  const saveName = useCvStore((s) => s.saveName);
+  const updateVisibility = useCvStore((s) => s.updateVisibility);
+
 
   const isTablet = useMediaQuery("(max-width: 1260px)");
   const hideEditor = useSheetStore((s) => s.hideEditor);
+
+  const router = useRouter();
+  const { toast } = useToast();
 
   // Load CV
   React.useEffect(() => {
@@ -102,6 +129,14 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
         ? "Private"
         : "Draft";
 
+  const getVisibility = (): Visibility => {
+    const visibility = currentCv?.visibility
+
+    if (visibility === 'public') return 'Public'
+    if (visibility === 'private') return 'Private'
+    return 'Draft'
+  }
+
   const handleVisibilityChange = async (
     newVisibility: Visibility,
     newPassword?: string
@@ -127,12 +162,6 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
     }
   };
 
-  const handleShare = () => {
-    if (!currentCv?.id) return;
-    const url = `${window.location.origin}/view/${currentCv.id}`;
-    console.log("Share URL:", url);
-  };
-
   const handleNameSave = async () => {
     if (!currentCv?.id) return setIsEditingName(false);
     const next = cvName.trim();
@@ -146,7 +175,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
     setSaveStatus("Saving...");
     setCurrentCv({ ...currentCv, name: next });
     try {
-      await updateCVName(currentCv.id, next);
+      await saveName({ ...currentCv, name: next });
       setSaveStatus("Saved");
     } catch {
       setCurrentCv({ ...currentCv, name: prev });
@@ -155,7 +184,55 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
     }
   };
 
+  const onRemove = useCallback(async () => {
+    if (!currentCv?.id) return;
+    try {
+      setDeleteDialogOpen(false);
+      await remove(currentCv.id);
+      router.push('/dashboard/');
+    } catch {
+      toast.error("Failed to delete CV");
+    }
+  }, [toast]);
+
+  const openShareModal = useCallback((cv: CvData | null) => {
+    const url = `${window.location.origin}/view/${cv?.id}`;
+    setCvToShare(cv);
+    setShareUrl(url);
+    setLinkCopied(false);
+    setIsShareModalOpen(true);
+  }, []);
+
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      toast.success("Share link copied");
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  }, [shareUrl, toast]);
+
+  const shareViaEmail = useCallback(() => {
+    const cvName = currentCv?.name?.trim() || "My CV";
+    const subject = `Check out my CV: ${cvName}`;
+    const body = `Hi,
+
+I wanted to share my CV with you.
+
+CV: ${cvName}
+Link: ${shareUrl}
+
+Best regards`;
+    window.open(
+      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    );
+    toast.success("Email client opened");
+  }, [currentCv, shareUrl, toast]);
+
   return (
+    <>
     <header className="flex h-[50px] w-full min-w-0 flex-shrink-0 items-center justify-between bg-white p-3">
       <div className="flex items-center gap-2 mr-2">
         <div className="hidden md:flex">
@@ -220,7 +297,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
             variant="ghost"
             size="sm"
             className="flex items-center gap-1.5 text-sm"
-            onClick={() => handleVisibilityChange(visibility)}
+            onClick={() => setIsVisibilityModalOpen(true)}
           >
             {visibility === "Public" ? (
               <IconLockOpen size={14} />
@@ -235,7 +312,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={handleShare}
+              onClick={() => openShareModal(currentCv)}
               title="Share CV"
             >
               <IconShare size={16} />
@@ -244,7 +321,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => currentCv && handleExportPdf(currentCv)}
+              onClick={() => handleExportPdf(currentCv!)}
               title="Export as PDF"
             >
               <IconFileTypePdf size={16} />
@@ -254,6 +331,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
               size="icon"
               className="h-8 w-8"
               title="Delete CV"
+              onClick={() => setDeleteDialogOpen(true)}
             >
               <IconTrash size={16} />
             </Button>
@@ -269,7 +347,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
-                onClick={() => handleVisibilityChange(visibility)}
+                onClick={() => setIsVisibilityModalOpen(true)}
               >
                 {visibility === "Public" ? (
                   <IconLockOpen size={16} className="mr-2" />
@@ -279,15 +357,16 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
                 Visibility: {visibility}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleShare}>
+              <DropdownMenuItem onClick={() => openShareModal(currentCv)}>
                 <IconShare size={16} className="mr-2" /> Share
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => currentCv && handleExportPdf(currentCv)}
+                onClick={() =>handleExportPdf(currentCv!)}
               >
                 <IconFileTypePdf size={16} className="mr-2" /> Export PDF
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600"
+               onClick={() => setDeleteDialogOpen(true)}>
                 <IconTrash size={16} className="mr-2" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -295,5 +374,30 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
         </div>
       </div>
     </header>
+    {/* The Visibility Modal is rendered here */}
+      <VisibilityModal
+        isOpen={isVisibilityModalOpen}
+        onOpenChange={setIsVisibilityModalOpen}
+        visibility={getVisibility()}
+        password={currentCv?.password ?? null}
+        onVisibilityChange={handleVisibilityChange}
+      />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onOpenChange={setIsShareModalOpen}
+        cv={currentCv}
+        shareUrl={shareUrl}
+        linkCopied={linkCopied}
+        onCopyLink={copyShareLink}
+        onShareEmail={shareViaEmail}
+      />
+      <DeleteCvModal
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        cv={currentCv ?? null}
+        onDelete={onRemove}
+      />
+    </>
   );
 }

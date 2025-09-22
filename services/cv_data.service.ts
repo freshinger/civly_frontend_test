@@ -44,7 +44,7 @@ export async function duplicateCv(id: string | null): Promise<string> {
     region,
   });
   if (error) throw error;
-  return data.data.id as string;
+  return data.id as string;
 }
 
 export async function updateCVName(id: string, value: string) {
@@ -57,12 +57,16 @@ export async function updateCVName(id: string, value: string) {
 
 export async function updateVisibility(
   cv: CvData,
-  value: string,
+  value: "public" | "draft" | "private",
   newPassword: string | undefined
 ) {
+  let payload = { visibility: value, name: cv.name } as CvData
+  if(newPassword){
+    payload = { visibility: value, name: cv.name, password: newPassword } as CvData
+  }
   const { data, error } = await sb.functions.invoke(path + cv.id, {
     method: "PATCH",
-    body: { visibility: value, name: cv.name },
+    body: payload,
     region,
   });
 

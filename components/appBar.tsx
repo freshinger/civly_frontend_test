@@ -18,7 +18,7 @@ export const AppBar: React.FC<AppBarProps> = ({
   const showEditor = useSheetStore((s) => s.showEditor);
 
   return (
-    <header className="flex h-(--header-height) items-center space-between gap-2 border-b px-4 lg:px-6 h-[55px] bg-card">
+    <header className="flex h-(--header-height) items-center space-between gap-2 border-b px-4 lg:px-6 h-[55px] bg-card ">
       <Button size="icon" variant="ghost" type="button" onClick={showNav}>
         <MenuIcon className="!h-8 !w-8" strokeWidth={1.2} />
       </Button>

@@ -46,8 +46,7 @@ export function NavMain({
   const fetchAll = useCvStore((s) => s.fetchAll); // fn is stable
   const duplicate = useCvStore((s) => s.duplicateOne); // fn is stable
   const cvDataList = useCvStore(
-    (s) => s.remoteItems ?? [],
-    shallow
+    (s) => s.remoteItems ?? []
   ) as CvData[];
 
   // ---- Local UI state ----

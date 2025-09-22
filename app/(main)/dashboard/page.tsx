@@ -4,7 +4,7 @@ import { AppBar } from "@/components/appBar";
 import { ResumeGrid } from "@/components/custom/resume-grid";
 import { createEmptyCv, duplicateCv } from "@/services/cv_data.service";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { CvData } from "@/schemas/cv_data_schema";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { getDisplayName } from "@/services/user-profile.service";
@@ -12,14 +12,25 @@ import { useCvStore } from "@/stores/cv_store";
 import { LoadingStatus } from "@/types/LoadingStatus";
 import Image from "next/image";
 import { useMediaQuery } from "usehooks-ts";
+import { DeleteCvModal } from "@/components/custom/delete-cv-modal";
+import { useToast } from "@/hooks/use-toast";
+import { ShareModal } from "@/components/custom/share-modal";
 
 export default function Page() {
+  const { toast } = useToast();
   const fetchAll = useCvStore((s) => s.fetchAll);
   const remove = useCvStore((s) => s.deleteOne);
   const [cvDataList, setCvDataList] = useState<CvData[] | null>(null);
   const [loadingStatus, setLoadingStatus] = useState<LoadingStatus>(
     LoadingStatus.Loading
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cvToDelete, setCvToDelete] = useState<CvData | null>(null);
+
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [cvToShare, setCvToShare] = useState<CvData | null>(null);
+  const [shareUrl, setShareUrl] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const isTablet = useMediaQuery("(max-width: 1000px)");
   const router = useRouter();
@@ -75,8 +86,16 @@ export default function Page() {
   const handleEditResume = (cv: CvData) => router.push(`/editor/${cv.id}`);
   const handleOpenResume = (cv: CvData) => router.push(`/cv-preview/${cv.id}`);
 
+  const openShareModal = useCallback((cv: CvData) => {
+    const url = `${window.location.origin}/view/${cv.id}`;
+    setCvToShare(cv);
+    setShareUrl(url);
+    setLinkCopied(false);
+    setIsShareModalOpen(true);
+  }, []);
+
   const handleShareResume = (cv: CvData) => {
-    console.log("Share resume:", cv.id);
+    openShareModal(cv)
   };
 
   const handleDuplicateResume = async (cv: CvData) => {
@@ -87,11 +106,50 @@ export default function Page() {
   };
 
   const handleDeleteResume = async (cv: CvData) => {
-    if (!cv.id) return;
-    setLoadingStatus(LoadingStatus.Loading);
-    await remove(cv.id);
-    setLoadingStatus(LoadingStatus.Loaded);
+    if (!cv) return;
+    setCvToDelete(cv);
+    setDeleteDialogOpen(true);
   };
+
+  const onRemove = useCallback(async () => {
+    if (!cvToDelete?.id) return;
+    try {
+      setDeleteDialogOpen(false);
+      await remove(cvToDelete.id);
+      await fetchAll();
+    } catch {
+      toast.error("Failed to delete CV");
+    } finally {
+      setCvToDelete(null);
+    }
+  }, [cvToDelete, fetchAll, toast]);
+  const copyShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      toast.success("Share link copied");
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  }, [shareUrl, toast]);
+
+  const shareViaEmail = useCallback(() => {
+    const cvName = cvToShare?.name?.trim() || "My CV";
+    const subject = `Check out my CV: ${cvName}`;
+    const body = `Hi,
+
+I wanted to share my CV with you.
+
+CV: ${cvName}
+Link: ${shareUrl}
+
+Best regards`;
+    window.open(
+      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    );
+    toast.success("Email client opened");
+  }, [cvToShare, shareUrl, toast]);
 
   return (
     <>
@@ -137,6 +195,21 @@ export default function Page() {
           </div>
         </div>
       )}
+      <DeleteCvModal
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        cv={cvToDelete ?? null}
+        onDelete={onRemove}
+      />
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onOpenChange={setIsShareModalOpen}
+        cv={cvToShare ?? null}
+        shareUrl={shareUrl}
+        linkCopied={linkCopied}
+        onCopyLink={copyShareLink}
+        onShareEmail={shareViaEmail}
+      />
     </>
   );
 }

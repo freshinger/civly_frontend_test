@@ -20,7 +20,7 @@ import {
   Globe,
   AlertCircle,
 } from "lucide-react";
-import router from "next/router";
+import { useRouter } from "next/navigation";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -42,12 +42,14 @@ export function ShareModal({
   onShareEmail,
 }: ShareModalProps) {
   const { remoteItems } = useCvStore();
-
+  const router = useRouter();
+  
   if (!cv) return null;
 
+  console.log('Vis: ',cv.visibility);
   // Get the most up-to-date version of the CV from the store
   const currentCv = remoteItems.find((item) => item.id === cv.id) || cv;
-
+  console.log('Visremote:', currentCv.visibility)
   const isPublished =
     currentCv.visibility === "public" || currentCv.visibility === "private";
   const isPrivate = currentCv.visibility === "private";

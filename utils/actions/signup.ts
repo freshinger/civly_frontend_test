@@ -7,7 +7,8 @@ export async function signUpAction(prevState: FormState, formData: FormData): Pr
   const fields = {
     name: formData.get('name') as string,
     email: formData.get('email') as string,
-    password: formData.get('password') as string
+    password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
   };
   const validatedFields = signUpSchema.safeParse(fields);
 
@@ -46,7 +47,7 @@ export async function signUpAction(prevState: FormState, formData: FormData): Pr
 
   return {
     success: true,
-    message: 'User Sign up successful',
+    message: 'Check your E-Mail Inbox to Confirm registration',
     backendErrors: null,
     zodErrors: null,
     data: {

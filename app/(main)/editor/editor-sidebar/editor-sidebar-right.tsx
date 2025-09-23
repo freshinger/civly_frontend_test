@@ -30,7 +30,7 @@ import { createClient } from "@/utils/supabase/client";
 import { IconX } from "@tabler/icons-react";
 import { useMediaQuery } from "usehooks-ts";
 import { useSheetStore } from "@/stores/sheet_store";
-
+import { useToast } from "@/hooks/use-toast";
 type Props = { id: string } & React.ComponentProps<typeof Sidebar>;
 
 export function EditorSidebarRight({ id, ...props }: Props) {
@@ -39,7 +39,7 @@ export function EditorSidebarRight({ id, ...props }: Props) {
   const [loadingStatus, setLoadingStatus] = React.useState<LoadingStatus>(
     LoadingStatus.Loading
   );
-
+  const { toast } = useToast();
   const getSingle = useCvStore((s) => s.getSingle);
   const saveRemote = useCvStore((s) => s.saveRemote);
   const saveLocally = useCvStore((s) => s.saveLocally);
@@ -109,8 +109,10 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     }
     try {
       await saveRemote(parsed.data);
+      toast.success('Saved');
     } catch (e) {
       console.error("Error saving CV:", e);
+      toast.error('saving data failed');
     }
   }
 

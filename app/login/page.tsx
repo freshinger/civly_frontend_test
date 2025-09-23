@@ -143,7 +143,7 @@ export default function LoginPage() {
           <>
             <form action={signUpFormAction}>
               <div className="grid gap-6">
-                <div className="text-pink-500 text-xs italic">{signUpFormState?.message} {loginFormState?.backendErrors?.message}</div>
+                <div className={signUpFormState?.success? "text-green-500 text-xs italic":"text-pink-500 text-xs italic"}>{signUpFormState?.message} {loginFormState?.backendErrors?.message}</div>
                 <NameField defaultName={signUpFormState?.data?.name || ''}/>
                 <ZodErrors error={signUpFormState?.zodErrors?.name} />
                 <EmailField defaultName={signUpFormState?.data?.email || ''}/>

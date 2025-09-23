@@ -202,7 +202,9 @@ export default function AccountForm({ user }: { user: User | null }) {
       setDeleteDialogOpen(false); // Close dialog when action starts
 
       // Delete user account using Supabase Admin API
-      const { error } = await supabase.auth.admin.deleteUser(user?.id || "");
+      const { error } = await supabase.functions.invoke('profile/' + user?.id, {
+        method: "DELETE"
+      });
 
       if (error) throw error;
 

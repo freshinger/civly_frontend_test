@@ -11,11 +11,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useToast } from '@/hooks/use-toast'
-import { IconEye, IconEyeOff } from '@tabler/icons-react'
+import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp'
+import { REGEXP_ONLY_DIGITS } from 'input-otp'
 
 // --- Prop Types ---
 interface VisibilityModalProps {
@@ -25,7 +25,7 @@ interface VisibilityModalProps {
   password: string | null
   onVisibilityChange: (
     visibility: 'Public' | 'Private' | 'Draft',
-    password?: string,
+    password?: string | null,
   ) => void
 }
 
@@ -38,13 +38,12 @@ export function VisibilityModal({
   onVisibilityChange,
 }: VisibilityModalProps) {
   const { toast } = useToast()
-  const [passwordInput, setPasswordInput] = useState(password)
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [passwordInput, setPasswordInput] = useState<string>('')
   const [localVisibility, setLocalVisibility] = useState(visibility)
 
   // Sync local state if the external props change
   useEffect(() => {
-    setPasswordInput(password)
+    setPasswordInput(password ?? '')
     setLocalVisibility(visibility)
   }, [password, visibility])
 
@@ -146,27 +145,28 @@ export function VisibilityModal({
                 Require Password
               </Label>
               <p className="text-sm text-muted-foreground">
-                A password is required to view this private resume.
+                A numeric password is required to view this private resume.
               </p>
               <div className="flex items-center gap-2">
-                <Input
-                  id="password-input"
-                  type={isPasswordVisible ? 'text' : 'password'}
-                  value={passwordInput ?? undefined}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="Enter a strong password"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                <InputOTP
+                  maxLength={6}
+                  pattern={REGEXP_ONLY_DIGITS}
+                  inputMode='numeric'
+                  value={passwordInput ?? ''}
+                  onChange={(passwordInput: string) => setPasswordInput(passwordInput)}
                 >
-                  {isPasswordVisible ? (
-                    <IconEyeOff size={16} />
-                  ) : (
-                    <IconEye size={16} />
-                  )}
-                </Button>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                  </InputOTPGroup>
+                  <InputOTPSeparator />
+                  <InputOTPGroup>
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
               </div>
             </div>
           )}

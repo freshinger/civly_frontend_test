@@ -31,7 +31,7 @@ export default function Page() {
   const [mounted, setMounted] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
 
-  const isDesktop = useMediaQuery("(min-width: 1260px)");
+  const isDesktop = useMediaQuery("(min-width: 1500px)");
   const editorOpen = useSheetStore((s) => s.editorOpen);
   const hideEditor = useSheetStore((s) => s.hideEditor);
 

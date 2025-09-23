@@ -656,10 +656,38 @@ function CVColumnLeft({
   fontId = 0,
   fontSizeId = 11,
 }: CVCleanTemplateProps): ReactNode[] {
-  return [
-    ...CVColumnLeftFixed({ cvData, accentColor, colorId, fontId, fontSizeId }),
-    ...CVColumnEducation({ cvData, accentColor, colorId, fontId, fontSizeId }),
-  ]
+  const leftFixedSections = CVColumnLeftFixed({
+    cvData,
+    accentColor,
+    colorId,
+    fontId,
+    fontSizeId,
+  })
+  const educationSections = CVColumnEducation({
+    cvData,
+    accentColor,
+    colorId,
+    fontId,
+    fontSizeId,
+  })
+
+  // Insert education after contact info (first section)
+  const result: ReactNode[] = []
+
+  // Add contact info first
+  if (leftFixedSections.length > 0) {
+    result.push(leftFixedSections[0]) // Contact section
+  }
+
+  // Add education right after contact
+  result.push(...educationSections)
+
+  // Add remaining sections (skills, etc.)
+  if (leftFixedSections.length > 1) {
+    result.push(...leftFixedSections.slice(1))
+  }
+
+  return result
 }
 
 function CVColumnRight({

@@ -533,15 +533,15 @@ function CVSidebar({
         fontSizeId={fontSizeId}
       />
 
-      {/* Skills */}
-      <CVColumnSkills cvData={cvData} fontId={fontId} fontSizeId={fontSizeId} />
-
       {/* Education */}
       <CVColumnEducation
         cvData={cvData}
         fontId={fontId}
         fontSizeId={fontSizeId}
       />
+
+      {/* Skills */}
+      <CVColumnSkills cvData={cvData} fontId={fontId} fontSizeId={fontSizeId} />
     </div>
   )
 }

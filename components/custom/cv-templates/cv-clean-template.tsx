@@ -44,7 +44,7 @@ const A4_PAGE_WIDTH_PX = 794;
 const A4_PAGE_HEIGHT_PX = 1123;
 const PAGE_PADDING_PX = 40;
 const PAGE_PADDING_Y_PX = PAGE_PADDING_PX * 2;
-const USABLE_PAGE_HEIGHT_SUBSEQUENT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
+const USABLE_PAGE_HEIGHT_SUBSEQUENT = A4_PAGE_HEIGHT_PX;
 
 // --- Visual Page Component ---
 function Page({ children }: { children: ReactNode }) {

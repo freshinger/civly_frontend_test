@@ -140,7 +140,9 @@ export function EditorSidebarRight({ id, ...props }: Props) {
             <SidebarHeader className="shrink-0 border-b border-sidebar-border bg-white">
               {isTablet && (
                 <div className="flex h-7 items-center justify-between ">
-                  <h2 className="text-base font-semibold">CV Editor</h2>
+                  <h2 className="text-base font-semibold">
+                    {form.getValues()?.name ?? "Resume"}
+                  </h2>
                   <Button type="button" variant="ghost" onClick={hideEditor}>
                     <IconX size={24} />
                   </Button>

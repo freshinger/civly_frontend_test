@@ -27,12 +27,7 @@ import {
 } from "@tabler/icons-react";
 import { useMediaQuery } from "usehooks-ts";
 import { useSheetStore } from "@/stores/sheet_store";
-import {
-  fetchCv,
-  updateCVName,
-  updateVisibility,
-  handleExportPdf,
-} from "@/services/cv_data.service";
+import { fetchCv, handleExportPdf } from "@/services/cv_data.service";
 import type { CvData } from "@/schemas/cv_data_schema";
 import { VisibilityModal } from "./visibility-modal";
 import { ShareModal } from "@/components/custom/share-modal";
@@ -80,7 +75,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
   //Share
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [cvToShare, setCvToShare] = useState<CvData | null>(null);
-  const [shareUrl, setShareUrl] = useState('');
+  const [shareUrl, setShareUrl] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
 
   //Delete
@@ -89,7 +84,6 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
 
   const saveName = useCvStore((s) => s.saveName);
   const updateVisibility = useCvStore((s) => s.updateVisibility);
-
 
   const isTablet = useMediaQuery("(max-width: 1260px)");
   const hideEditor = useSheetStore((s) => s.hideEditor);
@@ -130,12 +124,12 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
         : "Draft";
 
   const getVisibility = (): Visibility => {
-    const visibility = currentCv?.visibility
+    const visibility = currentCv?.visibility;
 
-    if (visibility === 'public') return 'Public'
-    if (visibility === 'private') return 'Private'
-    return 'Draft'
-  }
+    if (visibility === "public") return "Public";
+    if (visibility === "private") return "Private";
+    return "Draft";
+  };
 
   const handleVisibilityChange = async (
     newVisibility: Visibility,
@@ -189,7 +183,7 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
     try {
       setDeleteDialogOpen(false);
       await remove(currentCv.id);
-      router.push('/dashboard/');
+      router.push("/dashboard/");
     } catch {
       toast.error("Failed to delete CV");
     }
@@ -233,148 +227,152 @@ Best regards`;
 
   return (
     <>
-    <header className="flex h-[50px] w-full min-w-0 flex-shrink-0 items-center justify-between bg-white p-3">
-      <div className="flex items-center gap-2 mr-2">
-        <div className="hidden md:flex">
-          <StatusIcon status={isLoading ? "Saving..." : saveStatus} />
-        </div>
-      </div>
-
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-2 md:justify-start">
-        {isEditingName ? (
-          <div className="flex min-w-0 items-center gap-2">
-            <Input
-              value={cvName}
-              onChange={(e) => setCvName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") void handleNameSave();
-                if (e.key === "Escape") {
-                  setCvName(currentCv?.name || "Resume");
-                  setIsEditingName(false);
-                }
-              }}
-              autoFocus
-              className="h-9 text-md font-semibold"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleNameSave}
-              aria-label="Save name"
-            >
-              <IconCircleCheck size={16} className="text-green-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setIsEditingName(false)}
-              aria-label="Cancel"
-            >
-              <IconX size={16} />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-md font-semibold">{cvName}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setIsEditingName(true)}
-              aria-label="Edit name"
-            >
-              <IconPencil size={16} />
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center">
-        <div className="hidden md:flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-1.5 text-sm"
-            onClick={() => setIsVisibilityModalOpen(true)}
-          >
-            {visibility === "Public" ? (
-              <IconLockOpen size={14} />
-            ) : (
-              <IconLock size={14} />
-            )}
-            {visibility}
-          </Button>
-
-          <div className="flex items-center gap-1 px-2 border-l">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => openShareModal(currentCv)}
-              title="Share CV"
-            >
-              <IconShare size={16} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handleExportPdf(currentCv!)}
-              title="Export as PDF"
-            >
-              <IconFileTypePdf size={16} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              title="Delete CV"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
-              <IconTrash size={16} />
-            </Button>
+      <header className="flex h-[50px] w-full min-w-0 flex-shrink-0 items-center justify-between bg-white p-3">
+        <div className="flex items-center gap-2 mr-2">
+          <div className="hidden md:flex">
+            <StatusIcon status={isLoading ? "Saving..." : saveStatus} />
           </div>
         </div>
 
-        <div className="md:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu">
-                <IconDotsVertical size={18} />
+        <div className="flex min-w-0 max-w-[100%]  flex-1 items-center justify-center gap-2 md:justify-start ">
+          {isEditingName ? (
+            <div className="flex min-w-0 items-center gap-2">
+              <Input
+                value={cvName}
+                onChange={(e) => setCvName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void handleNameSave();
+                  if (e.key === "Escape") {
+                    setCvName(currentCv?.name || "Resume");
+                    setIsEditingName(false);
+                  }
+                }}
+                autoFocus
+                className="h-9 text-md font-semibold"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleNameSave}
+                aria-label="Save name"
+              >
+                <IconCircleCheck size={16} className="text-green-600" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={() => setIsVisibilityModalOpen(true)}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setIsEditingName(false)}
+                aria-label="Cancel"
               >
-                {visibility === "Public" ? (
-                  <IconLockOpen size={16} className="mr-2" />
-                ) : (
-                  <IconLock size={16} className="mr-2" />
-                )}
-                Visibility: {visibility}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => openShareModal(currentCv)}>
-                <IconShare size={16} className="mr-2" /> Share
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>handleExportPdf(currentCv!)}
+                <IconX size={16} />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="text-md overflow-hidden text-ellipsis whitespace-nowrap font-semibold">
+                {cvName.trim().length > 15
+                  ? cvName.trim().slice(0, 15) + "..."
+                  : cvName.trim()}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsEditingName(true)}
+                aria-label="Edit name"
               >
-                <IconFileTypePdf size={16} className="mr-2" /> Export PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600"
-               onClick={() => setDeleteDialogOpen(true)}>
-                <IconTrash size={16} className="mr-2" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <IconPencil size={16} />
+              </Button>
+            </div>
+          )}
         </div>
-      </div>
-    </header>
-    {/* The Visibility Modal is rendered here */}
+
+        <div className="flex items-center">
+          <div className="hidden md:flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-1.5 text-sm"
+              onClick={() => setIsVisibilityModalOpen(true)}
+            >
+              {visibility === "Public" ? (
+                <IconLockOpen size={14} />
+              ) : (
+                <IconLock size={14} />
+              )}
+              {visibility}
+            </Button>
+
+            <div className="flex items-center gap-1 px-2 border-l">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => openShareModal(currentCv)}
+                title="Share CV"
+              >
+                <IconShare size={16} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleExportPdf(currentCv!)}
+                title="Export as PDF"
+              >
+                <IconFileTypePdf size={16} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                title="Delete CV"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <IconTrash size={16} />
+              </Button>
+            </div>
+          </div>
+
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Open menu">
+                  <IconDotsVertical size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => setIsVisibilityModalOpen(true)}
+                >
+                  {visibility === "Public" ? (
+                    <IconLockOpen size={16} className="mr-2" />
+                  ) : (
+                    <IconLock size={16} className="mr-2" />
+                  )}
+                  Visibility: {visibility}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => openShareModal(currentCv)}>
+                  <IconShare size={16} className="mr-2" /> Share
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportPdf(currentCv!)}>
+                  <IconFileTypePdf size={16} className="mr-2" /> Export PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <IconTrash size={16} className="mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+      {/* The Visibility Modal is rendered here */}
       <VisibilityModal
         isOpen={isVisibilityModalOpen}
         onOpenChange={setIsVisibilityModalOpen}

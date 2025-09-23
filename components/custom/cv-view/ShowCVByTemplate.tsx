@@ -1,5 +1,6 @@
-import { CVCleanTemplate } from '../cv-templates/cv-clean-template'
+import CVCleanTemplate from '../cv-templates/cv-clean-template'
 import CVATSTemplate from '../cv-templates/cv-ats-template'
+import CVClassicTemplate from '../cv-templates/cv-classic-template'
 import { CvData } from '@/schemas/cv_data_schema'
 import { ColorRecord } from '@/types/colorType'
 
@@ -31,13 +32,19 @@ export function ShowCVByTemplate({ cvData }: { cvData: CvData }) {
     case 1:
       return (
         <>
-          <CVATSTemplate cvData={cvData} />
+          <CVClassicTemplate
+            cvData={cvData}
+            colorId={colorId}
+            fontId={fontId}
+            fontSizeId={fontSizeId as 10 | 11 | 12}
+            accentColor={accentColor}
+          />
         </>
       )
     default:
       return (
         <>
-          <CVCleanTemplate
+          <CVATSTemplate
             cvData={cvData}
             colorId={colorId}
             fontId={fontId}

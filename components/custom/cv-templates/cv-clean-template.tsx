@@ -212,7 +212,7 @@ export default function CVCleanTemplate({
                 fontSizeId={fontSizeId}
               />
             )}
-            <div className="grid grid-cols-[250px_1fr] gap-x-12">
+            <div className="grid grid-cols-[220px_1fr] gap-x-">
               <div>{paginatedLeft[i] || []}</div>
               <div>{paginatedRight[i] || []}</div>
             </div>

@@ -29,7 +29,7 @@ export default function Page() {
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [cvToShare, setCvToShare] = useState<CvData | null>(null);
-  const [shareUrl, setShareUrl] = useState('');
+  const [shareUrl, setShareUrl] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
 
   const isTablet = useMediaQuery("(max-width: 1000px)");
@@ -95,7 +95,7 @@ export default function Page() {
   }, []);
 
   const handleShareResume = (cv: CvData) => {
-    openShareModal(cv)
+    openShareModal(cv);
   };
 
   const handleDuplicateResume = async (cv: CvData) => {
@@ -164,37 +164,39 @@ Best regards`;
           />
         </AppBar>
       )}
-      {loadingStatus === LoadingStatus.Error && (
-        <div className="flex flex-1 items-center justify-center">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Error loading resumes
-          </h1>
-        </div>
-      )}
-      {loadingStatus === LoadingStatus.Loaded && (
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <div className="px-4 pb-3 lg:px-6">
-                <h1 className="text-2xl font-semibold text-foreground">
-                  Welcome back, {userName}! 👋
-                </h1>
-              </div>
+      <div className=" w-full   max-w-[1200px] mx-auto ">
+        {loadingStatus === LoadingStatus.Error && (
+          <div className="flex flex-1 items-center justify-center">
+            <h1 className="text-2xl font-semibold text-foreground">
+              Error loading resumes
+            </h1>
+          </div>
+        )}
+        {loadingStatus === LoadingStatus.Loaded && (
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <div className="px-4 pb-3 lg:px-6">
+                  <h1 className="text-2xl font-semibold text-foreground">
+                    Welcome back, {userName}! 👋
+                  </h1>
+                </div>
 
-              <ResumeGrid
-                resumes={cvDataList}
-                onCreateNew={handleCreateNew}
-                onEditResume={handleEditResume}
-                onShareResume={handleShareResume}
-                onDuplicateResume={handleDuplicateResume}
-                onExportPdf={handleExportPdf}
-                onDeleteResume={handleDeleteResume}
-                onOpenResume={handleOpenResume}
-              />
+                <ResumeGrid
+                  resumes={cvDataList}
+                  onCreateNew={handleCreateNew}
+                  onEditResume={handleEditResume}
+                  onShareResume={handleShareResume}
+                  onDuplicateResume={handleDuplicateResume}
+                  onExportPdf={handleExportPdf}
+                  onDeleteResume={handleDeleteResume}
+                  onOpenResume={handleOpenResume}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       <DeleteCvModal
         isOpen={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}

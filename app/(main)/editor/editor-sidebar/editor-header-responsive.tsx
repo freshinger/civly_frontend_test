@@ -32,7 +32,7 @@ import type { CvData } from "@/schemas/cv_data_schema";
 import { VisibilityModal } from "./visibility-modal";
 import { ShareModal } from "@/components/custom/share-modal";
 import { DeleteCvModal } from "@/components/custom/delete-cv-modal";
-import { useCallback, useState } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useCvStore } from "@/stores/cv_store";
@@ -208,6 +208,8 @@ export function EditorHeaderResponsive({ cvId = "dummy" }: { cvId?: string }) {
     }
   }, [shareUrl, toast]);
 
+  const isMobile = useMediaQuery("(max-width:500px)");
+
   const shareViaEmail = useCallback(() => {
     const cvName = currentCv?.name?.trim() || "My CV";
     const subject = `Check out my CV: ${cvName}`;
@@ -272,7 +274,7 @@ Best regards`;
           ) : (
             <div className="flex min-w-0 items-center gap-2">
               <span className="text-md overflow-hidden text-ellipsis whitespace-nowrap font-semibold">
-                {cvName.trim().length > 15
+                {isMobile && cvName.trim().length > 15
                   ? cvName.trim().slice(0, 15) + "..."
                   : cvName.trim()}
               </span>

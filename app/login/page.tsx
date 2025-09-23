@@ -1,21 +1,21 @@
-'use client'
+"use client";
 
-import { LoginForm } from '@/components/login-form'
-import { CivlyLogo } from '@/components/custom/civly-logo'
-import { useActionState, useState } from 'react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { forgotPasswordAction } from '@/utils/actions/forgotPassword'
-import { FormState } from '@/utils/validation/auth'
-import { signUpAction } from '@/utils/actions/signup'
-import { loginAction } from '@/utils/actions/login'
-import { redirect } from 'next/navigation'
-import { EmailField } from './EmailField'
-import { FormSeparator } from './FormSeparator'
-import { GoogleAuthButton } from './GoogleAuthButton'
-import { NameField } from './NameField'
-import { ZodErrors } from './ZodErrors'
+import { LoginForm } from "@/components/login-form";
+import { CivlyLogo } from "@/components/custom/civly-logo";
+import { useActionState, useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { forgotPasswordAction } from "@/utils/actions/forgotPassword";
+import { FormState } from "@/utils/validation/auth";
+import { signUpAction } from "@/utils/actions/signup";
+import { loginAction } from "@/utils/actions/login";
+import { redirect } from "next/navigation";
+import { EmailField } from "./EmailField";
+import { FormSeparator } from "./FormSeparator";
+import { GoogleAuthButton } from "./GoogleAuthButton";
+import { NameField } from "./NameField";
+import { ZodErrors } from "./ZodErrors";
 
 enum AuthView {
   Login,
@@ -25,8 +25,8 @@ enum AuthView {
 
 export default function LoginPage() {
   //TODO: if already logged in redirect to Dashboard
-  
-  const [authView, setAuthView] = useState(AuthView.Login)
+
+  const [authView, setAuthView] = useState(AuthView.Login);
   const INITIAL_STATE: FormState = {
     success: false,
     message: undefined,
@@ -45,25 +45,25 @@ export default function LoginPage() {
     loginAction,
     INITIAL_STATE
   );
-  
-  if(loginFormState?.success){
-    redirect('/');
+
+  if (loginFormState?.success) {
+    redirect("/");
   }
 
   const handleAuthViewChange = (view: AuthView) => {
-    setAuthView(view)
-  }
+    setAuthView(view);
+  };
 
   const SubmitButton = () => (
     <Button type="submit" className="w-full">
       Continue
     </Button>
-  )
+  );
 
   const PasswordField = ({
     showForgotPassword,
   }: {
-    showForgotPassword?: boolean
+    showForgotPassword?: boolean;
   }) => (
     <div className="grid gap-3">
       <div className="flex items-center">
@@ -79,7 +79,7 @@ export default function LoginPage() {
       </div>
       <Input id="password" name="password" type="password" required />
     </div>
-  )
+  );
 
   const ConfirmPasswordField = () => (
     <div className="grid gap-3">
@@ -92,11 +92,11 @@ export default function LoginPage() {
         required
       />
     </div>
-  )
+  );
 
   const SwitchToRegisterButton = () => (
     <div className="text-center text-sm">
-      Don&apos;t have an account?{' '}
+      Don&apos;t have an account?{" "}
       <a
         onClick={() => handleAuthViewChange(AuthView.Register)}
         className="underline underline-offset-4"
@@ -104,11 +104,11 @@ export default function LoginPage() {
         Sign up
       </a>
     </div>
-  )
+  );
 
   const SwitchToLoginButton = () => (
     <div className="text-center text-sm">
-      You already have an account?{' '}
+      You already have an account?{" "}
       <a
         onClick={() => handleAuthViewChange(AuthView.Login)}
         className="underline underline-offset-4"
@@ -116,7 +116,7 @@ export default function LoginPage() {
         Sign in
       </a>
     </div>
-)
+  );
 
   const renderFormChildren = () => {
     switch (authView) {
@@ -125,57 +125,75 @@ export default function LoginPage() {
           <>
             <form action={loginFormAction}>
               <div className="grid gap-6">
-                <div className="text-pink-500 text-xs italic">{loginFormState?.message} {loginFormState?.backendErrors?.message}</div>
-                <EmailField defaultName={loginFormState?.data?.email || ''} />
+                <div className="text-pink-500 text-xs italic">
+                  {loginFormState?.message}{" "}
+                  {loginFormState?.backendErrors?.message}
+                </div>
+                <EmailField defaultName={loginFormState?.data?.email || ""} />
                 <ZodErrors error={loginFormState?.zodErrors?.email} />
                 <PasswordField showForgotPassword={true} />
                 <ZodErrors error={loginFormState?.zodErrors?.password} />
                 <SubmitButton />
                 <FormSeparator />
-                <GoogleAuthButton onClick={() => {}} />
+
                 <SwitchToRegisterButton />
               </div>
             </form>
           </>
-        )
+        );
       case AuthView.Register:
         return (
           <>
             <form action={signUpFormAction}>
               <div className="grid gap-6">
-                <div className={signUpFormState?.success? "text-green-500 text-xs italic":"text-pink-500 text-xs italic"}>{signUpFormState?.message} {loginFormState?.backendErrors?.message}</div>
-                <NameField defaultName={signUpFormState?.data?.name || ''}/>
+                <div
+                  className={
+                    signUpFormState?.success
+                      ? "text-green-500 text-xs italic"
+                      : "text-pink-500 text-xs italic"
+                  }
+                >
+                  {signUpFormState?.message}{" "}
+                  {loginFormState?.backendErrors?.message}
+                </div>
+                <NameField defaultName={signUpFormState?.data?.name || ""} />
                 <ZodErrors error={signUpFormState?.zodErrors?.name} />
-                <EmailField defaultName={signUpFormState?.data?.email || ''}/>
+                <EmailField defaultName={signUpFormState?.data?.email || ""} />
                 <ZodErrors error={signUpFormState?.zodErrors?.email} />
                 <PasswordField showForgotPassword={false} />
                 <ZodErrors error={signUpFormState?.zodErrors?.password} />
                 <ConfirmPasswordField />
-                <ZodErrors error={signUpFormState?.zodErrors?.confirmPassword} />
+                <ZodErrors
+                  error={signUpFormState?.zodErrors?.confirmPassword}
+                />
                 <SubmitButton />
                 <FormSeparator />
-                <GoogleAuthButton onClick={() => {}} />
                 <SwitchToLoginButton />
               </div>
             </form>
           </>
-        )
+        );
       case AuthView.ForgotPassword:
         return (
           <>
             <form action={forgotPasswordFormAction}>
               <div className="grid gap-6">
-                <div className="text-pink-500 text-xs italic">{forgotPasswordFormState?.message} {loginFormState?.backendErrors?.message}</div>
-                <EmailField defaultName={forgotPasswordFormState?.data?.email || ''}/>
+                <div className="text-pink-500 text-xs italic">
+                  {forgotPasswordFormState?.message}{" "}
+                  {loginFormState?.backendErrors?.message}
+                </div>
+                <EmailField
+                  defaultName={forgotPasswordFormState?.data?.email || ""}
+                />
                 <ZodErrors error={forgotPasswordFormState?.zodErrors?.email} />
                 <SubmitButton />
                 <SwitchToLoginButton />
               </div>
             </form>
           </>
-        )
+        );
     }
-  }
+  };
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
@@ -186,5 +204,5 @@ export default function LoginPage() {
         <LoginForm>{renderFormChildren()}</LoginForm>
       </div>
     </div>
-  )
+  );
 }

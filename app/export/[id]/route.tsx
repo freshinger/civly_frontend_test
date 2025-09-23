@@ -1,7 +1,6 @@
 "use server";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest } from "next/server";
-import { toast } from "sonner";
 
 async function generatePDF(url: string) {
   const supabase = await createClient();
@@ -31,7 +30,7 @@ async function generatePDF(url: string) {
       const chromium = (await import("@sparticuz/chromium")).default;
       puppeteer = await import("puppeteer-core");
       launchOptions = {
-        headless: true,
+        headless: false,
         args: chromium.args,
         executablePath: await chromium.executablePath(),
       };
@@ -70,7 +69,6 @@ async function generatePDF(url: string) {
     const pdfBuffer = await page.pdf({ format: "A4" });
     return pdfBuffer;
   } catch (err) {
-    toast.error("The PDF export failed, please try again later.");
     throw err;
   } finally {
     if (browser) await browser.close();
@@ -105,7 +103,6 @@ export async function GET(
     newHeaders.set("Content-Disposition", `attachment; filename=cv-${id}.pdf`);
     return new Response(typedArrayToBuffer(pdfBuffer), { headers: newHeaders });
   } catch (error) {
-    toast.error("The PDF export failed, please try again later.");
     return new Response("An error occurred while generating the pdf.", {
       status: 500,
     });

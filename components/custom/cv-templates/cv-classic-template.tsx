@@ -125,21 +125,39 @@ export default function CVClassicTemplate({
         return;
       }
 
-      const getBlockHeight = (block: HTMLElement) => {
-        const style = window.getComputedStyle(block);
-        return (
-          block.offsetHeight +
-          parseInt(style.marginTop, 10) +
-          parseInt(style.marginBottom, 10)
-        );
-      };
+      // const getBlockHeight = (block: HTMLElement) => {
+      //   const style = window.getComputedStyle(block)
+      //   return (
+      //     block.offsetHeight +
+      //     parseInt(style.marginTop, 10) +
+      //     parseInt(style.marginBottom, 10)
+      //   )
+      // }
 
-      const headerHeight = getBlockHeight(headerEl);
-      const usableHeightPage1 =
-        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX;
+      // const headerHeight = getBlockHeight(headerEl)
 
-      const leftBlocks = Array.from(leftEl.children) as HTMLElement[];
-      const rightBlocks = Array.from(rightEl.children) as HTMLElement[];
+      // Simplified layout: Education always on right column, no complex balancing
+      const finalLeftJsx: ReactNode[] = CVColumnLeftFixed({
+        cvData,
+        accentColor,
+        colorId,
+        fontId,
+        fontSizeId,
+      });
+      const finalRightJsx: ReactNode[] = CVColumnRightWithEducation({
+        cvData,
+        accentColor,
+        colorId,
+        fontId,
+        fontSizeId,
+      });
+
+      /* 
+      // COMMENTED OUT: Complex education balancing logic
+      // TODO: Re-implement this logic when pagination is more stable
+      
+      const leftBlocks = Array.from(leftEl.children) as HTMLElement[]
+      const rightBlocks = Array.from(rightEl.children) as HTMLElement[]
 
       const educationBlock = leftBlocks.find(
         (el) => el.getAttribute("data-section") === "education"
@@ -155,38 +173,18 @@ export default function CVClassicTemplate({
         0
       );
 
-      let finalLeftJsx: ReactNode[] = [];
-      const finalRightJsx: ReactNode[] = CVColumnRight({
-        cvData,
-        accentColor,
-        colorId,
-        fontId,
-        fontSizeId,
-      });
-
       const shouldMoveEducation =
         educationHeight > 0 &&
         leftFixedHeight + educationHeight > usableHeightPage1 &&
         rightHeight + educationHeight <= usableHeightPage1;
 
       if (shouldMoveEducation) {
-        finalLeftJsx = CVColumnLeft({
-          cvData,
-          accentColor,
-          colorId,
-          fontId,
-          fontSizeId,
-        });
-        // For now, don't move education - keep it in the sidebar
+        finalLeftJsx = CVColumnLeftFixed({...})
+        finalRightJsx.push(...CVColumnEducationOnly({...}))
       } else {
-        finalLeftJsx = CVColumnLeft({
-          cvData,
-          accentColor,
-          colorId,
-          fontId,
-          fontSizeId,
-        });
+        finalLeftJsx = CVColumnLeft({...})
       }
+      */
 
       setBalancedLayout({ left: finalLeftJsx, right: finalRightJsx });
     }, 50); // A small delay to ensure DOM is ready for measurement.
@@ -218,12 +216,32 @@ export default function CVClassicTemplate({
       };
 
       const headerHeight = getBlockHeight(headerEl);
-      const usableHeightPage1 =
-        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX;
+      const usableHeightPage1 = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
+
+      console.log("Page dimensions:", {
+        A4_PAGE_HEIGHT_PX,
+        headerHeight,
+        PAGE_PADDING_Y_PX,
+        usableHeightPage1,
+        USABLE_PAGE_HEIGHT_SUBSEQUENT,
+      });
+
+      console.log("=== DEBUG PAGINATION ===");
+      console.log("Header height:", headerHeight);
+      console.log("Usable height page 1:", usableHeightPage1);
+      console.log(
+        "Total content height:",
+        leftEl.scrollHeight + rightEl.scrollHeight
+      );
+      console.log(
+        "Would fit on single page?",
+        leftEl.scrollHeight + rightEl.scrollHeight <= A4_PAGE_HEIGHT_PX
+      );
 
       const paginateColumn = (
         container: HTMLElement,
-        originalJsx: ReactNode[]
+        originalJsx: ReactNode[],
+        isRightColumn: boolean = false
       ) => {
         const pages: ReactNode[][] = [];
         if (!container || originalJsx.length === 0) return pages;
@@ -233,30 +251,88 @@ export default function CVClassicTemplate({
         let currentPageHeight = 0;
         let isFirstPage = true;
 
+        console.log(
+          `\n=== Starting ${
+            isRightColumn ? "RIGHT" : "LEFT"
+          } Column Pagination ===`
+        );
+        console.log(`Total blocks: ${blocks.length}`);
+        blocks.forEach((block, blockIndex) => {
+          console.log(
+            `Block ${blockIndex}: ${block.getAttribute(
+              "data-section"
+            )} - Height: ${getBlockHeight(block)}px`
+          );
+        });
+
         blocks.forEach((block, index) => {
           const blockHeight = getBlockHeight(block);
           const usableHeight = isFirstPage
             ? usableHeightPage1
             : USABLE_PAGE_HEIGHT_SUBSEQUENT;
-          if (
-            currentPageHeight + blockHeight > usableHeight &&
-            currentPage.length > 0
-          ) {
+
+          const wouldFit = currentPageHeight + blockHeight <= usableHeight;
+
+          console.log(
+            `\n${
+              isRightColumn ? "RIGHT" : "LEFT"
+            } Column - Processing Block ${index} (${block.getAttribute(
+              "data-section"
+            )}):`,
+            {
+              blockHeight: `${blockHeight}px`,
+              currentPageHeight: `${currentPageHeight}px`,
+              usableHeight: `${usableHeight}px`,
+              totalAfterAdd: `${currentPageHeight + blockHeight}px`,
+              wouldFit,
+              isFirstPage,
+              pageNumber: pages.length + 1,
+            }
+          );
+
+          if (!wouldFit && currentPage.length > 0) {
+            console.log(
+              `❌ Block ${index} (${block.getAttribute(
+                "data-section"
+              )}) doesn't fit. Moving to page ${pages.length + 2}`
+            );
             pages.push(currentPage);
             currentPage = [originalJsx[index]];
             currentPageHeight = blockHeight;
             isFirstPage = false;
           } else {
+            console.log(
+              `✅ Block ${index} (${block.getAttribute(
+                "data-section"
+              )}) fits on page ${pages.length + 1}`
+            );
             currentPage.push(originalJsx[index]);
             currentPageHeight += blockHeight;
           }
         });
-        if (currentPage.length > 0) pages.push(currentPage);
+
+        if (currentPage.length > 0) {
+          pages.push(currentPage);
+        }
+
+        console.log(
+          `${isRightColumn ? "RIGHT" : "LEFT"} Column pagination result: ${
+            pages.length
+          } pages`
+        );
+        pages.forEach((page, pageIndex) => {
+          console.log(`  Page ${pageIndex + 1}: ${page.length} sections`);
+        });
+
         return pages;
       };
 
-      const paginatedLeft = paginateColumn(leftEl, balancedLayout.left);
-      const paginatedRight = paginateColumn(rightEl, balancedLayout.right);
+      const paginatedLeft = paginateColumn(leftEl, balancedLayout.left, false);
+      const paginatedRight = paginateColumn(
+        rightEl,
+        balancedLayout.right,
+        true
+      );
 
       const numPages = Math.max(paginatedLeft.length, paginatedRight.length);
       const finalPages = [];
@@ -284,14 +360,15 @@ export default function CVClassicTemplate({
               >
                 {paginatedLeft[i] || []}
               </div>
-              {/* Right Column - Main content with proper padding */}
+              {/* Right Column - Main content with proper padding and max height */}
               <div
-                className="h-full"
+                className="overflow-hidden"
                 style={{
                   paddingLeft: "32px", // px-8
                   paddingRight: `${PAGE_PADDING_PX}px`,
                   paddingTop: `${PAGE_PADDING_PX}px`,
                   paddingBottom: `${PAGE_PADDING_PX}px`,
+                  maxHeight: `${A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX}px`,
                 }}
               >
                 {i === 0 && (
@@ -342,7 +419,7 @@ export default function CVClassicTemplate({
           >
             {balancedLayout
               ? balancedLayout.left
-              : CVColumnLeft({
+              : CVColumnLeftFixed({
                   cvData,
                   accentColor,
                   colorId,
@@ -351,12 +428,13 @@ export default function CVClassicTemplate({
                 })}
           </div>
           <div
-            className="h-full"
+            className="overflow-hidden"
             style={{
               paddingLeft: "32px",
               paddingRight: `${PAGE_PADDING_PX}px`,
               paddingTop: `${PAGE_PADDING_PX}px`,
               paddingBottom: `${PAGE_PADDING_PX}px`,
+              maxHeight: `${A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX}px`,
             }}
             ref={rightColRef}
           >
@@ -371,7 +449,7 @@ export default function CVClassicTemplate({
             </div>
             {balancedLayout
               ? balancedLayout.right
-              : CVColumnRight({
+              : CVColumnRightWithEducation({
                   cvData,
                   accentColor,
                   colorId,
@@ -446,7 +524,7 @@ function CVHeader({
 }
 
 // --- Left Column Components (Profile Photo + Contact + Skills + Education) ---
-function CVSidebar({
+function CVSidebarWithoutEducation({
   cvData,
   fontId = 0,
   fontSizeId = 11,
@@ -509,10 +587,10 @@ function CVSidebar({
   );
 
   return (
-    <div className="space-y-6">
-      {/* Profile Photo - Only show if image exists */}
-      <div className="flex justify-center mb-8">
-        {image ? (
+    <div>
+      {/* Profile Photo - Only show if image exists, no empty space if not */}
+      {image && (
+        <div className="flex justify-center mb-8">
           <div className="w-32 h-32 rounded-full bg-white/10 flex items-center justify-center">
             <Image
               src={image}
@@ -522,30 +600,144 @@ function CVSidebar({
               className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
             />
           </div>
-        ) : (
-          <div className="w-32 h-32" /> // Empty space to maintain layout alignment
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Add top spacing when no photo to align with right column */}
+      {!image && <div className="h-12" />}
 
       {/* Contact Information */}
-      <CVColumnContact
-        cvData={cvData}
-        fontId={fontId}
-        fontSizeId={fontSizeId}
-      />
+      <div data-section="contact" className="mb-8">
+        <CVColumnContact
+          cvData={cvData}
+          fontId={fontId}
+          fontSizeId={fontSizeId}
+        />
+      </div>
 
-      {/* Education */}
-      <CVColumnEducation
-        cvData={cvData}
-        fontId={fontId}
-        fontSizeId={fontSizeId}
-      />
-
-      {/* Skills */}
-      <CVColumnSkills cvData={cvData} fontId={fontId} fontSizeId={fontSizeId} />
+      {/* Skills - Education will be moved to right column */}
+      <div data-section="skills">
+        <CVColumnSkills
+          cvData={cvData}
+          fontId={fontId}
+          fontSizeId={fontSizeId}
+        />
+      </div>
     </div>
   );
 }
+
+// function CVSidebar({
+//   cvData,
+//   fontId = 0,
+//   fontSizeId = 11,
+// }: {
+//   cvData: CvData
+//   accentColor?: string
+//   colorId?: number
+//   fontId?: number
+//   fontSizeId?: 10 | 11 | 12
+// }) {
+//   const supabase = useMemo(() => createClient(), [])
+//   const profileUrl = cvData?.personalInformation?.profileUrl
+//   const setImage = useImageStore((s) => s.setImage)
+//   const removeImage = useImageStore((s) => s.removeImage)
+//   const objectUrlRef = useRef<string | null>(null)
+
+//   useEffect(() => {
+//     if (!profileUrl) return
+
+//     let cancelled = false
+
+//     async function fetchImage() {
+//       try {
+//         const { data, error } = await supabase.storage
+//           .from('cv_picture')
+//           .download(profileUrl!)
+
+//         if (error) throw error
+//         if (!data) return
+
+//         if (cancelled) return
+
+//         // cleanup old URL
+//         if (objectUrlRef.current) {
+//           URL.revokeObjectURL(objectUrlRef.current)
+//         }
+
+//         const objUrl = URL.createObjectURL(data)
+//         objectUrlRef.current = objUrl
+
+//         setImage(profileUrl!, objUrl)
+//       } catch (err) {
+//         console.error('Error downloading image:', err)
+//         removeImage(profileUrl!)
+//       }
+//     }
+
+//     fetchImage()
+
+//     return () => {
+//       cancelled = true
+//       if (objectUrlRef.current) {
+//         URL.revokeObjectURL(objectUrlRef.current)
+//       }
+//     }
+//   }, [profileUrl, setImage, removeImage, supabase.storage])
+
+//   const image = useImageStore((state) =>
+//     profileUrl ? state.images[profileUrl] : '',
+//   )
+
+//   return (
+//     <div>
+//       {/* Profile Photo - Only show if image exists, no empty space if not */}
+//       {image && (
+//         <div className="flex justify-center mb-8">
+//           <div className="w-32 h-32 rounded-full bg-white/10 flex items-center justify-center">
+//             <Image
+//               src={image}
+//               alt={`${cvData?.personalInformation?.name} ${cvData?.personalInformation?.surname}`}
+//               width={128}
+//               height={128}
+//               className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+//             />
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Add top spacing when no photo to align with right column */}
+//       {!image && <div className="h-12" />}
+
+//       {/* Contact Information */}
+//       <div data-section="contact" className="mb-8">
+//         <CVColumnContact
+//           cvData={cvData}
+//           fontId={fontId}
+//           fontSizeId={fontSizeId}
+//         />
+//       </div>
+
+//       {/* Education */}
+//       <div data-section="education" className="mb-8">
+//         <CVColumnEducation
+//           cvData={cvData}
+//           fontId={fontId}
+//           fontSizeId={fontSizeId}
+//         />
+//       </div>
+
+//       {/* Skills */}
+//       <div data-section="skills">
+//         <CVColumnSkills
+//           cvData={cvData}
+//           fontId={fontId}
+//           fontSizeId={fontSizeId}
+//         />
+//       </div>
+//     </div>
+//   )
+// }
 
 function CVColumnContact({
   cvData,
@@ -563,6 +755,9 @@ function CVColumnContact({
     "text-gray-800"
   );
 
+  // Get font styles for contact text
+  const contactFontStyles = getFontStyles("body", fontId);
+
   if (!cvData?.personalInformation) return null;
 
   return (
@@ -577,7 +772,10 @@ function CVColumnContact({
             className="flex items-center gap-2 text-white/90 hover:text-white"
           >
             <IconMail size={14} />
-            <span className={`${contactTextClasses} text-white`}>
+            <span
+              className={`${contactTextClasses} text-white`}
+              style={contactFontStyles}
+            >
               {cvData.personalInformation.email}
             </span>
           </a>
@@ -588,7 +786,10 @@ function CVColumnContact({
             className="flex items-center gap-2 text-white/90 hover:text-white"
           >
             <IconPhone size={14} />
-            <span className={`${contactTextClasses} text-white`}>
+            <span
+              className={`${contactTextClasses} text-white`}
+              style={contactFontStyles}
+            >
               {cvData.personalInformation.phone}
             </span>
           </a>
@@ -601,7 +802,10 @@ function CVColumnContact({
             className="flex items-center gap-2 text-white/90 hover:text-white"
           >
             <IconGlobe size={14} />
-            <span className={`${contactTextClasses} text-white`}>
+            <span
+              className={`${contactTextClasses} text-white`}
+              style={contactFontStyles}
+            >
               {cvData.personalInformation.website.replace("https://", "")}
             </span>
           </a>
@@ -614,7 +818,10 @@ function CVColumnContact({
             className="flex items-center gap-2 text-white/90 hover:text-white"
           >
             <IconBrandLinkedin size={14} />
-            <span className={`${contactTextClasses} text-white`}>
+            <span
+              className={`${contactTextClasses} text-white`}
+              style={contactFontStyles}
+            >
               {getLinkedInUsername(cvData.personalInformation.linkedin)}
             </span>
           </a>
@@ -627,7 +834,10 @@ function CVColumnContact({
             className="flex items-center gap-2 text-white/90 hover:text-white"
           >
             <IconBrandXing size={14} />
-            <span className={`${contactTextClasses} text-white`}>
+            <span
+              className={`${contactTextClasses} text-white`}
+              style={contactFontStyles}
+            >
               {getXingUsername(cvData.personalInformation.xing)}
             </span>
           </a>
@@ -635,7 +845,10 @@ function CVColumnContact({
         {cvData.personalInformation.location && (
           <div className="flex items-center gap-2 text-white/90">
             <IconMapPin size={14} />
-            <span className={`${contactTextClasses} text-white`}>
+            <span
+              className={`${contactTextClasses} text-white`}
+              style={contactFontStyles}
+            >
               {cvData.personalInformation.location}
             </span>
           </div>
@@ -661,19 +874,36 @@ function CVColumnSkills({
     "text-gray-800"
   );
 
+  // Get font styles for different elements
+  const titleFontStyles = getFontStyles("h4", fontId);
+  const skillFontStyles = getFontStyles("body", fontId);
+
   if (!cvData?.skillGroups || cvData.skillGroups.length === 0) return null;
 
   return (
     <>
       {cvData.skillGroups.map((skillGroup: SkillGroup, groupIndex: number) => (
-        <div key={`skill-group-${groupIndex}`}>
-          <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
+        <div
+          key={`skill-group-${groupIndex}`}
+          className={groupIndex > 0 ? "mt-6" : ""}
+        >
+          <h3
+            className="text-white font-bold text-sm uppercase tracking-wide mb-1"
+            style={titleFontStyles}
+          >
             {skillGroup.name}
           </h3>
-          <div className={`${skillItemClasses} space-y-1`}>
+          <div
+            className={`${skillItemClasses} space-y-1`}
+            style={skillFontStyles}
+          >
             {skillGroup.skills?.map(
               (skill: SkillGroupItem, skillIndex: number) => (
-                <p key={skillIndex} className="text-white/90">
+                <p
+                  key={skillIndex}
+                  className="text-white/90"
+                  style={skillFontStyles}
+                >
                   {skill.name}
                 </p>
               )
@@ -685,65 +915,84 @@ function CVColumnSkills({
   );
 }
 
-function CVColumnEducation({
-  cvData,
-  fontId = 0,
-  fontSizeId = 11,
-}: {
-  cvData: CvData;
-  fontId?: number;
-  fontSizeId?: 10 | 11 | 12;
-}) {
-  const educationItemClasses = getElementClasses(
-    "small",
-    fontSizeId as FontSizeId,
-    fontId,
-    ""
-  );
+// function CVColumnEducation({
+//   cvData,
+//   fontId = 0,
+//   fontSizeId = 11,
+// }: {
+//   cvData: CvData
+//   fontId?: number
+//   fontSizeId?: 10 | 11 | 12
+// }) {
+//   const educationItemClasses = getElementClasses(
+//     'small',
+//     fontSizeId as FontSizeId,
+//     fontId,
+//     '',
+//   )
 
-  if (!cvData?.education || cvData.education.length === 0) return null;
+//   // Get font styles for different elements
+//   const titleFontStyles = getFontStyles('h4', fontId)
+//   const degreeStyles = getFontStyles('body', fontId)
+//   const institutionStyles = getFontStyles('body', fontId)
+//   const descriptionStyles = getFontStyles('body', fontId)
 
-  return (
-    <div>
-      <h3 className="text-white font-bold text-sm uppercase tracking-wide mb-3">
-        Education
-      </h3>
-      <div className="space-y-4">
-        {cvData.education.map((edu: EducationItem, index: number) => (
-          <div key={index} className={educationItemClasses}>
-            <p className="font-semibold text-white mb-1">{edu.degree}</p>
-            <p className="text-white/90 font-medium">{edu.institution}</p>
-            <p className="text-white/70 font-medium mt-1 text-xs">
-              {edu?.startDate &&
-                new Date(edu?.startDate).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                })}{" "}
-              -{" "}
-              {edu.currentlyStudyingHere
-                ? "Present"
-                : edu.endDate
-                  ? new Date(edu.endDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                    })
-                  : "Present"}{" "}
-              • {edu.location}
-            </p>
-            {edu.description && (
-              <p className="text-white/80 mt-1 font-medium text-sm">
-                {edu.description}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+//   if (!cvData?.education || cvData.education.length === 0) return null
 
-// Helper to get all left column content combined
-function CVColumnLeft({
+//   return (
+//     <div>
+//       <h3
+//         className="text-white font-bold text-sm uppercase tracking-wide mb-3"
+//         style={titleFontStyles}
+//       >
+//         Education
+//       </h3>
+//       <div className="space-y-4">
+//         {cvData.education.map((edu: EducationItem, index: number) => (
+//           <div key={index} className={educationItemClasses}>
+//             <p className="font-semibold text-white mb-1" style={degreeStyles}>
+//               {edu.degree}
+//             </p>
+//             <p className="text-white/90 font-medium" style={institutionStyles}>
+//               {edu.institution}
+//             </p>
+//             <p
+//               className="text-white/70 font-medium mt-1 text-xs"
+//               style={institutionStyles}
+//             >
+//               {edu?.startDate &&
+//                 new Date(edu?.startDate).toLocaleDateString('en-US', {
+//                   year: 'numeric',
+//                   month: 'long',
+//                 })}{' '}
+//               -{' '}
+//               {edu.currentlyStudyingHere
+//                 ? 'Present'
+//                 : edu.endDate
+//                 ? new Date(edu.endDate).toLocaleDateString('en-US', {
+//                     year: 'numeric',
+//                     month: 'long',
+//                   })
+//                 : 'Present'}{' '}
+//               • {edu.location}
+//             </p>
+//             {edu.description && (
+//               <p
+//                 className="text-white/80 mt-1 font-medium text-sm"
+//                 style={descriptionStyles}
+//               >
+//                 {edu.description}
+//               </p>
+//             )}
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   )
+// }
+
+// Helper to get left column content WITHOUT education (for when education moves to right)
+function CVColumnLeftFixed({
   cvData,
   accentColor,
   colorId = 0,
@@ -751,8 +1000,8 @@ function CVColumnLeft({
   fontSizeId = 11,
 }: CVClassicTemplateProps): ReactNode[] {
   return [
-    <CVSidebar
-      key="sidebar"
+    <CVSidebarWithoutEducation
+      key="sidebar-no-edu"
       cvData={cvData}
       accentColor={accentColor}
       colorId={colorId}
@@ -762,7 +1011,108 @@ function CVColumnLeft({
   ];
 }
 
-function CVColumnRight({
+// Helper to get all left column content combined (WITH education)
+// function CVColumnLeft({
+//   cvData,
+//   accentColor,
+//   colorId = 0,
+//   fontId = 0,
+//   fontSizeId = 11,
+// }: CVClassicTemplateProps): ReactNode[] {
+//   return [
+//     <CVSidebar
+//       key="sidebar"
+//       cvData={cvData}
+//       accentColor={accentColor}
+//       colorId={colorId}
+//       fontId={fontId}
+//       fontSizeId={fontSizeId}
+//     />,
+//   ]
+// }
+
+// Helper to get only education section for right column
+// function CVColumnEducationOnly({
+//   cvData,
+//   fontId = 0,
+//   fontSizeId = 11,
+// }: {
+//   cvData: CvData
+//   fontId?: number
+//   fontSizeId?: 10 | 11 | 12
+// }): ReactNode[] {
+//   if (!cvData?.education || cvData.education.length === 0) return []
+
+//   const educationItemClasses = getElementClasses(
+//     'small',
+//     fontSizeId as FontSizeId,
+//     fontId,
+//     '',
+//   )
+//   const sectionHeadingClasses = getElementClasses(
+//     'h4',
+//     fontSizeId as FontSizeId,
+//     fontId,
+//     'font-bold tracking-wide mb-1.5',
+//   )
+
+//   // Get font styles for different elements
+//   const titleFontStyles = getFontStyles('h4', fontId)
+//   const degreeStyles = getFontStyles('body', fontId)
+//   const institutionStyles = getFontStyles('body', fontId)
+//   const descriptionStyles = getFontStyles('body', fontId)
+
+//   return [
+//     <div key="education" className="mb-6" data-section="education">
+//       <h3
+//         className={`${sectionHeadingClasses} text-gray-800`}
+//         style={titleFontStyles}
+//       >
+//         Education
+//       </h3>
+//       <div className="space-y-4">
+//         {cvData.education.map((edu: EducationItem, index: number) => (
+//           <div key={index} className={educationItemClasses}>
+//             <p
+//               className="font-semibold text-gray-900 mb-1"
+//               style={degreeStyles}
+//             >
+//               {edu.degree}
+//             </p>
+//             <p className="text-gray-700 mb-1" style={institutionStyles}>
+//               {edu.institution}
+//             </p>
+//             <p className="text-gray-500 mb-2" style={institutionStyles}>
+//               {edu?.startDate &&
+//                 new Date(edu?.startDate).toLocaleDateString('en-US', {
+//                   year: 'numeric',
+//                   month: 'long',
+//                 })}{' '}
+//               -{' '}
+//               {edu.currentlyStudyingHere
+//                 ? 'Present'
+//                 : edu.endDate
+//                 ? new Date(edu.endDate).toLocaleDateString('en-US', {
+//                     year: 'numeric',
+//                     month: 'long',
+//                   })
+//                 : 'Present'}{' '}
+//               • {edu.location}
+//             </p>
+//             {edu.description && (
+//               <p className="text-gray-600 mt-1" style={descriptionStyles}>
+//                 {edu.description}
+//               </p>
+//             )}
+//           </div>
+//         ))}
+//       </div>
+//     </div>,
+//   ]
+// }
+
+// Combined right column with Experience + Education
+function CVColumnRightWithEducation({
   cvData,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   accentColor: _accentColor,
@@ -783,59 +1133,208 @@ function CVColumnRight({
     fontId,
     ""
   );
+  const educationItemClasses = getElementClasses(
+    "small",
+    fontSizeId as FontSizeId,
+    fontId,
+    ""
+  );
   const accentColorHex = ColorRecord[colorId]?.hex || "#3B82F6";
 
-  /*
-  //console.log('CVColumnRight styles:', {
-    fontSizeId,
-    fontId,
-    colorId,
-    sectionHeadingClasses,
-    experienceItemClasses,
-    accentColorHex,
-  })
-    */
+  // Get font styles for different elements
+  const titleFontStyles = getFontStyles("h4", fontId);
+  const degreeStyles = getFontStyles("body", fontId);
+  const institutionStyles = getFontStyles("body", fontId);
+  const descriptionStyles = getFontStyles("body", fontId);
 
   const sections: ReactNode[] = [];
-  if (cvData?.experience && cvData?.experience?.length > 0) {
+
+  // Combined Experience + Education section in one block
+  if (
+    (cvData?.experience && cvData?.experience?.length > 0) ||
+    (cvData?.education && cvData.education.length > 0)
+  ) {
     sections.push(
-      <div key="experience" className="mb-6" data-section="experience">
-        <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
-          Experience
-        </h3>
-        <div className="space-y-5">
-          {cvData?.experience?.map((work: ExperienceItem, index: number) => (
-            <div key={index} className={experienceItemClasses}>
-              <p className="font-semibold text-black mb-1">{work.role}</p>
-              <p className="text-gray-800 mb-1">{work.company}</p>
-              <p className="text-gray-500 mb-2">
-                {work.startDate &&
-                  new Date(work.startDate).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                  })}{" "}
-                -{" "}
-                {work.currentlyWorkingHere
-                  ? "Present"
-                  : work.endDate
-                    ? new Date(work.endDate).toLocaleDateString("en-US", {
+      <div
+        key="experience-education"
+        className="mb-6"
+        data-section="experience-education"
+      >
+        {/* Experience section */}
+        {cvData?.experience && cvData?.experience?.length > 0 && (
+          <>
+            <h3
+              className={sectionHeadingClasses}
+              style={{ ...titleFontStyles, color: accentColorHex }}
+            >
+              Experience
+            </h3>
+            <div className="space-y-5 mb-8">
+              {cvData?.experience?.map(
+                (work: ExperienceItem, index: number) => (
+                  <div key={index} className={experienceItemClasses}>
+                    <p className="font-semibold text-black mb-1">{work.role}</p>
+                    <p className="text-gray-800 mb-1">{work.company}</p>
+                    <p className="text-gray-500 mb-2">
+                      {work.startDate &&
+                        new Date(work.startDate).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                        })}{" "}
+                      -{" "}
+                      {work.currentlyWorkingHere
+                        ? "Present"
+                        : work.endDate
+                          ? new Date(work.endDate).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                            })
+                          : "Present"}{" "}
+                      • {work.location}
+                    </p>
+                    <div
+                      className={`${experienceItemClasses} text-gray-800`}
+                      style={{ lineHeight: "1.5" }}
+                    >
+                      {work.description}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Education section - within the same block */}
+        {cvData?.education && cvData.education.length > 0 && (
+          <>
+            <h3
+              className={sectionHeadingClasses}
+              style={{ ...titleFontStyles, color: accentColorHex }}
+            >
+              Education
+            </h3>
+            <div className="space-y-4">
+              {cvData.education.map((edu: EducationItem, index: number) => (
+                <div key={index} className={educationItemClasses}>
+                  <p
+                    className="font-semibold text-gray-900 mb-1"
+                    style={degreeStyles}
+                  >
+                    {edu.degree}
+                  </p>
+                  <p className="text-gray-700 mb-1" style={institutionStyles}>
+                    {edu.institution}
+                  </p>
+                  <p className="text-gray-500 mb-2" style={institutionStyles}>
+                    {edu?.startDate &&
+                      new Date(edu?.startDate).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
-                      })
-                    : "Present"}{" "}
-                • {work.location}
-              </p>
-              <div
-                className={`${experienceItemClasses} text-gray-800`}
-                style={{ lineHeight: "1.5" }}
-              >
-                {work.description}
-              </div>
+                      })}{" "}
+                    -{" "}
+                    {edu.currentlyStudyingHere
+                      ? "Present"
+                      : edu.endDate
+                        ? new Date(edu.endDate).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                          })
+                        : "Present"}{" "}
+                    • {edu.location || ""}
+                  </p>
+                  {edu.description && (
+                    <div
+                      className={`${educationItemClasses} text-gray-800 mb-2`}
+                      style={{ ...descriptionStyles, lineHeight: "1.5" }}
+                    >
+                      {edu.description}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     );
   }
+
   return sections;
 }
+
+// function CVColumnRight({
+//   cvData,
+//   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//   accentColor: _accentColor,
+//   colorId = 0,
+//   fontId = 0,
+//   fontSizeId = 11,
+// }: CVClassicTemplateProps): ReactNode[] {
+//   // Get dynamic classes
+//   const sectionHeadingClasses = getElementClasses(
+//     'h4',
+//     fontSizeId as FontSizeId,
+//     fontId,
+//     'font-bold tracking-wide mb-1.5',
+//   )
+//   const experienceItemClasses = getElementClasses(
+//     'small',
+//     fontSizeId as FontSizeId,
+//     fontId,
+//     '',
+//   )
+//   const accentColorHex = ColorRecord[colorId]?.hex || '#3B82F6'
+
+//   console.log('CVColumnRight styles:', {
+//     fontSizeId,
+//     fontId,
+//     colorId,
+//     sectionHeadingClasses,
+//     experienceItemClasses,
+//     accentColorHex,
+//   })
+
+//   const sections: ReactNode[] = []
+//   if (cvData?.experience && cvData?.experience?.length > 0) {
+//     sections.push(
+//       <div key="experience" className="mb-6" data-section="experience">
+//         <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
+//           Experience
+//         </h3>
+//         <div className="space-y-5">
+//           {cvData?.experience?.map((work: ExperienceItem, index: number) => (
+//             <div key={index} className={experienceItemClasses}>
+//               <p className="font-semibold text-black mb-1">{work.role}</p>
+//               <p className="text-gray-800 mb-1">{work.company}</p>
+//               <p className="text-gray-500 mb-2">
+//                 {work.startDate &&
+//                   new Date(work.startDate).toLocaleDateString('en-US', {
+//                     year: 'numeric',
+//                     month: 'long',
+//                   })}{' '}
+//                 -{' '}
+//                 {work.currentlyWorkingHere
+//                   ? 'Present'
+//                   : work.endDate
+//                   ? new Date(work.endDate).toLocaleDateString('en-US', {
+//                       year: 'numeric',
+//                       month: 'long',
+//                     })
+//                   : 'Present'}{' '}
+//                 • {work.location}
+//               </p>
+//               <div
+//                 className={`${experienceItemClasses} text-gray-800`}
+//                 style={{ lineHeight: '1.5' }}
+//               >
+//                 {work.description}
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </div>,
+//     )
+//   }
+//   return sections
+// }

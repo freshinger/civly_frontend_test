@@ -113,24 +113,14 @@ export default function CVCleanTemplate({
       const usableHeightPage1 =
         A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX;
 
-      const leftBlocks = Array.from(leftEl.children) as HTMLElement[];
-      const rightBlocks = Array.from(rightEl.children) as HTMLElement[];
-
-      const educationBlock = leftBlocks.find(
-        (el) => el.getAttribute("data-section") === "education"
-      );
-      const leftFixedHeight = leftBlocks
-        .filter((el) => el.getAttribute("data-section") !== "education")
-        .reduce((sum, block) => sum + getBlockHeight(block), 0);
-      const educationHeight = educationBlock
-        ? getBlockHeight(educationBlock)
-        : 0;
-      const rightHeight = rightBlocks.reduce(
-        (sum, block) => sum + getBlockHeight(block),
-        0
-      );
-
-      let finalLeftJsx: ReactNode[] = [];
+      // Simplified layout: Education always on right column after Experience
+      const finalLeftJsx: ReactNode[] = CVColumnLeftFixed({
+        cvData,
+        accentColor,
+        colorId,
+        fontId,
+        fontSizeId,
+      });
       const finalRightJsx: ReactNode[] = CVColumnRight({
         cvData,
         accentColor,
@@ -138,38 +128,6 @@ export default function CVCleanTemplate({
         fontId,
         fontSizeId,
       });
-
-      const shouldMoveEducation =
-        educationHeight > 0 &&
-        leftFixedHeight + educationHeight > usableHeightPage1 &&
-        rightHeight + educationHeight <= usableHeightPage1;
-
-      if (shouldMoveEducation) {
-        finalLeftJsx = CVColumnLeftFixed({
-          cvData,
-          accentColor,
-          colorId,
-          fontId,
-          fontSizeId,
-        });
-        finalRightJsx.push(
-          ...CVColumnEducation({
-            cvData,
-            accentColor,
-            colorId,
-            fontId,
-            fontSizeId,
-          })
-        );
-      } else {
-        finalLeftJsx = CVColumnLeft({
-          cvData,
-          accentColor,
-          colorId,
-          fontId,
-          fontSizeId,
-        });
-      }
 
       setBalancedLayout({ left: finalLeftJsx, right: finalRightJsx });
     }, 50); // A small delay to ensure DOM is ready for measurement.
@@ -289,7 +247,7 @@ export default function CVCleanTemplate({
           <div ref={leftColRef}>
             {balancedLayout
               ? balancedLayout.left
-              : CVColumnLeft({
+              : CVColumnLeftFixed({
                   cvData,
                   accentColor,
                   colorId,
@@ -406,8 +364,8 @@ function CVHeader({
   const summaryFontStyles = getFontStyles("body", fontId);
 
   return (
-    <div className={`flex items-start justify-between ${paddingClass}`}>
-      <div className="flex-1 pr-8">
+    <div className={`flex items-start ${paddingClass}`}>
+      <div className="flex-1">
         <h1 className={nameClasses} style={nameFontStyles}>
           {cvData?.personalInformation?.name}{" "}
           {cvData?.personalInformation?.surname}
@@ -417,14 +375,16 @@ function CVHeader({
         </h2>
         {cvData?.personalInformation?.summary && (
           <p
-            className={`${summaryClasses} ${image ? "max-w-md" : "max-w-full"}`}
+            className={`${summaryClasses.replace("mb-6", "mb-8")} ${
+              image ? "max-w-md" : "max-w-full"
+            }`}
             style={{ lineHeight: "1.5" }}
           >
             {cvData?.personalInformation?.summary}
           </p>
         )}
       </div>
-      <div className="flex-shrink-0">
+      <div className="w-40 flex justify-center flex-shrink-0">
         {image && (
           <Image
             src={image}
@@ -580,121 +540,6 @@ function CVColumnLeftFixed({
   return sections;
 }
 
-function CVColumnEducation({
-  cvData,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  accentColor: _accentColor,
-  colorId = 0,
-  fontId = 0,
-  fontSizeId = 11,
-}: CVCleanTemplateProps): ReactNode[] {
-  if (!cvData?.education || cvData?.education?.length === 0) return [];
-
-  // Get dynamic classes
-  const sectionHeadingClasses = getElementClasses(
-    "h4",
-    fontSizeId as FontSizeId,
-    fontId,
-    "font-bold tracking-wide mb-1.5"
-  );
-  const educationItemClasses = getElementClasses(
-    "small",
-    fontSizeId as FontSizeId,
-    fontId,
-    ""
-  );
-  const accentColorHex = ColorRecord[colorId]?.hex || "#3B82F6";
-
-  /*
-  //console.log("CVColumnEducation styles:", {
-    fontSizeId,
-    fontId,
-    colorId,
-    sectionHeadingClasses,
-    educationItemClasses,
-    accentColorHex,
-  });
-  */
-
-  return [
-    <div key="education" className="mb-6" data-section="education">
-      <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
-        Education
-      </h3>
-      <div className="space-y-4">
-        {cvData?.education?.map((edu: EducationItem, index: number) => (
-          <div key={index} className={educationItemClasses}>
-            <p className="font-semibold text-black mb-1">{edu.degree}</p>
-            <p className="text-gray-800">{edu.institution}</p>
-            <p className="text-gray-500 mt-1">
-              {edu?.startDate &&
-                new Date(edu?.startDate).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                })}{" "}
-              -{" "}
-              {edu.currentlyStudyingHere
-                ? "Present"
-                : edu.endDate
-                  ? new Date(edu.endDate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                    })
-                  : "Present"}{" "}
-              • {edu.location}
-            </p>
-            {edu.description && (
-              <p className="text-gray-800 mt-1">{edu.description}</p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>,
-  ];
-}
-
-// Helper to get all left column content combined
-function CVColumnLeft({
-  cvData,
-  accentColor,
-  colorId = 0,
-  fontId = 0,
-  fontSizeId = 11,
-}: CVCleanTemplateProps): ReactNode[] {
-  const leftFixedSections = CVColumnLeftFixed({
-    cvData,
-    accentColor,
-    colorId,
-    fontId,
-    fontSizeId,
-  });
-  const educationSections = CVColumnEducation({
-    cvData,
-    accentColor,
-    colorId,
-    fontId,
-    fontSizeId,
-  });
-
-  // Insert education after contact info (first section)
-  const result: ReactNode[] = [];
-
-  // Add contact info first
-  if (leftFixedSections.length > 0) {
-    result.push(leftFixedSections[0]); // Contact section
-  }
-
-  // Add education right after contact
-  result.push(...educationSections);
-
-  // Add remaining sections (skills, etc.)
-  if (leftFixedSections.length > 1) {
-    result.push(...leftFixedSections.slice(1));
-  }
-
-  return result;
-}
-
 function CVColumnRight({
   cvData,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -716,6 +561,12 @@ function CVColumnRight({
     fontId,
     ""
   );
+  const educationItemClasses = getElementClasses(
+    "small",
+    fontSizeId as FontSizeId,
+    fontId,
+    ""
+  );
   const accentColorHex = ColorRecord[colorId]?.hex || "#3B82F6";
 
   /*
@@ -730,6 +581,8 @@ function CVColumnRight({
   */
 
   const sections: ReactNode[] = [];
+
+  // Experience section
   if (cvData?.experience && cvData?.experience?.length > 0) {
     sections.push(
       <div key="experience" className="mb-6" data-section="experience">
@@ -770,5 +623,45 @@ function CVColumnRight({
       </div>
     );
   }
+
+  // Education section - always after experience
+  if (cvData?.education && cvData?.education?.length > 0) {
+    sections.push(
+      <div key="education" className="mb-6" data-section="education">
+        <h3 className={sectionHeadingClasses} style={{ color: accentColorHex }}>
+          Education
+        </h3>
+        <div className="space-y-4">
+          {cvData?.education?.map((edu: EducationItem, index: number) => (
+            <div key={index} className={educationItemClasses}>
+              <p className="font-semibold text-black mb-1">{edu.degree}</p>
+              <p className="text-gray-800">{edu.institution}</p>
+              <p className="text-gray-500 mt-1">
+                {edu?.startDate &&
+                  new Date(edu?.startDate).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                  })}{" "}
+                -{" "}
+                {edu.currentlyStudyingHere
+                  ? "Present"
+                  : edu.endDate
+                    ? new Date(edu.endDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                      })
+                    : "Present"}{" "}
+                • {edu.location}
+              </p>
+              {edu.description && (
+                <p className="text-gray-800 mt-1">{edu.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return sections;
 }

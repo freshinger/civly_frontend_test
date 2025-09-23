@@ -44,6 +44,7 @@ function Page({ children }: { children: ReactNode }) {
         height: `${A4_PAGE_HEIGHT_PX}px`,
         padding: '48px',
         fontFamily: 'Helvetica, Arial, sans-serif',
+        margin: '0 auto 50px auto',
       }}
     >
       {children}

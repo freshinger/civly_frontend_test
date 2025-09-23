@@ -218,26 +218,6 @@ export default function CVClassicTemplate({
       const headerHeight = getBlockHeight(headerEl);
       const usableHeightPage1 = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
 
-      console.log("Page dimensions:", {
-        A4_PAGE_HEIGHT_PX,
-        headerHeight,
-        PAGE_PADDING_Y_PX,
-        usableHeightPage1,
-        USABLE_PAGE_HEIGHT_SUBSEQUENT,
-      });
-
-      console.log("=== DEBUG PAGINATION ===");
-      console.log("Header height:", headerHeight);
-      console.log("Usable height page 1:", usableHeightPage1);
-      console.log(
-        "Total content height:",
-        leftEl.scrollHeight + rightEl.scrollHeight
-      );
-      console.log(
-        "Would fit on single page?",
-        leftEl.scrollHeight + rightEl.scrollHeight <= A4_PAGE_HEIGHT_PX
-      );
-
       const paginateColumn = (
         container: HTMLElement,
         originalJsx: ReactNode[],
@@ -1169,7 +1149,7 @@ function CVColumnRightWithEducation({
             >
               Experience
             </h3>
-            <div className="space-y-5 mb-8">
+            <div className="space-y-3 mb-6">
               {cvData?.experience?.map(
                 (work: ExperienceItem, index: number) => (
                   <div key={index} className={experienceItemClasses}>
@@ -1214,7 +1194,7 @@ function CVColumnRightWithEducation({
             >
               Education
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {cvData.education.map((edu: EducationItem, index: number) => (
                 <div key={index} className={educationItemClasses}>
                   <p

@@ -110,8 +110,7 @@ export default function CVCleanTemplate({
       };
 
       const headerHeight = getBlockHeight(headerEl);
-      const usableHeightPage1 =
-        A4_PAGE_HEIGHT_PX - headerHeight - PAGE_PADDING_Y_PX;
+      const usableHeightPage1 = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX;
 
       // Simplified layout: Education always on right column after Experience
       const finalLeftJsx: ReactNode[] = CVColumnLeftFixed({

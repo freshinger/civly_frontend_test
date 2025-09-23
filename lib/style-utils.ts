@@ -134,7 +134,8 @@ export const getElementClasses = (
   }`.trim();
 
   // Debug logging
-  console.log("getElementClasses:", {
+  /*
+  //console.log("getElementClasses:", {
     elementType,
     fontSizeId,
     fontId,
@@ -149,6 +150,7 @@ export const getElementClasses = (
     isHeading: elementType.startsWith("h"),
     result,
   });
+  */
 
   return result;
 };

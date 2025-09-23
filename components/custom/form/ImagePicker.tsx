@@ -40,7 +40,7 @@ export default function ImagePicker({
       setAvatarUrl(objUrl);
       imageStore.setImage(path, objUrl);
     } catch (err) {
-      console.log("Error downloading image:", err);
+      //console.log("Error downloading image:", err);
       setAvatarUrl(null);
     }
   }
@@ -70,7 +70,7 @@ export default function ImagePicker({
         .upload(filePath, file, { upsert: false });
 
       if (uploadError) {
-        console.log("Error uploading avatar:", uploadError);
+        //console.log("Error uploading avatar:", uploadError);
         return;
       }
 
@@ -78,7 +78,7 @@ export default function ImagePicker({
       // Optionally show immediately without waiting for parent state:
       await downloadImage(filePath);
     } catch (err) {
-      console.log("Error uploading avatar:", err);
+      //console.log("Error uploading avatar:", err);
     } finally {
       setUploading(false);
       if (event.target) event.target.value = ""; // allow reselecting same file
@@ -91,7 +91,7 @@ export default function ImagePicker({
       setUploading(true);
 
       const { error } = await supabase.storage.from(bucket).remove([url]);
-      if (error) console.log("Error removing from storage:", error);
+      //if (error) console.log("Error removing from storage:", error);
 
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
@@ -99,9 +99,9 @@ export default function ImagePicker({
       }
       setAvatarUrl(null);
       onUpload(""); // tell parent it's cleared
-      imageStore.removeImage(url)
+      imageStore.removeImage(url);
     } catch (err) {
-      console.log("Error removing avatar:", err);
+      //console.log("Error removing avatar:", err);
     } finally {
       setUploading(false);
     }

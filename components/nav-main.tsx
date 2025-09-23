@@ -45,9 +45,7 @@ export function NavMain({
   // ---- Store selectors (stable) ----
   const fetchAll = useCvStore((s) => s.fetchAll); // fn is stable
   const duplicate = useCvStore((s) => s.duplicateOne); // fn is stable
-  const cvDataList = useCvStore(
-    (s) => s.remoteItems ?? []
-  ) as CvData[];
+  const cvDataList = useCvStore((s) => s.remoteItems ?? []) as CvData[];
 
   // ---- Local UI state ----
   const [isResumesOpen, setIsResumesOpen] = useState(true);
@@ -255,7 +253,7 @@ Best regards`;
                                 }}
                               >
                                 <span
-                                  className={`text-sm ${isActiveCv ? "font-bold" : ""}`}
+                                  className={`text-sm truncate max-w-[150px] ${isActiveCv ? "font-bold" : ""}`}
                                   title={cv.name?.trim()}
                                 >
                                   {cv.name?.trim()}

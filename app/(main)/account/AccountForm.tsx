@@ -64,7 +64,7 @@ export default function AccountForm({ user }: { user: User | null }) {
 
       if (error && error.code !== "PGRST116") {
         // PGRST116 = no rows found
-        console.log("Profile fetch error:", error);
+        //console.log("Profile fetch error:", error);
       }
 
       // Set basic profile data
@@ -88,7 +88,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       setSummary(metadata.summary || "");
       setWebsite(metadata.website || "");
     } catch (error) {
-      console.log("Error loading user data:", error);
+      // console.log("Error loading user data:", error);
       // Set fallback values from auth user
       setEmail(user?.email || "");
     } finally {
@@ -145,9 +145,9 @@ export default function AccountForm({ user }: { user: User | null }) {
         website,
       };
 
-      console.log("Updating profile with data:", profileData);
-      console.log("Extended data:", extendedData);
-      console.log("User ID:", user?.id);
+      // console.log("Updating profile with data:", profileData);
+      // console.log("Extended data:", extendedData);
+      // console.log("User ID:", user?.id);
 
       // Update basic profile
       const { error, data } = await supabase
@@ -158,11 +158,11 @@ export default function AccountForm({ user }: { user: User | null }) {
         })
         .select();
 
-      console.log("Supabase response:", { data, error });
+      // console.log("Supabase response:", { data, error });
 
       if (error) {
-        console.error("Database error:", error);
-        console.error("Error details:", JSON.stringify(error, null, 2));
+        // console.error("Database error:", error);
+        // console.error("Error details:", JSON.stringify(error, null, 2));
         throw error;
       }
 
@@ -176,13 +176,13 @@ export default function AccountForm({ user }: { user: User | null }) {
       });
 
       if (metadataError) {
-        console.error("Metadata update error:", metadataError);
+        // console.error("Metadata update error:", metadataError);
         // Don't throw error for metadata, it's supplementary
       }
 
       toast.success("Profile updated successfully!");
     } catch (error) {
-      console.error("Error updating the data:", error);
+      // console.error("Error updating the data:", error);
 
       if (error instanceof Error) {
         toast.error(`Error updating profile: ${error.message}`);
@@ -202,8 +202,8 @@ export default function AccountForm({ user }: { user: User | null }) {
       setDeleteDialogOpen(false); // Close dialog when action starts
 
       // Delete user account using Supabase Admin API
-      const { error } = await supabase.functions.invoke('profile/' + user?.id, {
-        method: "DELETE"
+      const { error } = await supabase.functions.invoke("profile/" + user?.id, {
+        method: "DELETE",
       });
 
       if (error) throw error;
@@ -214,7 +214,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       toast.success("Account deleted successfully");
       window.location.href = "/";
     } catch (error) {
-      console.error("Error deleting account:", error);
+      //console.error("Error deleting account:", error);
       toast.error("Error deleting account. Please contact support.");
     } finally {
       setLoading(false);

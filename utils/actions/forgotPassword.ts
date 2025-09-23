@@ -35,7 +35,8 @@ export async function forgotPasswordAction(
   );
 
   if (error) {
-    console.log(error);
+    /*
+    //console.log(error);
     return {
       success: false,
       message: "Reset Password failed",
@@ -46,6 +47,7 @@ export async function forgotPasswordAction(
         ...fields,
       },
     };
+    */
   }
 
   return {

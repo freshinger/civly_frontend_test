@@ -104,15 +104,15 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     const data = form.getValues();
     const parsed = cvDataSchema.safeParse(data);
     if (!parsed.success) {
-      console.error("Invalid data:", parsed.error);
+      toast.error("Invalid data");
       return;
     }
     try {
       await saveRemote(parsed.data);
-      toast.success('Saved');
+      toast.success("Saved");
     } catch (e) {
-      console.error("Error saving CV:", e);
-      toast.error('saving data failed');
+      //console.error("Error saving CV:", e);
+      toast.error("saving data failed");
     }
   }
 
@@ -139,14 +139,16 @@ export function EditorSidebarRight({ id, ...props }: Props) {
             {/* HEADER */}
             <SidebarHeader className="shrink-0 border-b border-sidebar-border bg-white">
               {isTablet && (
-                <div className="flex h-12 items-center justify-between px-3">
-                  <h2 className="text-base font-semibold">CV Editor</h2>
+                <div className="flex h-7 items-center justify-between ">
+                  <h2 className="text-base font-semibold">
+                    {form.getValues()?.name ?? "Resume"}
+                  </h2>
                   <Button type="button" variant="ghost" onClick={hideEditor}>
                     <IconX size={24} />
                   </Button>
                 </div>
               )}
-              <TabsList className="flex h-12 w-full justify-start gap-1 overflow-x-auto bg-white">
+              <TabsList className="flex h-10 w-full justify-start gap-0.5 overflow-x-auto bg-white pb-2">
                 <TabsTrigger
                   value="layout"
                   className="flex-shrink-0 px-2 text-xs"

@@ -49,12 +49,12 @@ export function AppSidebar({
   }, [serverCvs, storeCvs]);
 
   // Debug: what’s being rendered
-  console.log("AppSidebar rendering", {
-    serverCvs: serverCvs.length,
-    storeCvs: storeCvs.length,
-    merged: cvs.length,
-    ids: cvs.map((c) => c.id),
-  });
+  //console.log("AppSidebar rendering", {
+  //  serverCvs: serverCvs.length,
+  //  storeCvs: storeCvs.length,
+  //  merged: cvs.length,
+  //  ids: cvs.map((c) => c.id),
+  //});
 
   const navMain = [
     {

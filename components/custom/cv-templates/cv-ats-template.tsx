@@ -3,7 +3,11 @@
 import React, { useState, useEffect, useRef, ReactNode } from 'react'
 import { formatDate } from '@/utils/date-formatting'
 import { getLinkedInUsername, getXingUsername } from '@/utils/cv-utils'
-import { getElementClasses } from '@/lib/style-utils'
+import {
+  getElementClasses,
+  getFontStyles,
+  type FontSizeId,
+} from '@/lib/style-utils'
 import { ColorRecord } from '@/types/colorType'
 import {
   IconPhone,
@@ -18,6 +22,7 @@ import { CvData } from '@/schemas/cv_data_schema'
 // --- Types ---
 interface CVATSTemplateProps {
   cvData: CvData
+  accentColor?: string
   colorId?: number
   fontId?: number
   fontSizeId?: 10 | 11 | 12
@@ -49,6 +54,7 @@ function Page({ children }: { children: ReactNode }) {
 // --- Main Template Component with Pagination Logic ---
 export default function CVATSTemplate({
   cvData,
+  accentColor = 'text-blue-600',
   colorId = 0,
   fontId = 0,
   fontSizeId = 11,
@@ -75,6 +81,7 @@ export default function CVATSTemplate({
 
       const originalJsxNodes = CVContent({
         cvData,
+        accentColor,
         colorId,
         fontId,
         fontSizeId,
@@ -133,7 +140,7 @@ export default function CVATSTemplate({
 
     const timer = setTimeout(measureAndPaginate, 50)
     return () => clearTimeout(timer)
-  }, [cvData, colorId, fontId, fontSizeId])
+  }, [cvData, accentColor, colorId, fontId, fontSizeId])
 
   return (
     <div>
@@ -142,7 +149,7 @@ export default function CVATSTemplate({
         ref={measurementContainerRef}
         className="absolute opacity-0 -z-10 w-[702px]"
       >
-        {CVContent({ cvData, colorId, fontId, fontSizeId })}
+        {CVContent({ cvData, accentColor, colorId, fontId, fontSizeId })}
       </div>
 
       {/* 2. Visible Renderer for Calculated Pages */}
@@ -166,34 +173,53 @@ export default function CVATSTemplate({
 // Every logical block (headers, titles, paragraphs, list items) is a separate element in the array.
 function CVContent({
   cvData,
+  accentColor = 'text-blue-600',
   colorId = 0,
   fontId = 0,
   fontSizeId = 11,
 }: CVATSTemplateProps): ReactNode[] {
   const blocks: ReactNode[] = []
 
-  // Get accent color for this template
-  const accentColor = ColorRecord[colorId] || 'text-blue-600'
+  // Get dynamic accent color from colorId if not provided
+  const accentColorHex = ColorRecord[colorId]?.hex || accentColor || '#005eff'
+
+  // Get font styles for different elements
+  const nameFontStyles = getFontStyles('h1', fontId)
+  const titleFontStyles = getFontStyles('h2', fontId)
+  const summaryFontStyles = getFontStyles('body', fontId)
+  const sectionHeadingFontStyles = getFontStyles('h3', fontId)
+  const jobTitleFontStyles = getFontStyles('h4', fontId)
+  const bodyFontStyles = getFontStyles('body', fontId)
+  const smallFontStyles = getFontStyles('small', fontId)
 
   // Block 1: Header (Name & Title)
   blocks.push(
     <div key="header" className="pb-1 mb-4">
       <h1
-        className={`font-bold ${accentColor} mb-2 tracking-wide ${getElementClasses(
+        className={`font-bold mb-2 tracking-wide text-5xl ${getElementClasses(
           'h1',
-          fontSizeId,
+          fontSizeId as FontSizeId,
           fontId,
         )}`}
+        style={{
+          ...nameFontStyles,
+          color: accentColorHex,
+          fontSize: '1.7rem', // Aumentando o tamanho do nome
+        }}
       >
         {cvData.personalInformation?.name?.toUpperCase()}{' '}
         {cvData.personalInformation?.surname?.toUpperCase()}
       </h1>
       <h2
-        className={`font-normal text-gray-800 tracking-wide ${getElementClasses(
+        className={`font-normal text-gray-800 tracking-wide text-base ${getElementClasses(
           'h2',
-          fontSizeId,
+          fontSizeId as FontSizeId,
           fontId,
         )}`}
+        style={{
+          ...titleFontStyles,
+          fontSize: '1.1rem',
+        }}
       >
         {cvData.personalInformation?.professionalTitle
           ? cvData.personalInformation.professionalTitle.toUpperCase()
@@ -206,9 +232,9 @@ function CVContent({
   blocks.push(
     <div
       key="contact-info"
-      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-700 mb-4 ${getElementClasses(
+      className={`flex flex-wrap  gap-x-4 gap-y-1 text-gray-700 mb-4 ${getElementClasses(
         'small',
-        fontSizeId,
+        fontSizeId as FontSizeId,
         fontId,
       )}`}
     >
@@ -262,9 +288,10 @@ function CVContent({
         <p
           className={`text-gray-800 leading-relaxed ${getElementClasses(
             'body',
-            fontSizeId,
+            fontSizeId as FontSizeId,
             fontId,
           )}`}
+          style={summaryFontStyles}
         >
           {cvData.personalInformation.summary}
         </p>
@@ -277,11 +304,16 @@ function CVContent({
     blocks.push(
       <h3
         key="exp-title"
-        className={`font-bold ${accentColor} tracking-wide border-b border-blue-200 pb-1 mb-4 ${getElementClasses(
+        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-10 ${getElementClasses(
           'h3',
-          fontSizeId,
+          fontSizeId as FontSizeId,
           fontId,
         )}`}
+        style={{
+          ...sectionHeadingFontStyles,
+          color: accentColorHex,
+          borderColor: accentColorHex + '33',
+        }}
       >
         EXPERIENCE
       </h3>,
@@ -296,18 +328,20 @@ function CVContent({
             <h4
               className={`font-bold text-gray-900 mb-1 ${getElementClasses(
                 'h4',
-                fontSizeId,
+                fontSizeId as FontSizeId,
                 fontId,
               )}`}
+              style={jobTitleFontStyles}
             >
               {exp.role}
             </h4>
             <div
               className={`text-gray-700 ${getElementClasses(
                 'body',
-                fontSizeId,
+                fontSizeId as FontSizeId,
                 fontId,
               )}`}
+              style={bodyFontStyles}
             >
               {exp.company}
             </div>
@@ -315,9 +349,10 @@ function CVContent({
           <div
             className={`text-gray-600 font-medium ml-4 text-right ${getElementClasses(
               'small',
-              fontSizeId,
+              fontSizeId as FontSizeId,
               fontId,
             )}`}
+            style={smallFontStyles}
           >
             {exp.startDate
               ? formatDate(new Date(exp.startDate), 'MMM yyyy')
@@ -347,9 +382,10 @@ function CVContent({
                 key={`${exp.company}-${exp.role}-${exp.startDate}-p-${pIndex}`}
                 className={`text-gray-700 leading-relaxed mb-4 ${getElementClasses(
                   'body',
-                  fontSizeId,
+                  fontSizeId as FontSizeId,
                   fontId,
                 )}`}
+                style={bodyFontStyles}
               >
                 {paragraph}
               </p>,
@@ -364,11 +400,16 @@ function CVContent({
     blocks.push(
       <h3
         key="edu-title"
-        className={`font-bold ${accentColor} tracking-wide border-b border-blue-200 pb-1 mb-4 ${getElementClasses(
+        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-10 ${getElementClasses(
           'h3',
-          fontSizeId,
+          fontSizeId as FontSizeId,
           fontId,
         )}`}
+        style={{
+          ...sectionHeadingFontStyles,
+          color: accentColorHex,
+          borderColor: accentColorHex + '33',
+        }}
       >
         EDUCATION
       </h3>,
@@ -381,18 +422,20 @@ function CVContent({
               <h4
                 className={`font-bold text-gray-900 mb-1 ${getElementClasses(
                   'h4',
-                  fontSizeId,
+                  fontSizeId as FontSizeId,
                   fontId,
                 )}`}
+                style={jobTitleFontStyles}
               >
                 {edu.degree}
               </h4>
               <div
                 className={`text-gray-700 ${getElementClasses(
                   'body',
-                  fontSizeId,
+                  fontSizeId as FontSizeId,
                   fontId,
                 )}`}
+                style={bodyFontStyles}
               >
                 {edu.institution}
               </div>
@@ -400,9 +443,10 @@ function CVContent({
             <div
               className={`text-gray-600 font-medium ml-4 text-right ${getElementClasses(
                 'small',
-                fontSizeId,
+                fontSizeId as FontSizeId,
                 fontId,
               )}`}
+              style={smallFontStyles}
             >
               {edu.startDate ? formatDate(new Date(edu.startDate)) : 'N/A'} -{' '}
               {edu.currentlyStudyingHere
@@ -428,11 +472,16 @@ function CVContent({
     blocks.push(
       <h3
         key="skills-title"
-        className={`font-bold ${accentColor} tracking-wide border-b border-blue-200 pb-1 mb-4 ${getElementClasses(
+        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-10 ${getElementClasses(
           'h3',
-          fontSizeId,
+          fontSizeId as FontSizeId,
           fontId,
         )}`}
+        style={{
+          ...sectionHeadingFontStyles,
+          color: accentColorHex,
+          borderColor: accentColorHex + '33',
+        }}
       >
         SKILLS
       </h3>,
@@ -441,20 +490,25 @@ function CVContent({
       blocks.push(
         <div key={skillGroup.name} className="mb-3">
           <h4
-            className={`font-bold ${accentColor} mb-1 tracking-wide ${getElementClasses(
+            className={`font-bold mb-1 tracking-wide ${getElementClasses(
               'h4',
-              fontSizeId,
+              fontSizeId as FontSizeId,
               fontId,
             )}`}
+            style={{
+              ...jobTitleFontStyles,
+              color: accentColorHex,
+            }}
           >
             {(skillGroup.name ?? '').toUpperCase()}
           </h4>
           <div
             className={`text-gray-700 ${getElementClasses(
               'body',
-              fontSizeId,
+              fontSizeId as FontSizeId,
               fontId,
             )}`}
+            style={bodyFontStyles}
           >
             {skillGroup.skills?.map((skill, skillIndex) => (
               <span key={skill.name}>

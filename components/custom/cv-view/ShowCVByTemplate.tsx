@@ -44,7 +44,13 @@ export function ShowCVByTemplate({ cvData }: { cvData: CvData }) {
     default:
       return (
         <>
-          <CVATSTemplate cvData={cvData} />
+          <CVATSTemplate
+            cvData={cvData}
+            colorId={colorId}
+            fontId={fontId}
+            fontSizeId={fontSizeId as 10 | 11 | 12}
+            accentColor={accentColor}
+          />
         </>
       )
   }

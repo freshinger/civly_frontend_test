@@ -35,9 +35,9 @@ function darkenHexColor(hexColor: string, percentage: number = 0.08): string {
   const hex = hexColor.replace('#', '')
 
   // Parse RGB components
-  const r = parseInt(hex.substr(0, 2), 16)
-  const g = parseInt(hex.substr(2, 2), 16)
-  const b = parseInt(hex.substr(4, 2), 16)
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
 
   // Darken each component
   const darkR = Math.round(r * (1 - percentage))
@@ -266,7 +266,7 @@ export default function CVClassicTemplate({
             <div className="grid grid-cols-[320px_1fr] h-full">
               {/* Left Column - Sidebar with accent background that bleeds to edges */}
               <div
-                className="h-full"
+                className="min-h-full"
                 style={{
                   backgroundColor: darkenHexColor(
                     ColorRecord[colorId]?.hex || '#3B82F6',
@@ -278,6 +278,7 @@ export default function CVClassicTemplate({
                   paddingLeft: `${PAGE_PADDING_PX + 24}px`, // PAGE_PADDING_PX + original px-6 (24px)
                   paddingTop: `${PAGE_PADDING_PX + 32}px`, // PAGE_PADDING_PX + original py-8 (32px)
                   paddingBottom: `${PAGE_PADDING_PX + 32}px`,
+                  minHeight: `calc(100% + ${PAGE_PADDING_PX * 2}px)`,
                 }}
               >
                 {paginatedLeft[i] || []}
@@ -322,7 +323,7 @@ export default function CVClassicTemplate({
       >
         <div className="grid grid-cols-[320px_1fr] h-full">
           <div
-            className="h-full"
+            className="min-h-full"
             style={{
               backgroundColor: darkenHexColor(
                 ColorRecord[colorId]?.hex || '#3B82F6',
@@ -334,6 +335,7 @@ export default function CVClassicTemplate({
               paddingLeft: `${PAGE_PADDING_PX + 24}px`,
               paddingTop: `${PAGE_PADDING_PX + 32}px`,
               paddingBottom: `${PAGE_PADDING_PX + 32}px`,
+              minHeight: `calc(100% + ${PAGE_PADDING_PX * 2}px)`,
             }}
             ref={leftColRef}
           >

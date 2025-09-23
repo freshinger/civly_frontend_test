@@ -3,14 +3,25 @@
 import React, { useState, useEffect, useRef, ReactNode } from 'react'
 import { formatDate } from '@/utils/date-formatting'
 import { getLinkedInUsername, getXingUsername } from '@/utils/cv-utils'
+import { getElementClasses } from '@/lib/style-utils'
+import { ColorRecord } from '@/types/colorType'
 import {
   IconPhone,
   IconMail,
   IconGlobe,
+  IconMapPin,
   IconBrandLinkedin,
   IconBrandXing,
 } from '@tabler/icons-react'
 import { CvData } from '@/schemas/cv_data_schema'
+
+// --- Types ---
+interface CVATSTemplateProps {
+  cvData: CvData
+  colorId?: number
+  fontId?: number
+  fontSizeId?: 10 | 11 | 12
+}
 
 // --- Layout Constants ---
 const A4_PAGE_HEIGHT_PX = 1123 // Fixed height of an A4 page at 96 DPI
@@ -36,7 +47,12 @@ function Page({ children }: { children: ReactNode }) {
 }
 
 // --- Main Template Component with Pagination Logic ---
-export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
+export default function CVATSTemplate({
+  cvData,
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
+}: CVATSTemplateProps) {
   // State to hold the final, paginated content. Each inner array is a page.
   const [paginatedPages, setPaginatedPages] = useState<ReactNode[][]>([[]])
   // Ref for the hidden container used to measure the raw content.
@@ -57,7 +73,12 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
       let currentPageContent: ReactNode[] = []
       let currentPageHeight = 0
 
-      const originalJsxNodes = CVContent({ cvData })
+      const originalJsxNodes = CVContent({
+        cvData,
+        colorId,
+        fontId,
+        fontSizeId,
+      })
 
       contentBlocks.forEach((block, index) => {
         // Correct measurement including vertical margins for accurate layout calculation.
@@ -112,7 +133,7 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
 
     const timer = setTimeout(measureAndPaginate, 50)
     return () => clearTimeout(timer)
-  }, [cvData])
+  }, [cvData, colorId, fontId, fontSizeId])
 
   return (
     <div>
@@ -121,7 +142,7 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
         ref={measurementContainerRef}
         className="absolute opacity-0 -z-10 w-[702px]"
       >
-        {CVContent({ cvData })}
+        {CVContent({ cvData, colorId, fontId, fontSizeId })}
       </div>
 
       {/* 2. Visible Renderer for Calculated Pages */}
@@ -143,17 +164,37 @@ export default function CVATSTemplate({ cvData }: { cvData: CvData }) {
 // --- CV Content Component ---
 // CRUCIAL REFACTOR: This function now builds and returns a FLAT ARRAY of JSX elements.
 // Every logical block (headers, titles, paragraphs, list items) is a separate element in the array.
-function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
+function CVContent({
+  cvData,
+  colorId = 0,
+  fontId = 0,
+  fontSizeId = 11,
+}: CVATSTemplateProps): ReactNode[] {
   const blocks: ReactNode[] = []
+
+  // Get accent color for this template
+  const accentColor = ColorRecord[colorId] || 'text-blue-600'
 
   // Block 1: Header (Name & Title)
   blocks.push(
     <div key="header" className="pb-1 mb-4">
-      <h1 className="text-4xl font-bold text-blue-600 mb-2 tracking-wide">
+      <h1
+        className={`font-bold ${accentColor} mb-2 tracking-wide ${getElementClasses(
+          'h1',
+          fontSizeId,
+          fontId,
+        )}`}
+      >
         {cvData.personalInformation?.name?.toUpperCase()}{' '}
         {cvData.personalInformation?.surname?.toUpperCase()}
       </h1>
-      <h2 className="text-lg font-normal text-gray-800 tracking-wide">
+      <h2
+        className={`font-normal text-gray-800 tracking-wide ${getElementClasses(
+          'h2',
+          fontSizeId,
+          fontId,
+        )}`}
+      >
         {cvData.personalInformation?.professionalTitle
           ? cvData.personalInformation.professionalTitle.toUpperCase()
           : ''}
@@ -165,7 +206,11 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
   blocks.push(
     <div
       key="contact-info"
-      className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-700 mb-4"
+      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-700 mb-4 ${getElementClasses(
+        'small',
+        fontSizeId,
+        fontId,
+      )}`}
     >
       {cvData.personalInformation?.phone && (
         <div className="flex items-center gap-1.5">
@@ -201,6 +246,12 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
           <span>{getXingUsername(cvData.personalInformation.xing)}</span>
         </div>
       )}
+      {cvData.personalInformation?.location && (
+        <div className="flex items-center gap-1.5">
+          <IconMapPin size={14} />
+          <span>{cvData.personalInformation.location}</span>
+        </div>
+      )}
     </div>,
   )
 
@@ -208,7 +259,13 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
   if (cvData.personalInformation?.summary) {
     blocks.push(
       <div key="summary" className="mb-8">
-        <p className="text-sm text-gray-800 leading-relaxed">
+        <p
+          className={`text-gray-800 leading-relaxed ${getElementClasses(
+            'body',
+            fontSizeId,
+            fontId,
+          )}`}
+        >
           {cvData.personalInformation.summary}
         </p>
       </div>,
@@ -220,7 +277,11 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
     blocks.push(
       <h3
         key="exp-title"
-        className="text-sm font-bold text-blue-600 tracking-wide border-b border-blue-200 pb-1 mb-4"
+        className={`font-bold ${accentColor} tracking-wide border-b border-blue-200 pb-1 mb-4 ${getElementClasses(
+          'h3',
+          fontSizeId,
+          fontId,
+        )}`}
       >
         EXPERIENCE
       </h3>,
@@ -232,10 +293,32 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
           className="flex justify-between items-start mb-2"
         >
           <div className="flex-1">
-            <h4 className="text-sm font-bold text-gray-900 mb-1">{exp.role}</h4>
-            <div className="text-sm text-gray-700">{exp.company}</div>
+            <h4
+              className={`font-bold text-gray-900 mb-1 ${getElementClasses(
+                'h4',
+                fontSizeId,
+                fontId,
+              )}`}
+            >
+              {exp.role}
+            </h4>
+            <div
+              className={`text-gray-700 ${getElementClasses(
+                'body',
+                fontSizeId,
+                fontId,
+              )}`}
+            >
+              {exp.company}
+            </div>
           </div>
-          <div className="text-sm text-gray-600 font-medium ml-4 text-right">
+          <div
+            className={`text-gray-600 font-medium ml-4 text-right ${getElementClasses(
+              'small',
+              fontSizeId,
+              fontId,
+            )}`}
+          >
             {exp.startDate
               ? formatDate(new Date(exp.startDate), 'MMM yyyy')
               : 'N/A'}{' '}
@@ -262,7 +345,11 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
             blocks.push(
               <p
                 key={`${exp.company}-${exp.role}-${exp.startDate}-p-${pIndex}`}
-                className="text-sm text-gray-700 leading-relaxed mb-4"
+                className={`text-gray-700 leading-relaxed mb-4 ${getElementClasses(
+                  'body',
+                  fontSizeId,
+                  fontId,
+                )}`}
               >
                 {paragraph}
               </p>,
@@ -277,7 +364,11 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
     blocks.push(
       <h3
         key="edu-title"
-        className="text-base font-bold text-blue-600 tracking-wide border-b border-blue-200 pb-1 mb-4"
+        className={`font-bold ${accentColor} tracking-wide border-b border-blue-200 pb-1 mb-4 ${getElementClasses(
+          'h3',
+          fontSizeId,
+          fontId,
+        )}`}
       >
         EDUCATION
       </h3>,
@@ -287,12 +378,32 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
         <div key={edu.degree} className="mb-3">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <h4 className="text-sm font-bold text-gray-900 mb-1">
+              <h4
+                className={`font-bold text-gray-900 mb-1 ${getElementClasses(
+                  'h4',
+                  fontSizeId,
+                  fontId,
+                )}`}
+              >
                 {edu.degree}
               </h4>
-              <div className="text-sm text-gray-700">{edu.institution}</div>
+              <div
+                className={`text-gray-700 ${getElementClasses(
+                  'body',
+                  fontSizeId,
+                  fontId,
+                )}`}
+              >
+                {edu.institution}
+              </div>
             </div>
-            <div className="text-sm text-gray-600 font-medium ml-4 text-right">
+            <div
+              className={`text-gray-600 font-medium ml-4 text-right ${getElementClasses(
+                'small',
+                fontSizeId,
+                fontId,
+              )}`}
+            >
               {edu.startDate ? formatDate(new Date(edu.startDate)) : 'N/A'} -{' '}
               {edu.currentlyStudyingHere
                 ? 'Present'
@@ -317,7 +428,11 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
     blocks.push(
       <h3
         key="skills-title"
-        className="text-base font-bold text-blue-600 tracking-wide border-b border-blue-200 pb-1 mb-4"
+        className={`font-bold ${accentColor} tracking-wide border-b border-blue-200 pb-1 mb-4 ${getElementClasses(
+          'h3',
+          fontSizeId,
+          fontId,
+        )}`}
       >
         SKILLS
       </h3>,
@@ -325,10 +440,22 @@ function CVContent({ cvData }: { cvData: CvData }): ReactNode[] {
     cvData.skillGroups.forEach((skillGroup) => {
       blocks.push(
         <div key={skillGroup.name} className="mb-3">
-          <h4 className="text-sm font-bold text-blue-600 mb-1 tracking-wide">
+          <h4
+            className={`font-bold ${accentColor} mb-1 tracking-wide ${getElementClasses(
+              'h4',
+              fontSizeId,
+              fontId,
+            )}`}
+          >
             {(skillGroup.name ?? '').toUpperCase()}
           </h4>
-          <div className="text-sm text-gray-700">
+          <div
+            className={`text-gray-700 ${getElementClasses(
+              'body',
+              fontSizeId,
+              fontId,
+            )}`}
+          >
             {skillGroup.skills?.map((skill, skillIndex) => (
               <span key={skill.name}>
                 {skill.name}

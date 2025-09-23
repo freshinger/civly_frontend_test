@@ -104,15 +104,15 @@ export function EditorSidebarRight({ id, ...props }: Props) {
     const data = form.getValues();
     const parsed = cvDataSchema.safeParse(data);
     if (!parsed.success) {
-      console.error("Invalid data:", parsed.error);
+      toast.error("Invalid data");
       return;
     }
     try {
       await saveRemote(parsed.data);
-      toast.success('Saved');
+      toast.success("Saved");
     } catch (e) {
-      console.error("Error saving CV:", e);
-      toast.error('saving data failed');
+      //console.error("Error saving CV:", e);
+      toast.error("saving data failed");
     }
   }
 

@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest } from "next/server";
+import { toast } from "sonner";
 
 async function generatePDF(url: string) {
   const supabase = await createClient();
@@ -69,7 +70,7 @@ async function generatePDF(url: string) {
     const pdfBuffer = await page.pdf({ format: "A4" });
     return pdfBuffer;
   } catch (err) {
-    console.error("generatePDF error", err);
+    toast.error("The PDF export failed, please try again later.");
     throw err;
   } finally {
     if (browser) await browser.close();
@@ -104,7 +105,7 @@ export async function GET(
     newHeaders.set("Content-Disposition", `attachment; filename=cv-${id}.pdf`);
     return new Response(typedArrayToBuffer(pdfBuffer), { headers: newHeaders });
   } catch (error) {
-    console.error("export error", error);
+    toast.error("The PDF export failed, please try again later.");
     return new Response("An error occurred while generating the pdf.", {
       status: 500,
     });

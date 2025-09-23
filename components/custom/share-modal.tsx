@@ -43,13 +43,13 @@ export function ShareModal({
 }: ShareModalProps) {
   const { remoteItems } = useCvStore();
   const router = useRouter();
-  
+
   if (!cv) return null;
 
-  console.log('Vis: ',cv.visibility);
+  //console.log('Vis: ',cv.visibility);
   // Get the most up-to-date version of the CV from the store
   const currentCv = remoteItems.find((item) => item.id === cv.id) || cv;
-  console.log('Visremote:', currentCv.visibility)
+  //console.log('Visremote:', currentCv.visibility)
   const isPublished =
     currentCv.visibility === "public" || currentCv.visibility === "private";
   const isPrivate = currentCv.visibility === "private";

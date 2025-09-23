@@ -37,7 +37,7 @@ export default function Page({ id }: { id: string }) {
         setDisableButton(false);
       }
     } else {
-      console.log(data.data);
+      //console.log(data.data);
       setCvData(data.data);
       setShowPasswordField(false);
     }

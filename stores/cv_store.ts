@@ -24,7 +24,11 @@ type CvStore = {
   duplicateOne: (id: string) => Promise<string>;
   deleteOne: (id: string) => Promise<void>;
   saveName: (cv: CvData) => Promise<void>;
-  updateVisibility: (cv: CvData, visibility: "public" | "draft" | "private", password?: string) => Promise<void>;
+  updateVisibility: (
+    cv: CvData,
+    visibility: "public" | "draft" | "private",
+    password?: string
+  ) => Promise<void>;
 };
 
 export const useCvStore = create<CvStore>()(
@@ -44,8 +48,8 @@ export const useCvStore = create<CvStore>()(
 
       saveLocally: (cv) => {
         if (!cv?.id) return;
-        console.log("SAVE LOCALLY", cv.personalInformation?.name);
-        console.log(get().localItems);
+        //console.log("SAVE LOCALLY", cv.personalInformation?.name);
+        //console.log(get().localItems);
 
         set((s) => {
           const idx = s.localItems.findIndex((x) => x?.id === cv.id);
@@ -73,9 +77,9 @@ export const useCvStore = create<CvStore>()(
       getSingle: async (id) => {
         //console.log("GET SINGLE", id);
         const serverData = await fetchCv(id);
-        console.log("SERVER DATA", serverData);
+        //console.log("SERVER DATA", serverData);
         const localData = get().localItems.find((x) => x?.id === id);
-        console.log("LOCAL DATA", localData);
+        //console.log("LOCAL DATA", localData);
         if (!localData) {
           get().saveLocally(serverData);
           return serverData;
@@ -109,7 +113,11 @@ export const useCvStore = create<CvStore>()(
           ),
         }));
       },
-      updateVisibility: async (cv: CvData, visibility: "public"|"draft"|"private", password) => {
+      updateVisibility: async (
+        cv: CvData,
+        visibility: "public" | "draft" | "private",
+        password
+      ) => {
         // Update on server
         await updateVisibility(cv, visibility, password);
 

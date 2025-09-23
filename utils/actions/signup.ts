@@ -1,38 +1,42 @@
-'use server'
+"use server";
 
-import { createClient } from '@/utils/supabase/server';
-import { FormState, signUpSchema } from '../validation/auth';
+import { createClient } from "@/utils/supabase/server";
+import { FormState, signUpSchema } from "../validation/auth";
 
-export async function signUpAction(prevState: FormState, formData: FormData): Promise<FormState> {
+export async function signUpAction(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   const fields = {
-    name: formData.get('name') as string,
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-    confirmPassword: formData.get('confirmPassword') as string,
+    name: formData.get("name") as string,
+    email: formData.get("email") as string,
+    password: formData.get("password") as string,
+    confirmPassword: formData.get("confirmPassword") as string,
   };
   const validatedFields = signUpSchema.safeParse(fields);
 
-  if(!validatedFields.success){
-    return { 
+  if (!validatedFields.success) {
+    return {
       success: false,
-      message: 'Validation failed. Failed to sign up.',
+      message: "Validation failed. Failed to sign up.",
       zodErrors: validatedFields.error.flatten().fieldErrors,
       data: {
         ...prevState.data,
-        ...fields
-      }
-    }
+        ...fields,
+      },
+    };
   }
 
   const data = {
     email: validatedFields.data.email,
     password: validatedFields.data.password,
-  }
+  };
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp(data);
 
   if (error) {
-    console.log(error);
+    /*
+    //console.log(error);
     return {
       success: false,
       message: 'User Sign up failed',
@@ -43,16 +47,17 @@ export async function signUpAction(prevState: FormState, formData: FormData): Pr
         ...fields
       }
     }
+    */
   }
 
   return {
     success: true,
-    message: 'Check your E-Mail Inbox to Confirm registration',
+    message: "Check your E-Mail Inbox to Confirm registration",
     backendErrors: null,
     zodErrors: null,
     data: {
       ...prevState.data,
-      ...fields
-    }
-  }
+      ...fields,
+    },
+  };
 }

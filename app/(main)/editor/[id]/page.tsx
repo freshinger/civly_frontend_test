@@ -55,15 +55,11 @@ export default function Page() {
         `fixed right-0 top-0 z-[500] h-screen w-[400px] max-w-[100%] transform bg-background shadow-lg transition-transform duration-300 ${
           editorOpen ? "translate-x-0" : "translate-x-full"
         }`
-      : ''
+    : "";
   return (
-    <div
-      className="grid h-screen w-full max-w-full overflow-hidden"
-      style={{gridTemplateColumns}}
-    >
+    <div className="h-screen w-full max-w-full overflow-hidden bg-red-500 flex justify-between items-stretch">
       {/* LEFT COLUMN */}
-      <div className="flex min-w-0 flex-col overflow-hidden">
-        {/* keep header low z so the backdrop sits ABOVE it */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-10">
           <AppBar showEditorButton>
             <EditorHeaderResponsive cvId={id} />
@@ -77,9 +73,8 @@ export default function Page() {
             maxScale={4}
             limitToBounds={false}
             centerOnInit
-            wheel={{ disabled: false, step: 0.15 }}
-            pinch={{ disabled: false, step: 0.15 }}
-            panning={{ disabled: false }}
+            wheel={{ step: 0.15 }}
+            pinch={{ step: 0.15 }}
           >
             <TransformComponent
               wrapperStyle={{ width: "100%", height: "100%" }}
@@ -95,16 +90,13 @@ export default function Page() {
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR — single instance, never unmounted */}
-      <div
-        className={rightSidebar}
-      >
+      {/* RIGHT SIDEBAR */}
+      <div className={rightSidebar}>
         <div className="h-full w-full border-l">
           <EditorSidebarRight id={id} />
         </div>
       </div>
 
-      {/* MOBILE BACKDROP (covers header & triggers) */}
       {!isDesktop && <Backdrop open={editorOpen} onClose={hideEditor} />}
     </div>
   );

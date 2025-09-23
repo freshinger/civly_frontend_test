@@ -1,7 +1,7 @@
 // components/editor/VisibilityModal.tsx
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,24 +9,29 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useToast } from '@/hooks/use-toast'
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from '@/components/ui/input-otp'
-import { REGEXP_ONLY_DIGITS } from 'input-otp'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/hooks/use-toast";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 
 // --- Prop Types ---
 interface VisibilityModalProps {
-  isOpen: boolean
-  onOpenChange: (open: boolean) => void
-  visibility: 'Public' | 'Private' | 'Draft'
-  password: string | null
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  visibility: "Public" | "Private" | "Draft";
+  password: string | null;
   onVisibilityChange: (
-    visibility: 'Public' | 'Private' | 'Draft',
-    password?: string | null,
-  ) => void
+    visibility: "Public" | "Private" | "Draft",
+    password?: string | null
+  ) => void;
 }
 
 // --- The Component ---
@@ -37,41 +42,41 @@ export function VisibilityModal({
   password,
   onVisibilityChange,
 }: VisibilityModalProps) {
-  const { toast } = useToast()
-  const [passwordInput, setPasswordInput] = useState<string>('')
-  const [localVisibility, setLocalVisibility] = useState(visibility)
+  const { toast } = useToast();
+  const [passwordInput, setPasswordInput] = useState<string>("");
+  const [localVisibility, setLocalVisibility] = useState(visibility);
 
   // Sync local state if the external props change
   useEffect(() => {
-    setPasswordInput(password ?? '')
-    setLocalVisibility(visibility)
-  }, [password, visibility])
+    setPasswordInput(password ?? "");
+    setLocalVisibility(visibility);
+  }, [password, visibility]);
 
   const handleSaveChanges = () => {
-    console.log('VisibilityModal - handleSaveChanges called:', {
-      localVisibility,
-      passwordInput,
-    })
+    //console.log('VisibilityModal - handleSaveChanges called:', {
+    //  localVisibility,
+    //  passwordInput,
+    //})
 
-    if (localVisibility === 'Private') {
+    if (localVisibility === "Private") {
       if (!passwordInput) {
-        toast.error('Password is required for private resumes.')
-        return
+        toast.error("Password is required for private resumes.");
+        return;
       }
-      console.log(
-        'VisibilityModal - calling onVisibilityChange with Private + password',
-      )
-      onVisibilityChange('Private', passwordInput)
+      //console.log(
+      //  'VisibilityModal - calling onVisibilityChange with Private + password',
+      //)
+      onVisibilityChange("Private", passwordInput);
     } else {
-      console.log(
-        'VisibilityModal - calling onVisibilityChange with:',
-        localVisibility,
-      )
-      onVisibilityChange(localVisibility)
+      //console.log(
+      //  'VisibilityModal - calling onVisibilityChange with:',
+      //  localVisibility,
+      //)
+      onVisibilityChange(localVisibility);
     }
-    onOpenChange(false)
-    toast.success('Visibility settings saved')
-  }
+    onOpenChange(false);
+    toast.success("Visibility settings saved");
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -88,7 +93,7 @@ export function VisibilityModal({
         <div className="space-y-4 pt-4">
           <RadioGroup
             value={localVisibility}
-            onValueChange={(value: 'Draft' | 'Public' | 'Private') =>
+            onValueChange={(value: "Draft" | "Public" | "Private") =>
               setLocalVisibility(value)
             }
             className="space-y-4"
@@ -139,7 +144,7 @@ export function VisibilityModal({
             </div>
           </RadioGroup>
 
-          {localVisibility === 'Private' && (
+          {localVisibility === "Private" && (
             <div className="p-4 border border-primary/20 rounded-lg bg-primary/5 space-y-2">
               <Label htmlFor="password-input" className="font-semibold">
                 Require Password
@@ -151,9 +156,11 @@ export function VisibilityModal({
                 <InputOTP
                   maxLength={6}
                   pattern={REGEXP_ONLY_DIGITS}
-                  inputMode='numeric'
-                  value={passwordInput ?? ''}
-                  onChange={(passwordInput: string) => setPasswordInput(passwordInput)}
+                  inputMode="numeric"
+                  value={passwordInput ?? ""}
+                  onChange={(passwordInput: string) =>
+                    setPasswordInput(passwordInput)
+                  }
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -175,10 +182,10 @@ export function VisibilityModal({
         <DialogFooter>
           <Button
             onClick={() => {
-              console.log(
-                'SAVE BUTTON CLICKED - about to call handleSaveChanges',
-              )
-              handleSaveChanges()
+              //console.log(
+              //  "SAVE BUTTON CLICKED - about to call handleSaveChanges"
+              //);
+              handleSaveChanges();
             }}
           >
             Save and Close
@@ -186,5 +193,5 @@ export function VisibilityModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -31,7 +31,7 @@ interface CVATSTemplateProps {
 // --- Layout Constants ---
 const A4_PAGE_HEIGHT_PX = 1123 // Fixed height of an A4 page at 96 DPI
 const PAGE_PADDING_Y_PX = 96 // p-12 top (48px) + p-12 bottom (48px)
-const USABLE_PAGE_HEIGHT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX
+const USABLE_PAGE_HEIGHT = A4_PAGE_HEIGHT_PX - PAGE_PADDING_Y_PX + 60 // +60px more tolerance
 
 // --- Visual Page Component ---
 // This is a simple presentational component that styles each page wrapper.
@@ -44,6 +44,7 @@ function Page({ children }: { children: ReactNode }) {
         height: `${A4_PAGE_HEIGHT_PX}px`,
         padding: '48px',
         fontFamily: 'Helvetica, Arial, sans-serif',
+        margin: '0 auto 50px auto',
       }}
     >
       {children}
@@ -104,11 +105,12 @@ export default function CVATSTemplate({
             parseInt(window.getComputedStyle(nextBlock).marginBottom, 10)
           : 0
 
+        // More tolerant widow/orphan control - only apply if there's significant space left
         if (
           isSectionTitle &&
           currentPageHeight + blockHeight + nextBlockHeight >
-            USABLE_PAGE_HEIGHT &&
-          currentPageContent.length > 0
+            USABLE_PAGE_HEIGHT - 100 && // More tolerance: -100px instead of exact fit
+          currentPageContent.length > 2 // Only if there's already substantial content
         ) {
           newPages.push(currentPageContent)
           currentPageContent = [blockJsx]
@@ -232,7 +234,7 @@ function CVContent({
   blocks.push(
     <div
       key="contact-info"
-      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-700 mb-4 ${getElementClasses(
+      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-700 mb-3 ${getElementClasses(
         'small',
         fontSizeId as FontSizeId,
         fontId,
@@ -284,7 +286,7 @@ function CVContent({
   // Block 3: Summary
   if (cvData.personalInformation?.summary) {
     blocks.push(
-      <div key="summary" className="mb-8">
+      <div key="summary" className="mb-4">
         <p
           className={`text-gray-800 leading-relaxed ${getElementClasses(
             'body',
@@ -304,7 +306,7 @@ function CVContent({
     blocks.push(
       <h3
         key="exp-title"
-        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-10 ${getElementClasses(
+        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-4 ${getElementClasses(
           'h3',
           fontSizeId as FontSizeId,
           fontId,
@@ -380,7 +382,7 @@ function CVContent({
             blocks.push(
               <p
                 key={`${exp.company}-${exp.role}-${exp.startDate}-p-${pIndex}`}
-                className={`text-gray-700 leading-relaxed mb-4 ${getElementClasses(
+                className={`text-gray-700 leading-relaxed mb-3 ${getElementClasses(
                   'body',
                   fontSizeId as FontSizeId,
                   fontId,
@@ -400,7 +402,7 @@ function CVContent({
     blocks.push(
       <h3
         key="edu-title"
-        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-10 ${getElementClasses(
+        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-4 ${getElementClasses(
           'h3',
           fontSizeId as FontSizeId,
           fontId,
@@ -472,7 +474,7 @@ function CVContent({
     blocks.push(
       <h3
         key="skills-title"
-        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-10 ${getElementClasses(
+        className={`font-bold tracking-wide border-b pb-1 mb-3 mt-4 ${getElementClasses(
           'h3',
           fontSizeId as FontSizeId,
           fontId,

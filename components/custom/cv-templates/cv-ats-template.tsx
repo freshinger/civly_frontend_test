@@ -232,7 +232,7 @@ function CVContent({
   blocks.push(
     <div
       key="contact-info"
-      className={`flex flex-wrap  gap-x-4 gap-y-1 text-gray-700 mb-4 ${getElementClasses(
+      className={`flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-700 mb-4 ${getElementClasses(
         'small',
         fontSizeId as FontSizeId,
         fontId,

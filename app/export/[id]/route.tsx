@@ -32,7 +32,7 @@ async function generatePDF(url: string) {
       console.log('past chromium import');
       puppeteer = await import("puppeteer-core");
       console.log('past puppeteer import');
-      const execpath = await chromium.executablePath("/opt/chromium")
+      const execpath = await chromium.executablePath("https://github.com/Sparticuz/chromium/releases/download/v138.0.2/chromium-v138.0.2-pack.x64.tar")
       console.log('past exec path', execpath);
       launchOptions = {
         headless: true,

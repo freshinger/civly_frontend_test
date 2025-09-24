@@ -28,11 +28,11 @@ async function generatePDF(url: string) {
     console.log('Vercel',isVercel);
     if (isVercel) {
       console.log('in Vercel branch');
-      const chromium = (await import("@sparticuz/chromium")).default;
+      const chromium = (await import("@sparticuz/chromium-min")).default;
       console.log('past chromium import');
       puppeteer = await import("puppeteer-core");
       console.log('past puppeteer import');
-      const execpath = await chromium.executablePath()
+      const execpath = await chromium.executablePath("/opt/chromium")
       console.log('past exec path', execpath);
       launchOptions = {
         headless: true,
@@ -75,6 +75,7 @@ async function generatePDF(url: string) {
     const pdfBuffer = await page.pdf({ format: "A4" });
     return pdfBuffer;
   } catch (err) {
+    console.error(err);
     throw err;
   } finally {
     if (browser) await browser.close();

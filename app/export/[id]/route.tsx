@@ -25,21 +25,22 @@ async function generatePDF(url: string) {
         executablePath?: string;
       };
     launchOptions = { headless: true };
-
+    console.log('Vercel',isVercel);
     if (isVercel) {
       const chromium = (await import("@sparticuz/chromium")).default;
       puppeteer = await import("puppeteer-core");
       launchOptions = {
-        headless: false,
+        headless: true,
         args: chromium.args,
         executablePath: await chromium.executablePath(),
       };
+      console.log(launchOptions);
     } else {
       puppeteer = await import("puppeteer");
     }
-
+    console.log('pre browser launch');
     browser = await puppeteer.launch(launchOptions);
-
+    console.log('post browser launch');
     const page = await browser.newPage();
 
     // determine cookie domain & secure flag
